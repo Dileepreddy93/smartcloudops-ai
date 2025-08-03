@@ -1,16 +1,5 @@
-# Variables for SmartCloudOps AI Infrastructure
-
-variable "aws_region" {
-  description = "AWS region for resources"
-  type        = string
-  default     = "us-east-1"
-}
-
-variable "environment" {
-  description = "Environment name (dev, staging, prod)"
-  type        = string
-  default     = "dev"
-}
+# Variables for SmartCloudOps AI - FREE TIER Version
+# Cost: $0/month (AWS Free Tier eligible)
 
 variable "project_name" {
   description = "Name of the project"
@@ -18,159 +7,95 @@ variable "project_name" {
   default     = "smartcloudops-ai"
 }
 
+variable "aws_region" {
+  description = "AWS region for deployment"
+  type        = string
+  default     = "us-east-1"  # FREE TIER available
+}
+
+variable "ssh_public_key" {
+  description = "SSH public key for EC2 access"
+  type        = string
+  default     = ""  # Must be provided
+}
+
+variable "environment" {
+  description = "Environment name"
+  type        = string
+  default     = "development"
+}
+
+# EC2 Configuration (FREE TIER)
+variable "ec2_instance_type" {
+  description = "Instance type for EC2 instances"
+  type        = string
+  default     = "t2.micro"  # FREE TIER: 750 hours/month
+}
+
+# Monitoring Configuration
+variable "enable_monitoring" {
+  description = "Enable CloudWatch monitoring"
+  type        = bool
+  default     = true
+}
+
+variable "log_retention_days" {
+  description = "CloudWatch log retention in days"
+  type        = number
+  default     = 7  # Minimal for free tier
+}
+
+# Network Configuration
 variable "vpc_cidr" {
   description = "CIDR block for VPC"
   type        = string
   default     = "10.0.0.0/16"
 }
 
-variable "public_subnet_cidrs" {
-  description = "CIDR blocks for public subnets"
-  type        = list(string)
-  default     = ["10.0.1.0/24", "10.0.2.0/24"]
-}
-
-variable "private_subnet_cidrs" {
-  description = "CIDR blocks for private subnets"
-  type        = list(string)
-  default     = ["10.0.10.0/24", "10.0.20.0/24"]
-}
-
-variable "db_instance_class" {
-  description = "RDS instance class"
+variable "public_subnet_1_cidr" {
+  description = "CIDR block for public subnet 1"
   type        = string
-  default     = "db.t3.micro"
+  default     = "10.0.1.0/24"
 }
 
-variable "db_username" {
-  description = "Database username"
+variable "public_subnet_2_cidr" {
+  description = "CIDR block for public subnet 2"
   type        = string
-  default     = "admin"
-  sensitive   = true
+  default     = "10.0.2.0/24"
 }
 
-variable "db_password" {
-  description = "Database password"
-  type        = string
-  sensitive   = true
-}
-
-variable "ecs_cpu" {
-  description = "CPU units for ECS task"
-  type        = string
-  default     = "256"
-}
-
-variable "ecs_memory" {
-  description = "Memory for ECS task"
-  type        = string
-  default     = "512"
-}
-
-variable "ecs_desired_count" {
-  description = "Desired number of ECS tasks"
+# Application Configuration
+variable "flask_app_port" {
+  description = "Port for Flask application"
   type        = number
-  default     = 2
+  default     = 5000
 }
 
-variable "ecr_repository_url" {
-  description = "ECR repository URL for the application image"
-  type        = string
-  default     = "your-account-id.dkr.ecr.us-east-1.amazonaws.com/smartcloudops-ai"
-}
-
-variable "enable_monitoring" {
-  description = "Enable CloudWatch monitoring and alarms"
-  type        = bool
-  default     = true
-}
-
-variable "enable_backup" {
-  description = "Enable automated backups"
-  type        = bool
-  default     = true
-}
-
-variable "ssl_certificate_arn" {
-  description = "ARN of SSL certificate for HTTPS (optional)"
-  type        = string
-  default     = ""
-}
-
-variable "domain_name" {
-  description = "Domain name for the application (optional)"
-  type        = string
-  default     = ""
-}
-
-variable "enable_waf" {
-  description = "Enable AWS WAF for additional security"
-  type        = bool
-  default     = false
-}
-
-variable "enable_lambda" {
-  description = "Enable Lambda function for ML processing"
-  type        = bool
-  default     = false
-}
-
-variable "log_retention_days" {
-  description = "CloudWatch log retention in days"
+variable "prometheus_port" {
+  description = "Port for Prometheus"
   type        = number
-  default     = 30
+  default     = 9090
 }
 
-variable "backup_retention_days" {
-  description = "Database backup retention in days"
+variable "grafana_port" {
+  description = "Port for Grafana"
   type        = number
-  default     = 7
+  default     = 3000
 }
 
-variable "ml_model_storage_class" {
-  description = "S3 storage class for ML models"
-  type        = string
-  default     = "STANDARD"
-}
-
-variable "enable_cross_zone_lb" {
-  description = "Enable cross-zone load balancing"
-  type        = bool
-  default     = true
-}
-
-variable "auto_scaling_min_capacity" {
-  description = "Minimum number of ECS tasks for auto scaling"
+variable "node_exporter_port" {
+  description = "Port for Node Exporter"
   type        = number
-  default     = 1
+  default     = 9100
 }
 
-variable "auto_scaling_max_capacity" {
-  description = "Maximum number of ECS tasks for auto scaling"
-  type        = number
-  default     = 10
-}
-
-variable "auto_scaling_target_cpu" {
-  description = "Target CPU utilization for auto scaling"
-  type        = number
-  default     = 70
-}
-
-variable "enable_container_insights" {
-  description = "Enable ECS Container Insights"
-  type        = bool
-  default     = true
-}
-
-variable "lambda_timeout" {
-  description = "Lambda function timeout in seconds"
-  type        = number
-  default     = 300
-}
-
-variable "lambda_memory_size" {
-  description = "Lambda function memory size in MB"
-  type        = number
-  default     = 128
+# Tags
+variable "tags" {
+  description = "Common tags for all resources"
+  type        = map(string)
+  default = {
+    Project     = "SmartCloudOps-AI"
+    Environment = "development"
+    CostCenter  = "free-tier"
+  }
 }

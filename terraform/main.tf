@@ -9,10 +9,6 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.1"
-    }
   }
 }
 
@@ -226,7 +222,6 @@ resource "aws_instance" "monitoring" {
   key_name              = aws_key_pair.main.key_name
   vpc_security_group_ids = [aws_security_group.monitoring.id]
   subnet_id             = aws_subnet.public_1.id
-  iam_instance_profile  = aws_iam_instance_profile.ec2_profile.name
 
   user_data = base64encode(templatefile("${path.module}/user_data/monitoring.sh", {
     project_name = var.project_name
@@ -245,7 +240,6 @@ resource "aws_instance" "application" {
   key_name              = aws_key_pair.main.key_name
   vpc_security_group_ids = [aws_security_group.application.id]
   subnet_id             = aws_subnet.public_2.id
-  iam_instance_profile  = aws_iam_instance_profile.ec2_profile.name
 
   user_data = base64encode(templatefile("${path.module}/user_data/application.sh", {
     project_name = var.project_name

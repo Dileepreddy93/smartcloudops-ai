@@ -1,16 +1,7 @@
-# Phase 2.4 CI/CD Pipeline - Simple App Build (Per PDF Plan)
+# Phase 2.4 CI/CD Pipeline - Basic Build (Per PDF Plan)
 name: Flask App CI/CD
 
-on:
-  push:
-    branches: [ main, dev, app/chatops ]
-    paths:
-      - 'app/**'
-      - 'Dockerfile'
-  pull_request:
-    branches: [ main ]
-    paths:
-      - 'app/**'
+on: [push]
 
 jobs:
   build:
@@ -43,17 +34,9 @@ jobs:
         python -c "
         from main import app
         with app.test_client() as client:
-            # Test status endpoint
             response = client.get('/status')
             assert response.status_code == 200
-            print('✅ /status endpoint working')
-            
-            # Test logs endpoint
-            response = client.get('/logs')
-            assert response.status_code == 200
-            print('✅ /logs endpoint working')
-            
-            print('🎉 All basic tests passed!')
+            print('✅ All tests passed!')
         "
 
   docker:

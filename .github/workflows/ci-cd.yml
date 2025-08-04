@@ -1,0 +1,145 @@
+# Phase 2.4 CI/CD Pipeline for Flask ChatOps Application
+name: Application CI/CD
+
+on:
+  push:
+    branches: [ main, dev, app/chatops ]
+    paths:
+      - 'app/**'
+      - 'Dockerfile'
+      - '.github/workflows/ci-cd.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'app/**'
+      - 'Dockerfile'
+
+jobs:
+  test:
+    name: Test Flask Application
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        
+    - name: Install dependencies
+      run: |
+        cd app
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov flask-testing
+        
+    - name: Run tests
+      run: |
+        cd app
+        python -m pytest --cov=. --cov-report=xml
+        
+    - name: Test Flask endpoints
+      run: |
+        cd app
+        python -c "
+        import requests
+        import subprocess
+        import time
+        import sys
+        
+        # Start Flask app in background
+        proc = subprocess.Popen(['python', 'main.py'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        time.sleep(3)
+        
+        try:
+            # Test health endpoint
+            response = requests.get('http://localhost:5000/status')
+            assert response.status_code == 200
+            print('✅ /status endpoint working')
+            
+            # Test home endpoint
+            response = requests.get('http://localhost:5000/')
+            assert response.status_code == 200
+            print('✅ / endpoint working')
+            
+            print('🎉 All endpoint tests passed!')
+        except Exception as e:
+            print(f'❌ Endpoint test failed: {e}')
+            sys.exit(1)
+        finally:
+            proc.terminate()
+        "
+
+  docker:
+    name: Build and Test Docker Container
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Build Docker image
+      run: |
+        docker build -t smartcloudops-ai:${{ github.sha }} .
+        
+    - name: Test Docker container
+      run: |
+        # Run container in background
+        docker run -d --name test-container -p 5000:5000 smartcloudops-ai:${{ github.sha }}
+        
+        # Wait for container to start
+        sleep 10
+        
+        # Test endpoints
+        curl -f http://localhost:5000/status || exit 1
+        curl -f http://localhost:5000/ || exit 1
+        
+        # Cleanup
+        docker stop test-container
+        docker rm test-container
+        
+        echo "🎉 Docker container tests passed!"
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run Bandit security scan
+      run: |
+        pip install bandit
+        bandit -r app/ -f json -o bandit-report.json || true
+        
+    - name: Run Safety check
+      run: |
+        pip install safety
+        cd app
+        safety check -r requirements.txt
+        
+  deploy:
+    name: Deploy to Development
+    runs-on: ubuntu-latest
+    needs: [test, docker, security]
+    if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Deploy notification
+      run: |
+        echo "🚀 Ready for deployment to AWS EC2"
+        echo "📋 Next steps:"
+        echo "1. Configure AWS credentials"
+        echo "2. Run terraform apply"
+        echo "3. Deploy application to EC2 instances"

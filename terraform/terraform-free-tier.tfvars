@@ -11,7 +11,7 @@ aws_region = "us-east-1"  # FREE TIER available
 # IMPORTANT: Add your SSH public key here
 # Generate with: ssh-keygen -t rsa -b 2048 -f ~/.ssh/smartcloudops-ai
 # Then copy the contents of ~/.ssh/smartcloudops-ai.pub
-ssh_public_key = ""  # MUST BE PROVIDED
+ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDU9xkRxchF9RAwBtObNjzzotJl+mlQ99PRiDn1gr7HibMqnnx4rNYFfcUPhBP0IYte87vWwjPONyYSADl8uaQkOm4nWwqS7dTWYRwwlDIggHhAzGAJI8Ufs8YGLkqQmMdjhc8jGbXJ7eQZ+8QNce7RCH7T4WJnHgv/CKsEnxJ1GuWtQ9CYIKauVMy4ePoq19Iz8WQfX1VCwclGKH2lRVcB3zPll8pr26jAB93899PVj2vuag0d/HSq78T+fMiDQ88aW9Z8tf1BIOQuCAMRZfX8liNiv8Ts7aYe+uXPV7Mnr0Rv/S1g7XgJVfR6qHqcecml2zZES4awBz2/ab/UE6lv smartcloudops-ai-project"
 
 # Network Configuration
 vpc_cidr               = "10.0.0.0/16"

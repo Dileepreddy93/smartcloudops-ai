@@ -1,18 +1,54 @@
 #!/usr/bin/env python3
-# Phase 2.1 Flask ChatOps App - Basic Implementation (Per PDF Plan)
-# Simple endpoints as specified in Phase Wise Plan
+# Phase 2.2 Flask ChatOps App - GPT Integration (Per PDF Plan)
+# Enhanced with intelligent query processing
 
 from flask import Flask, request, jsonify
 import os
 import logging
 from datetime import datetime
 import json
+try:
+    import openai
+    from litellm import completion
+    GPT_AVAILABLE = True
+except ImportError:
+    GPT_AVAILABLE = False
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+
+# Phase 2.2 GPT Configuration
+GPT_MODEL = os.getenv('GPT_MODEL', 'gpt-3.5-turbo')
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+
+# DevOps Prompt Templates
+SYSTEM_PROMPT = """You are a DevOps AI assistant for SmartCloudOps AI platform. 
+Provide concise, actionable responses for infrastructure monitoring, troubleshooting, and automation queries.
+Focus on AWS, Docker, Kubernetes, monitoring, and CI/CD topics.
+Keep responses under 200 words and include specific commands when helpful."""
+
+def process_with_gpt(user_query):
+    """Process user query with GPT integration"""
+    if not GPT_AVAILABLE or not OPENAI_API_KEY:
+        return f"GPT integration available but not configured. Basic response to: {user_query}"
+    
+    try:
+        response = completion(
+            model=GPT_MODEL,
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_query}
+            ],
+            max_tokens=200,
+            temperature=0.7
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        logger.error(f"GPT processing error: {str(e)}")
+        return f"GPT processing unavailable. Basic response to: {user_query}"
 
 # Phase 2.1 Basic Endpoints (as per PDF)
 @app.route('/status', methods=['GET'])
@@ -21,13 +57,16 @@ def status():
     return jsonify({
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
-        "version": "2.1.0",
-        "phase": "2.1 - Basic Flask App (PDF Compliant)"
+        "version": "2.2.0",
+        "phase": "2.2 - GPT Integration (PDF Compliant)",
+        "gpt_available": GPT_AVAILABLE,
+        "openai_configured": bool(OPENAI_API_KEY),
+        "model": GPT_MODEL
     })
 
 @app.route('/query', methods=['POST'])
 def query():
-    """Basic ChatOps query endpoint - Phase 2.1 (Simple version per PDF)"""
+    """Enhanced ChatOps query endpoint - Phase 2.2 (GPT Integration)"""
     try:
         data = request.get_json()
         user_query = data.get('query', '').strip()
@@ -35,16 +74,24 @@ def query():
         if not user_query:
             return jsonify({"error": "Query cannot be empty"}), 400
             
-        # Phase 2.1 - Basic response (GPT integration comes in Phase 2.2 + 5)
+        # Input validation and sanitization
+        if len(user_query) > 500:
+            return jsonify({"error": "Query too long (max 500 characters)"}), 400
+            
+        # Phase 2.2 - GPT-powered intelligent response
+        gpt_response = process_with_gpt(user_query)
+        
         response = {
             "query": user_query,
-            "response": f"Basic ChatOps response to: {user_query}",
+            "response": gpt_response,
             "timestamp": datetime.utcnow().isoformat(),
             "status": "success",
-            "phase": "2.1 - Basic Implementation"
+            "phase": "2.2 - GPT Integration",
+            "gpt_available": GPT_AVAILABLE,
+            "model": GPT_MODEL if GPT_AVAILABLE else "N/A"
         }
         
-        logger.info(f"Query processed: {user_query}")
+        logger.info(f"GPT Query processed: {user_query[:50]}...")
         return jsonify(response)
         
     except Exception as e:

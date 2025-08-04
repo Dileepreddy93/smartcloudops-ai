@@ -129,5 +129,5 @@ if __name__ == '__main__':
     port = int(os.environ.get('FLASK_PORT', 5000))
     debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     
-    logger.info(f"Starting SmartCloudOps AI ChatOps - Phase 2.1 Basic Implementation")
+    logger.info(f"Starting SmartCloudOps AI ChatOps - Phase 2.2 GPT Integration Complete")
     app.run(host='0.0.0.0', port=port, debug=debug)

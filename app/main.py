@@ -8,7 +8,7 @@ import logging
 from datetime import datetime
 import json
 try:
-    import openai
+    from openai import OpenAI
     GPT_AVAILABLE = True
 except ImportError:
     GPT_AVAILABLE = False
@@ -21,18 +21,22 @@ app = Flask(__name__)
 
 # Phase 2.2 Basic GPT Configuration (per plan)
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+if GPT_AVAILABLE and OPENAI_API_KEY:
+    openai_client = OpenAI(api_key=OPENAI_API_KEY)
+else:
+    openai_client = None
 
 # Basic prompt template (Phase 2.2 spec)
 BASIC_PROMPT = "You are a DevOps assistant."
 
 def process_with_gpt(user_query):
     """Basic GPT processing - Phase 2.2 implementation"""
-    if not GPT_AVAILABLE or not OPENAI_API_KEY:
+    if not GPT_AVAILABLE or not openai_client:
         return f"Basic response to: {user_query}"
     
     try:
         # Basic OpenAI integration as per Phase 2.2 plan
-        response = openai.ChatCompletion.create(
+        response = openai_client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": BASIC_PROMPT},
@@ -55,7 +59,7 @@ def status():
         "version": "2.2.0",
         "phase": "2.2 - Basic GPT Integration (PDF Compliant)",
         "gpt_available": GPT_AVAILABLE,
-        "openai_configured": bool(OPENAI_API_KEY)
+        "openai_configured": bool(openai_client)
     })
 
 @app.route('/query', methods=['POST'])

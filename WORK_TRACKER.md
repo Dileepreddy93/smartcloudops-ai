@@ -16,7 +16,7 @@
 |-------|-------------|----------|------------|----------|--------|----------|
 | **Phase 0** | Foundation & Setup | **100%** ✅ | Aug 3 | Aug 4 | ✅ Complete | ✅ |
 | **Phase 1** | Infrastructure & Monitoring | **90%** ✅ | Aug 3 | Aug 4 | ✅ Complete | ✅ |
-| **Phase 2** | Flask ChatOps App | **40%** 🔄 | Aug 4 | Aug 5 | 🔄 Active | 🔥 High |
+| **Phase 2** | Flask ChatOps App | **60%** 🔄 | Aug 4 | Aug 5 | 🔄 Active | 🔥 High |
 | **Phase 3** | ML Anomaly Detection | **0%** ❌ | Aug 6 | Aug 9 | ⏳ Pending | 🔥 High |
 | **Phase 4** | Auto-Remediation | **0%** ❌ | Aug 9 | Aug 12 | ⏳ Pending | 🟡 Medium |
 | **Phase 5** | Advanced ChatOps | **0%** ❌ | Aug 12 | Aug 15 | ⏳ Pending | 🟡 Medium |
@@ -78,32 +78,30 @@
 
 ---
 
-### 🔄 **PHASE 2 - Flask ChatOps App (40% Complete)**
+### 🔄 **PHASE 2 - Flask ChatOps App (60% Complete)**
 
 #### ✅ **COMPLETED TASKS**
 - [x] **2.1.1** Create Flask application structure
 - [x] **2.1.2** Implement `/status` health check endpoint
-- [x] **2.1.3** Implement `/query` ChatOps processing endpoint
+- [x] **2.1.3** Implement `/query` ChatOps processing endpoint (basic)
 - [x] **2.1.4** Implement `/logs` log retrieval endpoint
-- [x] **2.1.5** Implement `/` API documentation endpoint
-- [x] **2.1.6** Add basic error handling and logging
+- [x] **2.1.5** Basic error handling and logging
 - [x] **2.3.1** Create Dockerfile with Python 3.10 base
 - [x] **2.3.2** Configure security best practices in Dockerfile
 - [x] **2.3.3** Add health check configuration
-- [x] **2.3.4** Create requirements.txt with dependencies
+- [x] **2.3.4** Create requirements.txt with basic dependencies
 
 #### 🔄 **ACTIVE TASKS**
-- [ ] **2.2.1** Implement OpenAI SDK integration ⏰ Due: Aug 5
+- [ ] **2.2.1** Implement OpenAI/LiteLLM SDK integration ⏰ Due: Aug 5
 - [ ] **2.2.2** Create prompt template system ⏰ Due: Aug 5
 - [ ] **2.2.3** Add input sanitization and validation ⏰ Due: Aug 5
 - [ ] **2.3.5** Test Docker container build and run ⏰ Due: Aug 5
 - [ ] **2.4.1** Create GitHub Actions workflow for app ⏰ Due: Aug 6
 - [ ] **2.4.2** Add automated testing pipeline ⏰ Due: Aug 6
 
-#### ❌ **PENDING TASKS**
-- [ ] **2.2.4** Advanced prompt engineering
-- [ ] **2.2.5** Context window management
-- [ ] **2.4.3** Container registry integration
+#### ❌ **PENDING TASKS (Per PDF Plan)**
+- [ ] **2.2.4** GPT Integration (Should be simple, not over-engineered)
+- [ ] **2.4.3** CI/CD pipeline: ci-app.yml for auto-build, lint, push container
 
 ---
 

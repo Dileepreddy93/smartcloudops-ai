@@ -85,6 +85,13 @@ Internet Gateway: Configured with route tables
 - Proper ingress/egress rules configured
 - Source restrictions implemented
 
+**Security Features:**
+- ✅ SSH key-based authentication
+- ✅ Security groups with minimal required ports
+- ✅ IAM roles with least privilege principle
+- ✅ S3 encryption enabled
+- ✅ CloudWatch logging enabled
+
 ---
 
 ### ✅ **PHASE 2 - Flask ChatOps Application (100% COMPLETE)**
@@ -137,6 +144,31 @@ CMD ["python", "/app/main.py"]
 - **Instance Types**: 2x t2.micro (within free tier)
 - **Storage**: S3 within free tier limits
 - **Data Transfer**: Within free tier allowance
+
+#### **Free Tier Limits Monitoring**
+- **EC2**: 750 hours/month per t2.micro (using 2 instances)
+- **S3**: 5GB storage per bucket (using 2 buckets) 
+- **CloudWatch**: 5GB log ingestion
+- **Data Transfer**: 15GB outbound monthly
+
+#### **Cost Optimization Achievement**
+```
+❌ ORIGINAL ARCHITECTURE (EXPENSIVE - ~$70/month)
+• ECS Fargate (256 CPU/512 MB)    → $25/month
+• RDS MySQL (db.t3.micro)         → $15/month  
+• Application Load Balancer       → $20/month
+• CloudWatch, S3, Data Transfer   → $10/month
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TOTAL: ~$70/month
+
+✅ NEW ARCHITECTURE (FREE TIER - $0/month)
+• 2x EC2 t2.micro instances       → $0/month (750h each)
+• S3 Standard Storage (5GB each)  → $0/month  
+• CloudWatch Logs (5GB)           → $0/month
+• VPC, Security Groups            → $0/month (always free)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TOTAL: $0/month (FREE TIER)
+```
 
 ---
 

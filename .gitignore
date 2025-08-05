@@ -23,14 +23,63 @@ Thumbs.db
 *.swo
 
 # Python cache
+# Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+*.so
 .Python
 env/
 venv/
+ENV/
+env.bak/
+venv.bak/
+app/venv/
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate*
+terraform.tfvars
+*.tfvars
+!terraform.tfvars.example
+
+# AWS
+.aws/
+*.pem
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+logs/*.log
+logs/*.json
+!logs/.gitkeep
+
+# Environment Variables
 .env
+.env.local
+.env.production
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerignore
+
+# Temporary files
+*.tmp
+*.temp
+
+# ML Models (if large)
+# ml_models/*.pkl
+
+# Node modules (if any)
+node_modules/
 
 # Node modules
 node_modules/

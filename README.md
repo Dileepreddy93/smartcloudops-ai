@@ -18,18 +18,20 @@
 - 🔍 **Monitors** your infrastructure with Prometheus + Grafana ✅ **OPERATIONAL**
 - 🧠 **Detects** anomalies using machine learning algorithms ⏳ **Phase 3 Ready**
 - 🔧 **Auto-heals** issues with intelligent remediation scripts ⏳ **Phase 4 Ready**
-- 💬 **Provides** ChatOps interface for natural language queries ✅ **DEPLOYED**
+- 💬 **Provides** ChatOps interface with **Multi-AI** (OpenAI + Gemini 2.0) ✅ **ENHANCED**
 - 💰 **Costs** $0/month using AWS Free Tier ✅ **VERIFIED**
 
-## 🏆 **CURRENT STATUS: PHASES 0-2 COMPLETE (1 DAY AHEAD)**
+## 🏆 **CURRENT STATUS: PHASES 0-3 COMPLETE + MULTI-AI ENHANCED**
 
 📋 **[📊 VIEW COMPLETE PROJECT STATUS →](MASTER_PROJECT_STATUS.md)**  
-🏗️ **[⚙️ VIEW TERRAFORM INFRASTRUCTURE DOCS →](terraform/TERRAFORM_MASTER_DOCUMENTATION.md)**
+🏗️ **[⚙️ VIEW TERRAFORM INFRASTRUCTURE DOCS →](terraform/TERRAFORM_MASTER_DOCUMENTATION.md)**  
+🤖 **[🔥 VIEW GEMINI 2.0 INTEGRATION GUIDE →](docs/GEMINI_INTEGRATION.md)**
 
 ### ✅ **LIVE INFRASTRUCTURE**
 - **🖥️ Grafana Dashboard**: [http://3.89.229.102:3000](http://3.89.229.102:3000) (HTTP 200 ✅)
 - **📊 Prometheus Monitoring**: [http://3.89.229.102:9090](http://3.89.229.102:9090) (Running ✅)
-- **🤖 ChatOps Flask App**: [http://3.239.197.127:5000](http://3.239.197.127:5000) (Deployed ✅)
+- **🤖 Multi-AI ChatOps**: [http://3.239.197.127:5000](http://3.239.197.127:5000) (Enhanced ✅)
+- **🧠 AI Providers**: OpenAI GPT + **Google Gemini 2.0 Flash** ⚡
 - **📦 Total AWS Resources**: 25 deployed successfully
 - **💰 Monthly Cost**: $0.00 (AWS Free Tier)
 
@@ -63,17 +65,31 @@ terraform init
 terraform apply -var-file="terraform-free-tier.tfvars"
 ```
 
-### 4. Access Services
+### 4. ⚡ Enable Gemini 2.0 Flash (Optional)
+```bash
+# Get API key from https://aistudio.google.com/
+export GEMINI_API_KEY="your-gemini-api-key-here"
+
+# Or add to your EC2 instance
+ssh -i ~/.ssh/smartcloudops-ai ec2-user@<app-ip>
+echo 'Environment="GEMINI_API_KEY=your-key"' | sudo tee -a /etc/systemd/system/smartcloudops-ai.service
+sudo systemctl daemon-reload && sudo systemctl restart smartcloudops-ai
+```
+
+### 5. Access Services
 ```bash
 # Get service URLs
 terraform output grafana_url      # Grafana dashboard
 terraform output flask_app_url    # ChatOps API
 terraform output prometheus_url   # Metrics
 
-# Example: Test ChatOps
+# Test Multi-AI ChatOps
 curl -X POST http://<app-ip>:5000/query \
      -H "Content-Type: application/json" \
-     -d '{"query": "system status"}'
+     -d '{"query": "How to check disk usage?"}'
+
+# Check AI status
+curl http://<app-ip>:5000/status | jq '.ai_status'
 ```
 
 ---

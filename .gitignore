@@ -28,6 +28,17 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
+
+# Python virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+.env/
+.ENV/
+ml_env/
 .Python
 env/
 venv/
@@ -47,6 +58,31 @@ terraform.tfvars
 # AWS
 .aws/
 *.pem
+
+# Development artifacts - prevent recreation
+DAILY_STATUS_*.md
+PHASE_*_ASSESSMENT.md
+PHASE_*_COMPLETION.md
+PHASE_*_FINAL_STATUS.md
+PHASE_*_KICKOFF.md
+MISSION_COMPLETE_*.md
+PDF_COMPLIANCE_REPORT.md
+FINAL_PLAN_COMPLIANCE_VERIFICATION.md
+PROJECT_STATUS.md
+PROJECT_STRUCTURE.md
+WORK_TRACKER.md
+
+# Terraform documentation duplicates
+terraform/DEPLOYMENT_GUIDE.md
+terraform/FREE_TIER_DEPLOYMENT.md
+terraform/README.md
+terraform/REVIEW_SUMMARY.md
+terraform/TERRAFORM_MASTER_DOCUMENTATION.md
+terraform/WORKSPACE_STATUS.md
+terraform/terraform.tfvars.example
+
+# Application development files
+app/.env.example
 
 # IDE
 .vscode/

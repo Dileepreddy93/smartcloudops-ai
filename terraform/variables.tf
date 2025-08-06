@@ -10,13 +10,13 @@ variable "project_name" {
 variable "aws_region" {
   description = "AWS region for deployment"
   type        = string
-  default     = "us-east-1"  # FREE TIER available
+  default     = "us-east-1" # FREE TIER available
 }
 
 variable "ssh_public_key" {
   description = "SSH public key for EC2 access"
   type        = string
-  default     = ""  # Must be provided
+  default     = "" # Must be provided
 }
 
 variable "environment" {
@@ -29,7 +29,7 @@ variable "environment" {
 variable "ec2_instance_type" {
   description = "Instance type for EC2 instances"
   type        = string
-  default     = "t2.micro"  # FREE TIER: 750 hours/month
+  default     = "t2.micro" # FREE TIER: 750 hours/month
 }
 
 # Monitoring Configuration
@@ -42,7 +42,7 @@ variable "enable_monitoring" {
 variable "log_retention_days" {
   description = "CloudWatch log retention in days"
   type        = number
-  default     = 7  # Minimal for free tier
+  default     = 7 # Minimal for free tier
 }
 
 # Network Configuration

@@ -24,7 +24,7 @@ data "aws_availability_zones" "available" {
 data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
-  
+
   filter {
     name   = "name"
     values = ["amzn2-ami-hvm-*-x86_64-gp2"]
@@ -218,10 +218,10 @@ resource "aws_key_pair" "main" {
 # EC2 Instance for Monitoring (Phase 1.1.4 - ec2_monitoring)
 resource "aws_instance" "monitoring" {
   ami                    = data.aws_ami.amazon_linux.id
-  instance_type          = "t2.micro"  # FREE TIER
-  key_name              = aws_key_pair.main.key_name
+  instance_type          = "t2.micro" # FREE TIER
+  key_name               = aws_key_pair.main.key_name
   vpc_security_group_ids = [aws_security_group.monitoring.id]
-  subnet_id             = aws_subnet.public_1.id
+  subnet_id              = aws_subnet.public_1.id
 
   user_data = base64encode(templatefile("${path.module}/user_data/monitoring.sh", {
     project_name = var.project_name
@@ -236,10 +236,10 @@ resource "aws_instance" "monitoring" {
 # EC2 Instance for Application (Phase 1.1.4 - ec2_application)
 resource "aws_instance" "application" {
   ami                    = data.aws_ami.amazon_linux.id
-  instance_type          = "t2.micro"  # FREE TIER
-  key_name              = aws_key_pair.main.key_name
+  instance_type          = "t2.micro" # FREE TIER
+  key_name               = aws_key_pair.main.key_name
   vpc_security_group_ids = [aws_security_group.application.id]
-  subnet_id             = aws_subnet.public_2.id
+  subnet_id              = aws_subnet.public_2.id
 
   user_data = base64encode(templatefile("${path.module}/user_data/application.sh", {
     project_name = var.project_name
@@ -311,7 +311,7 @@ resource "random_id" "bucket_suffix" {
 # CloudWatch Log Groups (FREE TIER - 5GB)
 resource "aws_cloudwatch_log_group" "application" {
   name              = "/aws/ec2/${var.project_name}-application"
-  retention_in_days = 7  # Minimal retention for free tier
+  retention_in_days = 7 # Minimal retention for free tier
 
   tags = {
     Name = "${var.project_name}-application-logs"
@@ -320,7 +320,7 @@ resource "aws_cloudwatch_log_group" "application" {
 
 resource "aws_cloudwatch_log_group" "monitoring" {
   name              = "/aws/ec2/${var.project_name}-monitoring"
-  retention_in_days = 7  # Minimal retention for free tier
+  retention_in_days = 7 # Minimal retention for free tier
 
   tags = {
     Name = "${var.project_name}-monitoring-logs"

@@ -4,10 +4,18 @@
 *.tfplan
 *.tfplan.*
 .terraform.tfstate.lock.info
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate*
+terraform.tfvars
+*.tfvars
+!terraform.tfvars.example
 
 # AWS CLI installation files
 terraform/aws/
 terraform/awscliv2.zip
+.aws/
+*.pem
 
 # Local environment files
 terraform/terraform.tfvars
@@ -40,24 +48,12 @@ venv.bak/
 .ENV/
 ml_env/
 .Python
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
 app/venv/
 
-# Terraform
-.terraform/
-.terraform.lock.hcl
-terraform.tfstate*
-terraform.tfvars
-*.tfvars
-!terraform.tfvars.example
-
-# AWS
-.aws/
-*.pem
+# Environment Variables
+.env
+.env.local
+.env.production
 
 # Development artifacts - prevent recreation
 DAILY_STATUS_*.md
@@ -84,25 +80,11 @@ terraform/terraform.tfvars.example
 # Application development files
 app/.env.example
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
 # Logs
 logs/*.log
 logs/*.json
 !logs/.gitkeep
-
-# Environment Variables
-.env
-.env.local
-.env.production
-
-# OS
-.DS_Store
-Thumbs.db
+*.log
 
 # Docker
 .dockerignore
@@ -116,12 +98,3 @@ Thumbs.db
 
 # Node modules (if any)
 node_modules/
-
-# Node modules
-node_modules/
-
-# Logs
-*.log
-terraform/.terraform/
-terraform/.terraform.lock.hcl
-terraform/*.tfstate*

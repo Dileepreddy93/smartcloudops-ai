@@ -5,7 +5,7 @@
 from flask import Flask, request, jsonify
 import os
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import requests
 
@@ -126,7 +126,7 @@ def status():
     
     return jsonify({
         "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "version": "2.2.1",
         "phase": "2.2 - Multi-AI Integration (OpenAI + Gemini)",
         "ai_status": ai_status
@@ -152,7 +152,7 @@ def query():
         response = {
             "query": user_query,
             "response": ai_response,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "status": "success",
             "ai_provider": AI_PROVIDER,
             "phase": "2.2 - Multi-AI Integration"
@@ -175,14 +175,14 @@ def logs():
         # Enhanced log response
         sample_logs = [
             {
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "level": "INFO",
                 "message": f"Multi-AI ChatOps system active - Provider: {AI_PROVIDER}",
                 "source": "smartcloudops_ai",
                 "ai_provider": AI_PROVIDER
             },
             {
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "level": "INFO", 
                 "message": "Enhanced ChatOps with Gemini 2.0 Flash + OpenAI support",
                 "source": "ai_integration"
@@ -225,7 +225,7 @@ def switch_ai_provider():
             "status": "success",
             "previous_provider": old_provider,
             "current_provider": AI_PROVIDER,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         })
         
     except Exception as e:
@@ -268,7 +268,7 @@ def test_ai_providers():
         return jsonify({
             "test_results": results,
             "current_provider": AI_PROVIDER,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         })
         
     except Exception as e:

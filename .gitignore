@@ -1,100 +1,130 @@
-# Terraform files
-*.tfstate
-*.tfstate.*
-*.tfplan
-*.tfplan.*
-.terraform.tfstate.lock.info
-.terraform/
-.terraform.lock.hcl
-terraform.tfstate*
-terraform.tfvars
-*.tfvars
-!terraform.tfvars.example
+# SmartCloudOps AI - Professional .gitignore
 
-# AWS CLI installation files
-terraform/aws/
-terraform/awscliv2.zip
-.aws/
-*.pem
+# Environment & Configuration
+.env
+.env.local
+.env.production
+*.key
+api_keys.txt
 
-# Local environment files
-terraform/terraform.tfvars
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Python cache
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# Python virtual environments
+# Virtual Environments
 venv/
 env/
 ENV/
-env.bak/
-venv.bak/
-.venv/
-.env/
-.ENV/
 ml_env/
-.Python
-app/venv/
+.venv/
 
-# Environment Variables
-.env
-.env.local
-.env.production
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-# Development artifacts - prevent recreation
-DAILY_STATUS_*.md
-PHASE_*_ASSESSMENT.md
-PHASE_*_COMPLETION.md
-PHASE_*_FINAL_STATUS.md
-PHASE_*_KICKOFF.md
-MISSION_COMPLETE_*.md
-PDF_COMPLIANCE_REPORT.md
-FINAL_PLAN_COMPLIANCE_VERIFICATION.md
-PROJECT_STATUS.md
-PROJECT_STRUCTURE.md
-WORK_TRACKER.md
+# Operating System
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# Terraform documentation duplicates
-terraform/DEPLOYMENT_GUIDE.md
-terraform/FREE_TIER_DEPLOYMENT.md
-terraform/README.md
-terraform/REVIEW_SUMMARY.md
-terraform/TERRAFORM_MASTER_DOCUMENTATION.md
-terraform/WORKSPACE_STATUS.md
-terraform/terraform.tfvars.example
-
-# Application development files
-app/.env.example
-
-# Logs
-logs/*.log
-logs/*.json
-!logs/.gitkeep
+# Logs & Temporary Files
 *.log
-
-# Docker
-.dockerignore
-
-# Temporary files
 *.tmp
-*.temp
+*.bak
+*.swp
+*.swo
+logs/*.log
+logs/*.txt
 
-# ML Models (if large)
-# ml_models/*.pkl
+# Terraform
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/terraform.tfstate.backup
+terraform/crash.log
+terraform/override.tf
+terraform/override.tf.json
+terraform/*_override.tf
+terraform/*_override.tf.json
 
-# Node modules (if any)
-node_modules/
+# AWS & Cloud
+.aws/
+*.pem
+*.ppk
+
+# Machine Learning
+*.pkl
+*.joblib
+*.h5
+*.hdf5
+models/
+data/
+datasets/
+
+# Development artifacts (cleaned up)
+*_STATUS.md
+*_TRACKER.md
+*_GUIDE.md
+*_ASSESSMENT.md
+*_COMPLIANCE.md
+DAILY_*.md
+PHASE_*.md
+MISSION_*.md
+FINAL_*.md
+*_SUMMARY.md
+*_DEPLOYMENT.md
+FREE_TIER_*.md
+
+# Documentation backups
+*.md.bak
+docs/*.bak
+
+# Application specific
+app/static/uploads/
+app/instance/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Jupyter Notebooks
+.ipynb_checkpoints

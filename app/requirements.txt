@@ -1,16 +1,30 @@
-# Phase 2.1 Flask App Dependencies (Basic - Per PDF Plan)
-Flask==3.0.0
-Werkzeug==3.0.1
+# SmartCloudOps AI - Production Dependencies
+# Multi-AI ChatOps Application Requirements
 
-# Phase 2.2 Multi-AI Integration (OpenAI + Gemini)
-openai==1.3.8
+# Core Web Framework
+Flask==3.1.1
+Werkzeug==3.1.3
+
+# HTTP Client Libraries
+requests==2.32.4
+
+# AI/ML Providers
+openai==1.99.1
 google-generativeai==0.8.3
 
-# Phase 2.4 Production Dependencies
-gunicorn==21.2.0
-requests==2.31.0
+# Data Processing & Utilities
+python-dotenv==1.0.1
+pydantic==2.11.7
 
-# Phase 3.x ML Dependencies (PLANNED)
-# scikit-learn==1.3.2
-# pandas==2.1.4
-# numpy==1.24.3
+# Production Server
+gunicorn==22.0.0
+
+# Machine Learning (Phase 3 Complete)
+scikit-learn==1.5.1
+pandas==2.2.2
+numpy==1.26.4
+prophet==1.1.5
+
+# Development & Testing
+pytest==8.3.2
+pytest-flask==1.3.0

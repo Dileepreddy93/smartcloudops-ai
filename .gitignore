@@ -71,6 +71,7 @@ terraform/override.tf
 terraform/override.tf.json
 terraform/*_override.tf
 terraform/*_override.tf.json
+# Keep terraform.tfvars and terraform.tfstate for this deployed project
 
 # AWS & Cloud
 .aws/
@@ -88,6 +89,19 @@ datasets/
 
 # Development artifacts (cleaned up)
 *_STATUS.md
+*_BACKUP.md
+*.example
+.env.example
+.env.local
+.env.development
+.env.test
+
+# Cache and temporary files
+.cache/
+.pytest_cache/
+*.pyc
+*.pyo
+*.pyd
 *_TRACKER.md
 *_GUIDE.md
 *_ASSESSMENT.md

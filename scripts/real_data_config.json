@@ -1,0 +1,87 @@
+{
+  "data_sources": {
+    "prometheus": {
+      "enabled": true,
+      "url": "http://3.89.229.102:9090",
+      "metrics": [
+        "cpu_usage",
+        "memory_usage", 
+        "disk_io",
+        "network_rx",
+        "network_tx",
+        "load_1m",
+        "load_5m", 
+        "load_15m",
+        "disk_used_percent",
+        "response_time"
+      ],
+      "collection_interval": 60
+    },
+    "system": {
+      "enabled": true,
+      "metrics": [
+        "cpu_usage",
+        "memory_usage",
+        "disk_usage",
+        "network_io",
+        "process_count",
+        "load_average"
+      ],
+      "collection_duration_minutes": 60
+    },
+    "cloudwatch": {
+      "enabled": true,
+      "region": "us-east-1",
+      "metrics": [
+        "CPUUtilization",
+        "NetworkIn",
+        "NetworkOut", 
+        "DiskReadBytes",
+        "DiskWriteBytes"
+      ]
+    },
+    "csv_files": {
+      "enabled": true,
+      "paths": [
+        "../data/",
+        "/var/log/metrics/",
+        "./metrics.csv"
+      ],
+      "required_columns": ["timestamp"]
+    },
+    "log_files": {
+      "enabled": true,
+      "paths": [
+        "/var/log/",
+        "../logs/",
+        "./app.log"
+      ],
+      "patterns": {
+        "response_time": "response_time[:\\s]+(\\d+\\.?\\d*)",
+        "cpu_usage": "cpu[:\\s]+(\\d+\\.?\\d*)%?",
+        "memory_usage": "memory[:\\s]+(\\d+\\.?\\d*)%?",
+        "disk_io": "disk_io[:\\s]+(\\d+\\.?\\d*)",
+        "network_io": "network[:\\s]+(\\d+\\.?\\d*)"
+      }
+    }
+  },
+  "data_processing": {
+    "anomaly_detection_method": "iqr",
+    "anomaly_threshold": 1.5,
+    "fill_missing_values": true,
+    "remove_duplicates": true,
+    "time_window_minutes": 60
+  },
+  "output": {
+    "save_to_csv": true,
+    "csv_path": "../data/real_monitoring_data.csv",
+    "save_metadata": true,
+    "include_anomaly_labels": true
+  },
+  "collection_settings": {
+    "default_hours_back": 24,
+    "max_data_points": 10000,
+    "retry_attempts": 3,
+    "timeout_seconds": 30
+  }
+}

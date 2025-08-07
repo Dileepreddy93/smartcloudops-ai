@@ -124,15 +124,29 @@ class ProductionInferenceEngine:
     def __init__(self, 
                  s3_bucket: str = "smartcloudops-ai-ml-models-aa7be1e7",
                  prometheus_url: str = "http://3.89.229.102:9090",
-                 model_cache_ttl: int = 3600):  # 1 hour
+                 model_cache_ttl: int = 3600,  # 1 hour
+                 use_real_data: bool = True):
         
         self.s3_bucket = s3_bucket
         self.prometheus_url = prometheus_url
         self.model_cache_ttl = model_cache_ttl
+        self.use_real_data = use_real_data
         
         # Initialize components
         self.model_registry = ProductionModelRegistry(s3_bucket)
         self.monitor = ModelPerformanceMonitor()
+        
+        # Real data collector for live features
+        if self.use_real_data:
+            try:
+                from prometheus_collector import PrometheusCollector
+                self.prometheus_collector = PrometheusCollector(prometheus_url)
+                logger.info("✅ Real data collector initialized")
+            except Exception as e:
+                logger.warning(f"⚠️ Real data collector unavailable: {e}")
+                self.prometheus_collector = None
+        else:
+            self.prometheus_collector = None
         
         # Model cache
         self.model = None
@@ -218,7 +232,21 @@ class ProductionInferenceEngine:
         return health
     
     def collect_current_metrics(self) -> Dict:
-        """Collect current system metrics from Prometheus."""
+        """Collect current system metrics from real data sources."""
+        metrics = {}
+        
+        # Try real data sources first
+        if self.use_real_data and self.prometheus_collector:
+            try:
+                real_metrics = self.prometheus_collector.collect_current_metrics()
+                if real_metrics:
+                    metrics.update(real_metrics)
+                    logger.info("✅ Collected real-time metrics from Prometheus")
+                    return metrics
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to collect real metrics: {e}")
+        
+        # Fallback to API queries
         try:
             queries = {
                 'cpu_usage': 'avg(100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100))',
@@ -228,7 +256,6 @@ class ProductionInferenceEngine:
                 'response_time': 'avg(prometheus_http_request_duration_seconds{handler="/api/v1/query"})'
             }
             
-            metrics = {}
             for metric_name, query in queries.items():
                 try:
                     response = requests.get(

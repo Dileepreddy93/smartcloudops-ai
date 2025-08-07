@@ -153,6 +153,30 @@ graph TB
 - **Auto-Deployment**: User data scripts for instant setup
 - **Multi-AI ChatOps**: OpenAI GPT + Gemini 2.0 Flash integration
 - **ML Anomaly Detection**: F1-score 0.8835 production-ready models
+- **Real Data Integration**: Multiple data sources (Prometheus, System, CloudWatch, CSV, Logs)
+- **Production ML Pipeline**: Real-time inference with monitoring and caching
+
+### 🔄 **Data Sources & Training**
+#### **Real Data Sources (Recommended)**
+- 🔴 **Prometheus**: Live infrastructure metrics from monitoring stack
+- 💻 **System Metrics**: Local system monitoring via psutil
+- ☁️ **AWS CloudWatch**: Cloud infrastructure metrics and logs
+- 📄 **CSV Files**: Historical monitoring data import
+- 📝 **Log Files**: Application and system log parsing
+
+#### **Enhanced Synthetic Data (Fallback)**
+- 🧪 **Pattern-Enhanced**: Synthetic data using real-world patterns
+- 📊 **Standard Synthetic**: Baseline training data for testing
+
+#### **Migration Tools**
+```bash
+# Assess available data sources
+python scripts/data_migration_tool.py
+
+# Train with real data
+python scripts/real_data_ml_trainer.py
+```
+📖 **[Complete Migration Guide →](docs/REAL_DATA_MIGRATION_GUIDE.md)**
 
 ### 🔄 **In Development**
 - **Phase 4 Auto-Remediation**: Intelligent healing scripts

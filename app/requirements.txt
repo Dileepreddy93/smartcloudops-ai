@@ -1,5 +1,5 @@
 # SmartCloudOps AI - Production Dependencies
-# Multi-AI ChatOps Application Requirements
+# Multi-AI ChatOps Application + ML Inference Requirements
 
 # Core Web Framework
 Flask==3.1.1
@@ -19,12 +19,21 @@ pydantic==2.11.7
 # Production Server
 gunicorn==22.0.0
 
-# Machine Learning (Phase 3 Complete)
+# Machine Learning (Phase 3 Complete + Production Inference)
 scikit-learn==1.5.1
 pandas==2.2.2
 numpy==1.26.4
 prophet==1.1.5
+joblib==1.4.2
+
+# AWS SDK
+boto3==1.35.36
+botocore==1.35.36
 
 # Development & Testing
 pytest==8.3.2
 pytest-flask==1.3.0
+
+# Additional ML Production Dependencies
+matplotlib==3.8.4
+seaborn==0.13.2

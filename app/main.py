@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 # Phase 2.2 Flask ChatOps App - Multi-AI Integration (OpenAI + Gemini)
-# Enhanced implementation with Gemini 2.0 Flash support
+# Enhanced implementation with Gemini 2.0 Flash support + ML Inference
 
 from flask import Flask, request, jsonify
 import os
+import sys
 import logging
 from datetime import datetime, timezone
 import json
 import requests
+
+# Add scripts directory to path for ML imports
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'scripts'))
 
 # AI Provider Imports
 try:
@@ -21,6 +25,14 @@ try:
     GEMINI_AVAILABLE = True
 except ImportError:
     GEMINI_AVAILABLE = False
+
+# ML Inference Imports  
+try:
+    from production_inference import get_inference_engine, initialize_models
+    ML_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ ML inference not available: {e}")
+    ML_AVAILABLE = False
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -113,24 +125,50 @@ def process_with_openai(user_query):
         return f"DevOps Assistant (OpenAI Error): {user_query}"
 
 # Enhanced endpoints with multi-AI support
-@app.route('/status', methods=['GET'])
+@app.route('/status')
 def status():
-    """Enhanced health check endpoint with AI provider info"""
-    ai_status = {
-        'provider': AI_PROVIDER,
-        'openai_available': bool(openai_client),
-        'gemini_available': bool(gemini_model),
-        'openai_configured': OPENAI_AVAILABLE and bool(OPENAI_API_KEY),
-        'gemini_configured': GEMINI_AVAILABLE and bool(GEMINI_API_KEY)
-    }
-    
-    return jsonify({
-        "status": "healthy",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "version": "2.2.1",
-        "phase": "2.2 - Multi-AI Integration (OpenAI + Gemini)",
-        "ai_status": ai_status
-    })
+    """Enhanced status endpoint with ML information"""
+    try:
+        # Get ML health if available
+        ml_status = None
+        if ML_AVAILABLE:
+            try:
+                engine = get_inference_engine()
+                ml_status = engine.health_check()
+            except Exception as e:
+                ml_status = {"status": "error", "error": str(e)}
+        
+        return jsonify({
+            "status": "operational",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "phase": "2.2 - Multi-AI ChatOps + ML Integration",
+            "version": "1.2.0",
+            "ai_status": {
+                "current_provider": AI_PROVIDER,
+                "openai_available": OPENAI_AVAILABLE and bool(openai_client),
+                "gemini_available": GEMINI_AVAILABLE and bool(gemini_model),
+                "fallback_enabled": True
+            },
+            "ml_status": {
+                "ml_available": ML_AVAILABLE,
+                "model_health": ml_status
+            },
+            "endpoints": {
+                "health": "/health",
+                "query": "/query", 
+                "logs": "/logs",
+                "ai_switch": "/ai/switch",
+                "ai_test": "/ai/test",
+                "ml_health": "/ml/health",
+                "ml_predict": "/ml/predict",
+                "ml_metrics": "/ml/metrics",
+                "ml_performance": "/ml/performance"
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Status error: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
 @app.route('/query', methods=['POST'])
 def query():
@@ -275,9 +313,120 @@ def test_ai_providers():
         logger.error(f"AI test error: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
 
+# =============================================================================
+# ML ANOMALY DETECTION ENDPOINTS (Phase 3)
+# =============================================================================
+
+@app.route('/ml/health', methods=['GET'])
+def ml_health():
+    """ML model health check endpoint."""
+    try:
+        if not ML_AVAILABLE:
+            return jsonify({
+                "status": "unavailable",
+                "message": "ML inference not available",
+                "ml_available": False
+            }), 503
+        
+        engine = get_inference_engine()
+        health = engine.health_check()
+        
+        return jsonify({
+            "status": health['status'],
+            "ml_available": ML_AVAILABLE,
+            "health": health,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"ML health check error: {str(e)}")
+        return jsonify({"error": "ML health check failed"}), 500
+
+@app.route('/ml/predict', methods=['POST'])
+def predict_anomaly():
+    """Real-time anomaly prediction endpoint."""
+    try:
+        if not ML_AVAILABLE:
+            return jsonify({
+                "error": "ML inference not available",
+                "anomaly": False,
+                "confidence": 0.0
+            }), 503
+        
+        # Get custom metrics from request body (optional)
+        data = request.get_json() if request.is_json else {}
+        custom_metrics = data.get('metrics') if data else None
+        
+        engine = get_inference_engine()
+        result = engine.predict_anomaly(custom_metrics)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.error(f"Anomaly prediction error: {str(e)}")
+        return jsonify({
+            "error": str(e),
+            "anomaly": False,
+            "confidence": 0.0,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }), 500
+
+@app.route('/ml/metrics', methods=['GET'])
+def get_current_metrics():
+    """Get current system metrics from Prometheus."""
+    try:
+        if not ML_AVAILABLE:
+            return jsonify({"error": "ML inference not available"}), 503
+        
+        engine = get_inference_engine()
+        metrics = engine.collect_current_metrics()
+        
+        return jsonify({
+            "metrics": metrics,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Metrics collection error: {str(e)}")
+        return jsonify({"error": "Failed to collect metrics"}), 500
+
+@app.route('/ml/performance', methods=['GET'])
+def get_ml_performance():
+    """Get ML model performance metrics."""
+    try:
+        if not ML_AVAILABLE:
+            return jsonify({"error": "ML inference not available"}), 503
+        
+        engine = get_inference_engine()
+        performance = engine.monitor.get_performance_metrics()
+        
+        return jsonify({
+            "performance": performance,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Performance metrics error: {str(e)}")
+        return jsonify({"error": "Failed to get performance metrics"}), 500
+
+# =============================================================================
+# APPLICATION STARTUP
+# =============================================================================
+
 if __name__ == '__main__':
+    # Initialize ML models if available
+    if ML_AVAILABLE:
+        try:
+            logger.info("🚀 Initializing ML models...")
+            initialize_models()
+            logger.info("✅ ML models initialized successfully")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize ML models: {e}")
+            ML_AVAILABLE = False
+    
     port = int(os.environ.get('FLASK_PORT', 5000))
     debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     
-    logger.info(f"Starting SmartCloudOps AI ChatOps - Phase 2.2 Basic GPT Integration")
+    logger.info(f"Starting SmartCloudOps AI ChatOps - Phase 2.2 + ML Integration")
+    logger.info(f"ML Available: {ML_AVAILABLE}")
     app.run(host='0.0.0.0', port=port, debug=debug)

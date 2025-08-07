@@ -228,7 +228,7 @@ smartcloudops-ai/
 # Health check
 GET /health
 
-# System status
+# System status (now includes ML status)
 GET /status
 
 # ChatOps queries
@@ -239,6 +239,16 @@ POST /query
 
 # Application logs
 GET /logs
+
+# ML Anomaly Detection (NEW)
+GET /ml/health                    # ML model health check
+POST /ml/predict                  # Real-time anomaly prediction
+GET /ml/metrics                   # Current system metrics
+GET /ml/performance               # Model performance statistics
+
+# AI Provider Management
+POST /ai/switch                   # Switch AI provider
+POST /ai/test                     # Test AI providers
 ```
 
 ### **Key Metrics**

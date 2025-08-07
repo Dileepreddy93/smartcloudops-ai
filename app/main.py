@@ -30,9 +30,18 @@ except ImportError:
 try:
     from production_inference import get_inference_engine, initialize_models
     ML_AVAILABLE = True
+    ML_ENGINE_TYPE = 'production'
 except ImportError as e:
-    print(f"⚠️ ML inference not available: {e}")
-    ML_AVAILABLE = False
+    try:
+        # Fallback to real data inference engine
+        from real_data_inference_engine import get_real_inference_engine
+        ML_AVAILABLE = True
+        ML_ENGINE_TYPE = 'real_data'
+        logger.info("✅ Using real data inference engine")
+    except ImportError as e2:
+        print(f"⚠️ ML inference not available: {e}, {e2}")
+        ML_AVAILABLE = False
+        ML_ENGINE_TYPE = None
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -328,12 +337,18 @@ def ml_health():
                 "ml_available": False
             }), 503
         
-        engine = get_inference_engine()
+        # Get the appropriate engine based on type
+        if ML_ENGINE_TYPE == 'real_data':
+            engine = get_real_inference_engine()
+        else:
+            engine = get_inference_engine()
+            
         health = engine.health_check()
         
         return jsonify({
             "status": health['status'],
             "ml_available": ML_AVAILABLE,
+            "engine_type": ML_ENGINE_TYPE,
             "health": health,
             "timestamp": datetime.now(timezone.utc).isoformat()
         })
@@ -344,7 +359,7 @@ def ml_health():
 
 @app.route('/ml/predict', methods=['POST'])
 def predict_anomaly():
-    """Real-time anomaly prediction endpoint."""
+    """Real-time anomaly prediction endpoint using real infrastructure data."""
     try:
         if not ML_AVAILABLE:
             return jsonify({
@@ -357,8 +372,17 @@ def predict_anomaly():
         data = request.get_json() if request.is_json else {}
         custom_metrics = data.get('metrics') if data else None
         
-        engine = get_inference_engine()
+        # Get the appropriate engine based on type
+        if ML_ENGINE_TYPE == 'real_data':
+            engine = get_real_inference_engine()
+        else:
+            engine = get_inference_engine()
+            
         result = engine.predict_anomaly(custom_metrics)
+        
+        # Add engine type to response
+        result['engine_type'] = ML_ENGINE_TYPE
+        result['data_source'] = 'real_infrastructure_data' if ML_ENGINE_TYPE == 'real_data' else 'prometheus_api'
         
         return jsonify(result)
         
@@ -373,16 +397,23 @@ def predict_anomaly():
 
 @app.route('/ml/metrics', methods=['GET'])
 def get_current_metrics():
-    """Get current system metrics from Prometheus."""
+    """Get current system metrics from real infrastructure data."""
     try:
         if not ML_AVAILABLE:
             return jsonify({"error": "ML inference not available"}), 503
         
-        engine = get_inference_engine()
-        metrics = engine.collect_current_metrics()
+        # Get the appropriate engine based on type
+        if ML_ENGINE_TYPE == 'real_data':
+            engine = get_real_inference_engine()
+        else:
+            engine = get_inference_engine()
+            
+        metrics = engine.collect_live_metrics() if hasattr(engine, 'collect_live_metrics') else engine.collect_current_metrics()
         
         return jsonify({
             "metrics": metrics,
+            "engine_type": ML_ENGINE_TYPE,
+            "data_source": "real_infrastructure_data" if ML_ENGINE_TYPE == 'real_data' else "prometheus_api",
             "timestamp": datetime.now(timezone.utc).isoformat()
         })
         

@@ -30,6 +30,13 @@ import joblib
 import warnings
 warnings.filterwarnings('ignore')
 
+# Prefer real data for training when available
+try:
+    from real_data_integration import RealDataCollector
+    _REAL_DATA_AVAILABLE = True
+except Exception:
+    _REAL_DATA_AVAILABLE = False
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -593,16 +600,21 @@ class SmartCloudOpsAnomalyDetector:
         # Step 1: Data Collection
         logger.info("📊 Step 1: Data Collection")
         
-        # Try to collect real Prometheus data
-        prometheus_data = self.collect_prometheus_data('up')
+        # Prefer real monitoring data; fallback to synthetic
+        data = pd.DataFrame()
+        if _REAL_DATA_AVAILABLE:
+            try:
+                collector = RealDataCollector()
+                real_df = collector.collect_comprehensive_dataset(hours_back=24)
+                if not real_df.empty:
+                    logger.info("📊 Using real monitoring data for training")
+                    data = real_df
+                else:
+                    logger.info("📊 No real data available, falling back to synthetic data")
+            except Exception as e:
+                logger.warning(f"⚠️ Real data collection failed, falling back to synthetic: {e}")
         
-        if prometheus_data.empty:
-            logger.info("📊 No Prometheus data available, using synthetic data")
-            data = self.generate_synthetic_data(days=7)
-        else:
-            logger.info("📊 Using real Prometheus data")
-            data = prometheus_data
-            # For demonstration, we'll still use synthetic data with known anomalies
+        if data.empty:
             data = self.generate_synthetic_data(days=7)
         
         # Step 2: Feature Engineering
@@ -612,9 +624,11 @@ class SmartCloudOpsAnomalyDetector:
         # Step 3: Model Training
         logger.info("🤖 Step 3: Model Training")
         
-        # Define feature columns for Isolation Forest
-        feature_columns = [col for col in enhanced_data.columns if col not in 
-                          ['timestamp', 'is_anomaly']]
+        # Define feature columns for Isolation Forest (exclude non-numeric/meta cols)
+        feature_columns = [
+            col for col in enhanced_data.columns 
+            if col not in ['timestamp', 'is_anomaly', 'source']
+        ]
         
         # Train Isolation Forest
         iso_results = self.train_isolation_forest(enhanced_data, feature_columns)

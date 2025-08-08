@@ -8,9 +8,15 @@ set -e
 yum update -y
 yum install -y wget curl unzip git
 
-# Install Python 3.10+ (Phase 0.3)
-yum install -y python3 python3-pip python3-devel
-python3 -m pip install --upgrade pip
+# Install Python (prefer 3.8+) and pip
+if command -v amazon-linux-extras >/dev/null 2>&1; then
+  amazon-linux-extras enable python3.8 >/dev/null 2>&1 || true
+  yum clean metadata -y || true
+  yum install -y python3.8 python3.8-devel || true
+fi
+yum install -y python3 python3-pip python3-devel || true
+PY3=$(command -v python3.8 || command -v python3)
+"$PY3" -m pip install --upgrade pip
 
 # Install Docker (Phase 2.3)
 yum install -y docker
@@ -55,18 +61,30 @@ mkdir -p /opt/smartcloudops-ai
 mkdir -p /opt/smartcloudops-ai/app
 mkdir -p /opt/smartcloudops-ai/logs
 mkdir -p /opt/smartcloudops-ai/data
+mkdir -p /opt/smartcloudops-ai/scripts
+mkdir -p /opt/smartcloudops-ai/ml_models/optimized
 chown -R appuser:appuser /opt/smartcloudops-ai
 
 # Create Python virtual environment
 cd /opt/smartcloudops-ai
-python3 -m venv venv
+"$PY3" -m venv venv
 source venv/bin/activate
 pip install --upgrade pip
 
 # Install Python dependencies for Flask app (Phase 2.1)
-pip install flask gunicorn requests boto3 prometheus-client psutil
+pip install --no-cache-dir -r https://raw.githubusercontent.com/Dileepreddy93/smartcloudops-ai/main/app/requirements.txt || true
+# Fallback explicit runtime deps (ensures ML imports work even if the above fails)
+pip install --no-cache-dir flask gunicorn requests boto3 prometheus-client psutil pandas numpy scikit-learn joblib google-generativeai openai || true
 
-# Create basic Flask application (Phase 2.1)
+# Deploy application code from GitHub (latest main)
+cd /opt/smartcloudops-ai
+git init
+git remote add origin https://github.com/Dileepreddy93/smartcloudops-ai.git || true
+git fetch --depth=1 origin main || true
+git checkout -f FETCH_HEAD || true
+
+# Fallback minimal Flask app if git fetch fails
+if [ ! -f /opt/smartcloudops-ai/app/main.py ]; then
 cat > /opt/smartcloudops-ai/app/main.py << 'EOF'
 from flask import Flask, request, jsonify
 import os
@@ -160,36 +178,75 @@ def logs():
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
 EOF
+fi
 
-# Create requirements.txt
-cat > /opt/smartcloudops-ai/requirements.txt << 'EOF'
-Flask==2.3.3
-gunicorn==21.2.0
-requests==2.31.0
-boto3==1.29.0
-prometheus-client==0.19.0
-psutil==5.9.6
-openai==1.3.0
-litellm==1.0.0
-EOF
+# Install application requirements from repository
+cd /opt/smartcloudops-ai
+source venv/bin/activate
+if [ -f app/requirements.txt ]; then
+  pip install --no-cache-dir -r app/requirements.txt || true
+fi
+
+# Remove legacy inline requirements.txt creation (repo requirements is used)
 
 # Create systemd service for Flask app
 cat > /etc/systemd/system/smartcloudops-ai.service << 'EOF'
 [Unit]
 Description=SmartCloudOps AI Flask Application
-After=network.target
+Wants=network-online.target
+After=network-online.target
 
 [Service]
 Type=simple
 User=appuser
 WorkingDirectory=/opt/smartcloudops-ai
 Environment=PATH=/opt/smartcloudops-ai/venv/bin
+EnvironmentFile=-/etc/profile.d/smartcloudops-ai.sh
+ExecStartPre=/bin/bash -lc 'test -x /opt/smartcloudops-ai/venv/bin/gunicorn'
+ExecStartPre=/bin/bash -lc 'test -f /opt/smartcloudops-ai/app/main.py'
 ExecStart=/opt/smartcloudops-ai/venv/bin/gunicorn --bind 0.0.0.0:5000 --workers 2 app.main:app
 Restart=always
 RestartSec=3
+StandardOutput=append:/opt/smartcloudops-ai/logs/app.log
+StandardError=append:/opt/smartcloudops-ai/logs/app.err
 
 [Install]
 WantedBy=multi-user.target
+EOF
+
+# Configure environment for ML S3 bucket and Prometheus
+cat > /etc/profile.d/smartcloudops-ai.sh << 'EOF'
+# Injected by Terraform template
+export S3_ML_MODELS_BUCKET="${ml_models_bucket}"
+export ML_MODELS_BUCKET="$S3_ML_MODELS_BUCKET"
+export PROMETHEUS_URL="http://${prometheus_host}:${prometheus_port}"
+EOF
+
+# Create systemd service and timer for periodic training (daily)
+cat > /etc/systemd/system/smartcloudops-train.service << 'EOF'
+[Unit]
+Description=SmartCloudOps AI - Real Data Training
+After=network.target
+
+[Service]
+Type=oneshot
+User=appuser
+WorkingDirectory=/opt/smartcloudops-ai
+Environment=PATH=/opt/smartcloudops-ai/venv/bin
+EnvironmentFile=-/etc/profile.d/smartcloudops-ai.sh
+ExecStart=/opt/smartcloudops-ai/venv/bin/python /opt/smartcloudops-ai/scripts/train_model.py
+EOF
+
+cat > /etc/systemd/system/smartcloudops-train.timer << 'EOF'
+[Unit]
+Description=Run SmartCloudOps AI Training daily
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+
+[Install]
+WantedBy=timers.target
 EOF
 
 # Create Dockerfile (Phase 2.3)
@@ -244,6 +301,8 @@ systemctl start node_exporter
 systemctl enable node_exporter
 systemctl start smartcloudops-ai
 systemctl enable smartcloudops-ai
+systemctl enable smartcloudops-train.timer
+systemctl start smartcloudops-train.timer
 
 # Start CloudWatch agent
 /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json

@@ -1,42 +1,86 @@
 #!/usr/bin/env python3
 """
-SmartCloudOps AI - Simple Real Data Collector
+SmartCloudOps AI - Secure Real Data Collector
 ============================================
 
-Lightweight real data collection using only standard library.
-Collects actual infrastructure metrics from Prometheus.
+Production-grade real data collection with security and error handling.
 """
 
 import json
 import time
 import urllib.request
 import urllib.parse
+import urllib.error
+import ssl
 import os
 from datetime import datetime, timedelta
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class SimpleRealDataCollector:
-    """Simple real data collector using only standard library."""
+    """Secure real data collector with production-grade error handling."""
     
-    def __init__(self, prometheus_url="http://3.89.229.102:9090"):
-        self.prometheus_url = prometheus_url
+    def __init__(self, prometheus_url=None):
+        # Environment-aware configuration
+        self.prometheus_url = prometheus_url or os.getenv(
+            'PROMETHEUS_URL', 
+            'http://3.89.229.102:9090'  # Development default
+        )
+        self.timeout = int(os.getenv('PROMETHEUS_TIMEOUT', '30'))
+        self.ssl_verify = os.getenv('PROMETHEUS_SSL_VERIFY', 'true').lower() == 'true'
+        
+        # Create SSL context for secure connections
+        if self.ssl_verify:
+            self.ssl_context = ssl.create_default_context()
+        else:
+            self.ssl_context = ssl.create_default_context()
+            self.ssl_context.check_hostname = False
+            self.ssl_context.verify_mode = ssl.CERT_NONE
+            logger.warning("SSL verification disabled - not recommended for production")
+        
+        logger.info(f"✅ Initialized Real Data Collector for {self.prometheus_url}")
         
     def query_prometheus(self, query):
-        """Query Prometheus and return parsed results."""
+        """Query Prometheus with proper error handling and security."""
         try:
             url = f"{self.prometheus_url}/api/v1/query"
             params = {'query': query}
             query_string = urllib.parse.urlencode(params)
             full_url = f"{url}?{query_string}"
             
-            with urllib.request.urlopen(full_url, timeout=10) as response:
-                data = json.loads(response.read().decode())
+            # Create request with proper headers
+            req = urllib.request.Request(full_url)
+            req.add_header('User-Agent', 'SmartCloudOps-AI/1.0')
+            
+            # Execute request with SSL context and timeout
+            with urllib.request.urlopen(
+                req, 
+                timeout=self.timeout,
+                context=self.ssl_context
+            ) as response:
+                data = json.loads(response.read().decode('utf-8'))
                 
-            if data['status'] == 'success' and data['data']['result']:
+            if data.get('status') == 'success' and data.get('data', {}).get('result'):
                 return float(data['data']['result'][0]['value'][1])
             return 0.0
             
+        except urllib.error.HTTPError as e:
+            logger.error(f"HTTP error querying {query}: {e.code} - {e.reason}")
+            return 0.0
+        except urllib.error.URLError as e:
+            logger.error(f"URL error querying {query}: {e.reason}")
+            return 0.0
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON decode error for {query}: {e}")
+            return 0.0
+        except (KeyError, IndexError, ValueError) as e:
+            logger.error(f"Data parsing error for {query}: {e}")
+            return 0.0
         except Exception as e:
-            print(f"Error querying {query}: {e}")
+            logger.error(f"Unexpected error querying {query}: {e}")
             return 0.0
     
     def collect_current_metrics(self):

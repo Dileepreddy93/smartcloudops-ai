@@ -5,8 +5,9 @@
 Flask==3.1.1
 Werkzeug==3.1.3
 
-# HTTP Client Libraries
+# HTTP Client Libraries  
 requests==2.32.4
+urllib3==2.2.2
 
 # AI/ML Providers
 openai==1.99.1
@@ -30,6 +31,13 @@ joblib==1.4.2
 boto3==1.35.36
 botocore==1.35.36
 
+# Monitoring & Metrics
+prometheus-client==0.20.0
+
+# Security & SSL
+certifi==2024.7.4
+cryptography==42.0.8
+
 # Development & Testing
 pytest==8.3.2
 pytest-flask==1.3.0
@@ -37,3 +45,9 @@ pytest-flask==1.3.0
 # Additional ML Production Dependencies
 matplotlib==3.8.4
 seaborn==0.13.2
+
+# Configuration Management
+PyYAML==6.0.1
+
+# Logging and Monitoring
+structlog==24.2.0

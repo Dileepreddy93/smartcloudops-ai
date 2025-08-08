@@ -150,7 +150,7 @@ class RealDataCollector:
                 ).reset_index()
                 
                 # Fill missing values
-                df_pivot = df_pivot.fillna(method='forward').fillna(method='backward').fillna(0)
+                df_pivot = df_pivot.fillna(method='ffill').fillna(method='bfill').fillna(0)
                 
                 logger.info(f"✅ Collected {len(df_pivot)} Prometheus data points")
                 return df_pivot
@@ -520,7 +520,7 @@ class RealDataCollector:
                 
                 # Fill missing values
                 numeric_columns = combined_df.select_dtypes(include=[np.number]).columns
-                combined_df[numeric_columns] = combined_df[numeric_columns].fillna(method='forward').fillna(0)
+                combined_df[numeric_columns] = combined_df[numeric_columns].fillna(method='ffill').fillna(method='bfill').fillna(0)
                 
                 # Add anomaly labels (basic heuristic - can be improved)
                 combined_df = self._add_anomaly_labels(combined_df)

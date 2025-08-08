@@ -1,8 +1,33 @@
 {
+  "environments": {
+    "development": {
+      "prometheus": {
+        "enabled": true,
+        "url": "http://3.89.229.102:9090",
+        "ssl_verify": false,
+        "timeout": 30
+      }
+    },
+    "staging": {
+      "prometheus": {
+        "enabled": true,
+        "url": "https://staging-prometheus.example.com:9090",
+        "ssl_verify": true,
+        "timeout": 30
+      }
+    },
+    "production": {
+      "prometheus": {
+        "enabled": true,
+        "url": "https://prometheus.example.com:9090",
+        "ssl_verify": true,
+        "timeout": 30
+      }
+    }
+  },
   "data_sources": {
     "prometheus": {
       "enabled": true,
-      "url": "http://3.89.229.102:9090",
       "metrics": [
         "cpu_usage",
         "memory_usage", 
@@ -30,7 +55,7 @@
       "collection_duration_minutes": 60
     },
     "cloudwatch": {
-      "enabled": true,
+      "enabled": false,
       "region": "us-east-1",
       "metrics": [
         "CPUUtilization",

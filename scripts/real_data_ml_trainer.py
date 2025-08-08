@@ -29,6 +29,14 @@ class RealDataMLTrainer(SmartCloudOpsAnomalyDetector):
         self.use_real_data = use_real_data
         self.fallback_to_synthetic = fallback_to_synthetic
         self.real_data_collector = RealDataCollector('../scripts/real_data_config.json')
+        # Align S3 bucket with environment for production
+        try:
+            env_bucket = os.getenv('S3_ML_MODELS_BUCKET') or os.getenv('ML_MODELS_BUCKET')
+            if env_bucket:
+                self.s3_bucket = env_bucket
+                logger.info(f"✅ Using S3 bucket from env: {self.s3_bucket}")
+        except Exception:
+            pass
         
     def collect_training_data(self, hours_back=24, min_data_points=100):
         """
@@ -203,7 +211,7 @@ class RealDataMLTrainer(SmartCloudOpsAnomalyDetector):
             
             # Clean up data
             standardized_df = standardized_df.replace([np.inf, -np.inf], np.nan)
-            standardized_df = standardized_df.fillna(method='forward').fillna(method='backward').fillna(0)
+            standardized_df = standardized_df.fillna(method='ffill').fillna(method='bfill').fillna(0)
             
             # Sort by timestamp
             standardized_df = standardized_df.sort_values('timestamp').reset_index(drop=True)
@@ -367,13 +375,43 @@ class RealDataMLTrainer(SmartCloudOpsAnomalyDetector):
             # Step 2: Feature Engineering
             logger.info("🔧 Step 2: Feature Engineering")
             enhanced_data = self.prepare_features(training_data)
+
+            # Align with production inference features
+            # Add the same derived features used by production inference
+            from datetime import datetime as _dt
+            if 'timestamp' in enhanced_data.columns:
+                enhanced_data['hour'] = enhanced_data['timestamp'].dt.hour
+                enhanced_data['day_of_week'] = enhanced_data['timestamp'].dt.dayofweek
+                enhanced_data['is_weekend'] = enhanced_data['day_of_week'].isin([5, 6]).astype(int)
+            else:
+                now = _dt.now()
+                enhanced_data['hour'] = now.hour
+                enhanced_data['day_of_week'] = now.weekday()
+                enhanced_data['is_weekend'] = int(now.weekday() >= 5)
+            enhanced_data['is_business_hours'] = ((enhanced_data['hour'] >= 9) & (enhanced_data['hour'] <= 17) & (~enhanced_data['is_weekend'].astype(bool))).astype(int)
+            # Ensure required base columns exist before computing ratios
+            for base_col, default in [('cpu_usage', 0.0), ('memory_usage', 0.0), ('disk_io', 0.0), ('network_io', 0.0), ('response_time', 0.0)]:
+                if base_col not in enhanced_data.columns:
+                    enhanced_data[base_col] = default
+
+            enhanced_data['cpu_memory_ratio'] = enhanced_data['cpu_usage'] / (enhanced_data['memory_usage'] + 1e-6)
+            enhanced_data['io_ratio'] = enhanced_data['disk_io'] / (enhanced_data['network_io'] + 1e-6)
+            enhanced_data['load_indicator'] = (enhanced_data['cpu_usage'] + enhanced_data['memory_usage']) / 2
+            enhanced_data['performance_indicator'] = enhanced_data['response_time'] / (enhanced_data['load_indicator'] + 1e-6)
             
             # Step 3: Model Training
             logger.info("🤖 Step 3: Model Training")
             
-            # Define feature columns
-            feature_columns = [col for col in enhanced_data.columns if col not in 
-                              ['timestamp', 'is_anomaly', 'source']]
+            # Define feature columns to match production inference exactly
+            feature_columns = [
+                'cpu_usage', 'memory_usage', 'disk_io', 'network_io', 'response_time',
+                'hour', 'day_of_week', 'is_weekend', 'is_business_hours',
+                'cpu_memory_ratio', 'io_ratio', 'load_indicator', 'performance_indicator'
+            ]
+            # Ensure all features exist
+            for _f in feature_columns:
+                if _f not in enhanced_data.columns:
+                    enhanced_data[_f] = 0.0
             
             # Train models
             iso_results = self.train_isolation_forest(enhanced_data, feature_columns)
@@ -405,7 +443,41 @@ class RealDataMLTrainer(SmartCloudOpsAnomalyDetector):
             
             # Step 5: Model Persistence
             logger.info("💾 Step 5: Model Persistence")
-            self.save_models_to_s3()
+            # Ensure models go to the optimized path expected by inference
+            try:
+                # Explicitly write both S3 and local copies to optimized paths
+                if getattr(self, 's3_client', None):
+                    try:
+                        logger.info("💾 Uploading models to S3 optimized paths...")
+                        # Isolation Forest
+                        if 'isolation_forest' in self.models:
+                            import joblib, tempfile
+                            with tempfile.NamedTemporaryFile(suffix='.pkl', delete=False) as f:
+                                joblib.dump(self.models['isolation_forest'], f.name)
+                                self.s3_client.upload_file(
+                                    f.name,
+                                    self.s3_bucket,
+                                    'models/optimized/optimized_isolation_forest_model.pkl'
+                                )
+                            with tempfile.NamedTemporaryFile(suffix='.pkl', delete=False) as f:
+                                joblib.dump(self.scalers['isolation_forest'], f.name)
+                                self.s3_client.upload_file(
+                                    f.name,
+                                    self.s3_bucket,
+                                    'models/optimized/optimized_isolation_forest_scaler.pkl'
+                                )
+                    except Exception as e:
+                        logger.warning(f"⚠️ S3 upload failed, will still save locally: {e}")
+
+                # Local copies
+                import os, joblib
+                os.makedirs('../ml_models/optimized', exist_ok=True)
+                if 'isolation_forest' in self.models:
+                    joblib.dump(self.models['isolation_forest'], '../ml_models/optimized/optimized_isolation_forest_model.pkl')
+                    joblib.dump(self.scalers['isolation_forest'], '../ml_models/optimized/optimized_isolation_forest_scaler.pkl')
+                    logger.info("✅ Saved optimized Isolation Forest locally")
+            except Exception as e:
+                logger.error(f"❌ Error persisting models: {e}")
             
             # Step 6: Save training data for reference
             self.real_data_collector.save_real_data(enhanced_data, '../data/training_data_real.csv')

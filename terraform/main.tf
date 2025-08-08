@@ -222,10 +222,12 @@ resource "aws_instance" "monitoring" {
   key_name               = aws_key_pair.main.key_name
   vpc_security_group_ids = [aws_security_group.monitoring.id]
   subnet_id              = aws_subnet.public_1.id
+  iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
 
   user_data = base64encode(templatefile("${path.module}/user_data/monitoring.sh", {
     project_name = var.project_name
   }))
+  user_data_replace_on_change = true
 
   tags = {
     Name = "${var.project_name}-monitoring"
@@ -240,10 +242,15 @@ resource "aws_instance" "application" {
   key_name               = aws_key_pair.main.key_name
   vpc_security_group_ids = [aws_security_group.application.id]
   subnet_id              = aws_subnet.public_2.id
+  iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
 
   user_data = base64encode(templatefile("${path.module}/user_data/application.sh", {
-    project_name = var.project_name
+    project_name      = var.project_name,
+    ml_models_bucket  = aws_s3_bucket.ml_models.bucket,
+    prometheus_host   = aws_instance.monitoring.private_ip,
+    prometheus_port   = var.prometheus_port
   }))
+  user_data_replace_on_change = true
 
   tags = {
     Name = "${var.project_name}-application"

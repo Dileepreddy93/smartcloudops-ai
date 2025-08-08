@@ -32,23 +32,30 @@ class ProductionModelRegistry:
         self.s3_client = boto3.client('s3')
         
     def get_latest_model_version(self) -> str:
-        """Get the latest model version from S3."""
+        """Get the latest model version from S3 across known prefixes."""
         try:
-            response = self.s3_client.list_objects_v2(
-                Bucket=self.s3_bucket,
-                Prefix='models/optimized/'
-            )
-            
-            if 'Contents' in response:
-                # Find latest model based on timestamp
-                models = [obj for obj in response['Contents'] 
-                         if obj['Key'].endswith('_model.pkl')]
-                if models:
-                    latest = max(models, key=lambda x: x['LastModified'])
-                    return latest['Key']
-            
+            prefixes = ['models/optimized/', 'models/']
+            candidates = []
+            for prefix in prefixes:
+                try:
+                    response = self.s3_client.list_objects_v2(
+                        Bucket=self.s3_bucket,
+                        Prefix=prefix
+                    )
+                    if 'Contents' in response:
+                        for obj in response['Contents']:
+                            if obj['Key'].endswith('_model.pkl'):
+                                candidates.append(obj)
+                except Exception as inner_e:
+                    logger.warning(f"Failed listing S3 prefix {prefix}: {inner_e}")
+
+            if candidates:
+                latest = max(candidates, key=lambda x: x['LastModified'])
+                return latest['Key']
+
+            # default to optimized naming
             return 'models/optimized/optimized_isolation_forest_model.pkl'
-            
+
         except Exception as e:
             logger.error(f"Error getting latest model: {e}")
             return 'models/optimized/optimized_isolation_forest_model.pkl'
@@ -122,13 +129,17 @@ class ProductionInferenceEngine:
     """Production-ready anomaly detection inference engine."""
     
     def __init__(self, 
-                 s3_bucket: str = "smartcloudops-ai-ml-models-aa7be1e7",
+                 s3_bucket: str = None,
                  prometheus_url: str = "http://3.89.229.102:9090",
                  model_cache_ttl: int = 3600,  # 1 hour
                  use_real_data: bool = True):
         
-        self.s3_bucket = s3_bucket
-        self.prometheus_url = prometheus_url
+        # Allow overriding via environment variable
+        env_bucket = os.getenv('S3_ML_MODELS_BUCKET')
+        self.s3_bucket = env_bucket or s3_bucket or os.getenv('ML_MODELS_BUCKET')
+        # Allow overriding Prometheus endpoint via environment
+        env_prom = os.getenv('PROMETHEUS_URL')
+        self.prometheus_url = env_prom or prometheus_url
         self.model_cache_ttl = model_cache_ttl
         self.use_real_data = use_real_data
         
@@ -160,33 +171,42 @@ class ProductionInferenceEngine:
     def _load_models(self):
         """Load models with fallback to local storage."""
         try:
-            # Try loading from S3 first
-            model_key = self.model_registry.get_latest_model_version()
-            scaler_key = model_key.replace('_model.pkl', '_scaler.pkl')
-            
-            model, scaler = self.model_registry.load_model_from_s3(model_key, scaler_key)
-            
-            if model and scaler:
-                self.model = model
-                self.scaler = scaler
-                self.model_loaded_at = datetime.now()
-                logger.info("✅ Models loaded from S3")
-                return
-                
+            # Try loading from S3 first if bucket is configured
+            if self.model_registry.s3_bucket:
+                model_key = self.model_registry.get_latest_model_version()
+                scaler_key = model_key.replace('_model.pkl', '_scaler.pkl')
+                model, scaler = self.model_registry.load_model_from_s3(model_key, scaler_key)
+                if model and scaler:
+                    self.model = model
+                    self.scaler = scaler
+                    self.model_loaded_at = datetime.now()
+                    logger.info("✅ Models loaded from S3")
+                    return
         except Exception as e:
             logger.warning(f"⚠️ S3 model loading failed: {e}")
         
         # Fallback to local models
         try:
-            local_model_path = "../ml_models/optimized_isolation_forest_model.pkl"
-            local_scaler_path = "../ml_models/optimized_isolation_forest_scaler.pkl"
-            
-            if os.path.exists(local_model_path) and os.path.exists(local_scaler_path):
-                self.model = joblib.load(local_model_path)
-                self.scaler = joblib.load(local_scaler_path)
-                self.model_loaded_at = datetime.now()
-                logger.info("✅ Models loaded from local storage")
-            else:
+            # Try multiple local paths
+            candidate_local_paths = [
+                ("../ml_models/optimized/optimized_isolation_forest_model.pkl", "../ml_models/optimized/optimized_isolation_forest_scaler.pkl"),
+                ("../ml_models/optimized_isolation_forest_model.pkl", "../ml_models/optimized_isolation_forest_scaler.pkl"),
+                ("../ml_models/isolation_forest_model.pkl", "../ml_models/isolation_forest_scaler.pkl"),
+                ("/opt/smartcloudops-ai/ml_models/optimized/optimized_isolation_forest_model.pkl", 
+                 "/opt/smartcloudops-ai/ml_models/optimized/optimized_isolation_forest_scaler.pkl")
+            ]
+
+            loaded = False
+            for model_path, scaler_path in candidate_local_paths:
+                if os.path.exists(model_path) and os.path.exists(scaler_path):
+                    self.model = joblib.load(model_path)
+                    self.scaler = joblib.load(scaler_path)
+                    self.model_loaded_at = datetime.now()
+                    logger.info(f"✅ Models loaded from local storage: {model_path}")
+                    loaded = True
+                    break
+
+            if not loaded:
                 logger.error("❌ No models found locally or in S3")
                 
         except Exception as e:
@@ -310,10 +330,16 @@ class ProductionInferenceEngine:
             # Collect metrics if not provided
             if metrics is None:
                 metrics = self.collect_current_metrics()
-            
+
+            # Ensure required base metrics exist before feature engineering
+            base_metrics = ['cpu_usage', 'memory_usage', 'disk_io', 'network_io', 'response_time']
+            for base in base_metrics:
+                if base not in metrics or metrics[base] is None:
+                    metrics[base] = 0.0
+
             # Create DataFrame with basic features
             df = pd.DataFrame([metrics])
-            
+
             # Add time-based features
             now = datetime.now()
             df['hour'] = now.hour

@@ -13,8 +13,28 @@ from typing import Dict, Any, Optional
 from dataclasses import dataclass
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
+class ConfigManager:
+    """Environment-aware configuration manager."""
+    
+    def __init__(self):
+        self.environment = os.getenv('ENVIRONMENT', 'development')
+        self._load_environment_config()
+    
+    def _load_environment_config(self):
+        """Load environment-specific configuration."""
+        # Load base .env file first
+        load_dotenv()
+        
+        # Load environment-specific .env file
+        env_file = f".env.{self.environment}"
+        if os.path.exists(env_file):
+            load_dotenv(env_file, override=True)
+            logging.info(f"✅ Loaded {env_file}")
+        else:
+            logging.warning(f"⚠️ Environment file {env_file} not found, using defaults")
+
+# Initialize configuration manager
+config_manager = ConfigManager()
 
 @dataclass
 class PrometheusConfig:
@@ -92,14 +112,27 @@ class Config:
         self._validate_config()
     
     def _get_prometheus_url(self) -> str:
-        """Get Prometheus URL based on environment."""
+        """Get Prometheus URL based on environment with proper service discovery."""
+        base_url = os.getenv('PROMETHEUS_URL')
+        
+        if base_url:
+            return base_url
+            
+        # Fallback to environment-specific defaults
         if self.environment == 'production':
-            return os.getenv('PROMETHEUS_URL', 'https://prometheus.example.com:9090')
+            return 'https://prometheus.internal.smartcloudops.com:9090'
         elif self.environment == 'staging':
-            return os.getenv('PROMETHEUS_URL', 'https://staging-prometheus.example.com:9090')
+            return 'http://staging-prometheus.internal:9090'
         else:
-            # Development - use existing working URL
-            return os.getenv('PROMETHEUS_URL', 'http://3.89.229.102:9090')
+            # Development - check for local instance first
+            local_prometheus = 'http://localhost:9090'
+            try:
+                import requests
+                requests.get(f"{local_prometheus}/api/v1/status/config", timeout=2)
+                return local_prometheus
+            except:
+                # Fall back to existing working development URL
+                return 'http://3.89.229.102:9090'
     
     def _generate_secret_key(self) -> str:
         """Generate a secret key if none provided."""

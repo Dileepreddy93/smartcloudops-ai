@@ -19,6 +19,8 @@ export DEBUG=false
 export PROMETHEUS_URL=http://3.89.229.102:9090
 export AI_PROVIDER=fallback
 export LOG_LEVEL=INFO
+export ML_ENGINE=real_data
+export ML_CONFIDENCE_THRESHOLD=0.85
 
 echo "📦 Stopping existing container if running..."
 docker stop $CONTAINER_NAME 2>/dev/null || true
@@ -32,8 +34,9 @@ if [ -f "smartcloudops-ai-production.tar.gz" ]; then
     gunzip -c smartcloudops-ai-production.tar.gz | docker load
     echo "✅ Docker image loaded successfully"
 else
-    echo "❌ Docker image file not found"
-    exit 1
+    echo "🔨 Building production image..."
+    docker build -t $IMAGE_NAME .
+    echo "✅ Docker image built successfully"
 fi
 
 echo "🚀 Starting production container..."
@@ -46,6 +49,8 @@ docker run -d \
     -e PROMETHEUS_URL=$PROMETHEUS_URL \
     -e AI_PROVIDER=$AI_PROVIDER \
     -e LOG_LEVEL=$LOG_LEVEL \
+    -e ML_ENGINE=$ML_ENGINE \
+    -e ML_CONFIDENCE_THRESHOLD=$ML_CONFIDENCE_THRESHOLD \
     --memory=512m \
     --cpus=0.5 \
     --security-opt no-new-privileges \

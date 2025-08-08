@@ -27,6 +27,9 @@ COPY --chown=appuser:appuser scripts/ /app/scripts/
 COPY --chown=appuser:appuser data/ /app/data/
 COPY --chown=appuser:appuser ml_models/ /app/ml_models/
 
+# Add scripts directory to Python path for module imports
+ENV PYTHONPATH=/app/scripts:/app:$PYTHONPATH
+
 # Switch to non-root user
 USER appuser
 
@@ -37,5 +40,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 # Expose port
 EXPOSE 5000
 
-# Production server command
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "120", "main:app"]
+# Production server command with proper permissions
+# Production server command using Python directly to avoid permission issues
+CMD ["python", "main.py"]

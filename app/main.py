@@ -117,23 +117,40 @@ if AI_PROVIDER == 'auto':
 
 logger.info(f"🤖 Active AI Provider: {AI_PROVIDER.upper()}")
 
-# ML Engine Configuration
+# ML Engine Configuration with improved error handling
 ML_ENGINE_TYPE = "none"
 ml_engine_instance = None
 
+# Get ML engine setting from environment
+ml_engine_preference = os.getenv('ML_ENGINE', 'auto')
+
 if ML_ENGINE_AVAILABLE:
     try:
-        if RealDataInferenceEngine:
+        if ml_engine_preference == 'real_data' and RealDataInferenceEngine:
             ml_engine_instance = RealDataInferenceEngine()
             ML_ENGINE_TYPE = "real_data"
             logger.info("✅ Real Data ML Engine initialized")
-        elif MLModel:
+        elif ml_engine_preference == 'phase3' and MLModel:
             ml_engine_instance = MLModel()
             ML_ENGINE_TYPE = "phase3"
             logger.info("✅ Phase 3 ML Engine initialized")
+        elif ml_engine_preference == 'auto':
+            # Auto-detection: prefer real_data over phase3
+            if RealDataInferenceEngine:
+                ml_engine_instance = RealDataInferenceEngine()
+                ML_ENGINE_TYPE = "real_data"
+                logger.info("✅ Real Data ML Engine auto-selected")
+            elif MLModel:
+                ml_engine_instance = MLModel()
+                ML_ENGINE_TYPE = "phase3"
+                logger.info("✅ Phase 3 ML Engine auto-selected")
+        else:
+            logger.warning(f"⚠️ Requested ML engine '{ml_engine_preference}' not available")
     except Exception as e:
         logger.error(f"❌ ML Engine initialization failed: {e}")
         ML_ENGINE_TYPE = "none"
+else:
+    logger.warning("⚠️ No ML engines available")
 
 def get_inference_engine():
     """Get the available inference engine."""

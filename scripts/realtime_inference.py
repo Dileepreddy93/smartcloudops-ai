@@ -24,10 +24,9 @@ class AnomalyInferenceEngine:
     Real-time anomaly detection inference engine.
     """
     
-    def __init__(self, model_path="ml_models/optimized", 
-                 prometheus_url="http://3.89.229.102:9090"):
+    def __init__(self, model_path="ml_models/optimized", prometheus_url: str | None = None):
         self.model_path = model_path
-        self.prometheus_url = prometheus_url
+        self.prometheus_url = prometheus_url or os.getenv('PROMETHEUS_URL', 'http://localhost:9090')
         self.model = None
         self.scaler = None
         self.feature_columns = None

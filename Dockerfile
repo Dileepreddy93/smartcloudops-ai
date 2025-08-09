@@ -22,8 +22,8 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser
 WORKDIR /app
 RUN chown appuser:appuser /app
 
-# Install gunicorn in production stage
-RUN pip install --no-cache-dir gunicorn==21.2.0
+# Install gunicorn in production stage (align with app requirements)
+RUN pip install --no-cache-dir gunicorn==22.0.0
 
 # Copy dependencies from builder stage
 COPY --from=builder /root/.local /home/appuser/.local
@@ -51,4 +51,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 EXPOSE 5000
 
 # 🔒 SECURITY: Use Gunicorn production server (NOT Flask dev server)
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "120", "--worker-class", "sync", "--max-requests", "1000", "--max-requests-jitter", "100", "main:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "120", "--worker-class", "sync", "--max-requests", "1000", "--max-requests-jitter", "100", "app.main:app"]

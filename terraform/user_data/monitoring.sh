@@ -57,18 +57,22 @@ chown prometheus:prometheus /etc/prometheus
 chown prometheus:prometheus /var/lib/prometheus
 
 # Configure Prometheus (Phase 1.2.1)
-cat > /etc/prometheus/prometheus.yml << 'EOF'
+cat > /etc/prometheus/prometheus.yml << EOF
 global:
   scrape_interval: 15s
 
 scrape_configs:
   - job_name: 'prometheus'
     static_configs:
-      - targets: ['localhost:9090']
+      - targets: ['localhost:${prometheus_port:-9090}']
 
-  - job_name: 'ec2_node'
+  - job_name: 'monitoring_node'
     static_configs:
-      - targets: ['localhost:9100']
+      - targets: ['localhost:${node_exporter_port:-9100}']
+
+  - job_name: 'application_node'
+    static_configs:
+      - targets: ['${application_private_ip}:${node_exporter_port:-9100}']
 EOF
 
 chown prometheus:prometheus /etc/prometheus/prometheus.yml
@@ -109,18 +113,21 @@ EOF
 
 yum install -y grafana
 
-# Configure Grafana
-cat > /etc/grafana/grafana.ini << 'EOF'
+# Configure Grafana (secure defaults)
+cat > /etc/grafana/grafana.ini << EOF
 [server]
-http_port = 3000
+http_port = ${grafana_port:-3000}
 
 [security]
 admin_user = admin
-admin_password = admin123
+admin_password = ${grafana_admin_password}
+cookie_secure = true
+strict_transport_security = true
+x_content_type_options = true
+x_xss_protection = true
 
 [auth.anonymous]
-enabled = true
-org_role = Viewer
+enabled = false
 EOF
 
 # Install CloudWatch agent for log shipping
@@ -154,6 +161,21 @@ systemctl enable prometheus
 systemctl start grafana-server
 systemctl enable grafana-server
 
+# Create Grafana Prometheus datasource provisioning
+mkdir -p /etc/grafana/provisioning/datasources
+cat > /etc/grafana/provisioning/datasources/prometheus.yaml << EOF
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://localhost:${prometheus_port:-9090}
+    isDefault: true
+    editable: false
+EOF
+
+systemctl restart grafana-server
+
 # Start CloudWatch agent
 /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
 
@@ -169,8 +191,8 @@ systemctl is-active prometheus && echo "✓ Prometheus: Running" || echo "✗ Pr
 systemctl is-active grafana-server && echo "✓ Grafana: Running" || echo "✗ Grafana: Stopped"
 echo ""
 echo "URLs:"
-echo "- Grafana: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):3000"
-echo "- Prometheus: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):9090"
+echo "- Grafana: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):${grafana_port:-3000}"
+echo "- Prometheus: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):${prometheus_port:-9090}"
 echo ""
 echo "Grafana Login: admin/admin123"
 EOF
@@ -190,9 +212,9 @@ cat > /etc/motd << 'EOF'
   🔍 MONITORING INSTANCE - Phase 1 Setup Complete
   
   Services:
-  - Grafana Dashboard: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):3000
-  - Prometheus: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):9090
-  - Node Exporter: :9100
+  - Grafana Dashboard: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):${grafana_port:-3000}
+  - Prometheus: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):${prometheus_port:-9090}
+  - Node Exporter: :${node_exporter_port:-9100}
   
   Run './health-check.sh' to check service status
   

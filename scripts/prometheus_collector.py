@@ -7,6 +7,7 @@ Collects real-time metrics from Prometheus for anomaly detection training.
 """
 
 import requests
+import os
 import pandas as pd
 import json
 from datetime import datetime, timedelta
@@ -20,8 +21,8 @@ class PrometheusCollector:
     Collects metrics from Prometheus monitoring stack.
     """
     
-    def __init__(self, prometheus_url="http://3.89.229.102:9090"):
-        self.prometheus_url = prometheus_url
+    def __init__(self, prometheus_url: str | None = None):
+        self.prometheus_url = prometheus_url or os.getenv('PROMETHEUS_URL', 'http://localhost:9090')
         
         # Common Prometheus queries for infrastructure monitoring
         self.queries = {

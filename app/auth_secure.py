@@ -96,7 +96,7 @@ class SecureAPIKeyAuth:
             current_time = datetime.now(timezone.utc)
             
             # Admin API key - full access
-            admin_key = self.app.config.get('ADMIN_API_KEY', 'sk-admin-demo-key-12345678901234567890')
+            admin_key = self.app.config.get('ADMIN_API_KEY', '')
             admin_hash = self._hash_api_key(admin_key)
             self.api_keys[admin_hash] = APIKeyInfo(
                 key_hash=admin_hash,
@@ -113,7 +113,7 @@ class SecureAPIKeyAuth:
             )
             
             # ML Service API key - ML operations only
-            ml_key = self.app.config.get('ML_API_KEY', 'sk-ml-demo-key-12345678901234567890123')
+            ml_key = self.app.config.get('ML_API_KEY', '')
             ml_hash = self._hash_api_key(ml_key)
             self.api_keys[ml_hash] = APIKeyInfo(
                 key_hash=ml_hash,
@@ -130,7 +130,7 @@ class SecureAPIKeyAuth:
             )
             
             # Read-only API key
-            readonly_key = self.app.config.get('READONLY_API_KEY', 'sk-readonly-demo-key-12345678901234567890')
+            readonly_key = self.app.config.get('READONLY_API_KEY', '')
             readonly_hash = self._hash_api_key(readonly_key)
             self.api_keys[readonly_hash] = APIKeyInfo(
                 key_hash=readonly_hash,
@@ -184,7 +184,7 @@ class SecureAPIKeyAuth:
                 key_hash = self._hash_api_key(api_key)
                 
                 # Check if key exists
-                if key_hash not in self.api_keys:
+                if not api_key or key_hash not in self.api_keys:
                     self._log_auth_attempt(api_key, client_ip, user_agent, endpoint, required_permission, False)
                     self._record_failed_attempt(client_ip)
                     return False, None, "Invalid API key"

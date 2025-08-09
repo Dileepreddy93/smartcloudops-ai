@@ -1,0 +1,15 @@
+{
+  "model_type": "ultimate_95_percent",
+  "version": "8.0.0",
+  "training_timestamp": "2025-08-09T16:18:09.203912",
+  "description": "Ultimate optimization for 95%+ on all metrics",
+  "performance": {
+    "accuracy": 0.9925,
+    "precision": 0.9904761904761905,
+    "recall": 0.9811320754716981,
+    "f1_score": 0.985781990521327,
+    "auc_roc": 0.9879829290206648,
+    "optimal_threshold": 0.16000000000000003
+  },
+  "achievement": {
+    "metrics_above_95": 

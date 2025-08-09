@@ -26,6 +26,36 @@
     }
   },
   "data_sources": {
+    "application_metrics": {
+      "enabled": true,
+      "endpoints": [
+        "http://localhost:5000/metrics",
+        "http://localhost:8080/actuator/metrics"
+      ],
+      "metrics": [
+        "http_requests_total",
+        "http_request_duration",
+        "database_connections",
+        "cache_hit_ratio",
+        "queue_size",
+        "error_rate",
+        "throughput",
+        "concurrent_users"
+      ],
+      "collection_interval": 30
+    },
+    "business_metrics": {
+      "enabled": true,
+      "metrics": [
+        "user_sessions",
+        "api_calls_per_minute",
+        "transaction_volume",
+        "page_load_time",
+        "feature_usage",
+        "user_activity"
+      ],
+      "collection_interval": 60
+    },
     "prometheus": {
       "enabled": true,
       "metrics": [
@@ -38,9 +68,21 @@
         "load_5m", 
         "load_15m",
         "disk_used_percent",
-        "response_time"
+        "response_time",
+        "tcp_connections",
+        "file_descriptors",
+        "context_switches",
+        "interrupts",
+        "boot_time",
+        "process_cpu_usage",
+        "process_memory_usage",
+        "process_io_read",
+        "process_io_write",
+        "filesystem_inodes_used",
+        "network_errors",
+        "network_dropped_packets"
       ],
-      "collection_interval": 60
+      "collection_interval": 30
     },
     "system": {
       "enabled": true,
@@ -91,11 +133,21 @@
     }
   },
   "data_processing": {
-    "anomaly_detection_method": "iqr",
+    "anomaly_detection_methods": ["iqr", "zscore", "isolation_forest", "local_outlier_factor"],
     "anomaly_threshold": 1.5,
+    "zscore_threshold": 3.0,
+    "isolation_forest_contamination": 0.1,
+    "lof_n_neighbors": 20,
     "fill_missing_values": true,
     "remove_duplicates": true,
-    "time_window_minutes": 60
+    "time_window_minutes": 60,
+    "seasonal_decomposition": true,
+    "feature_engineering": {
+      "rolling_averages": [5, 15, 30],
+      "derivative_features": true,
+      "time_based_features": true,
+      "interaction_features": true
+    }
   },
   "output": {
     "save_to_csv": true,

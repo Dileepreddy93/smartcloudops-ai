@@ -10,12 +10,20 @@ RUN pip install --no-cache-dir --user -r requirements.txt
 # Production Stage
 FROM python:3.10-slim as production
 
+# Security: Install security updates
+RUN apt-get update && apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/*
+
 # Create non-root user for security
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 
 # Set up application directory
 WORKDIR /app
 RUN chown appuser:appuser /app
+
+# Install gunicorn in production stage
+RUN pip install --no-cache-dir gunicorn==21.2.0
 
 # Copy dependencies from builder stage
 COPY --from=builder /root/.local /home/appuser/.local
@@ -29,17 +37,18 @@ COPY --chown=appuser:appuser ml_models/ /app/ml_models/
 
 # Add scripts directory to Python path for module imports
 ENV PYTHONPATH=/app/scripts:/app:$PYTHONPATH
+ENV ENVIRONMENT=production
+ENV DEBUG=false
 
 # Switch to non-root user
 USER appuser
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:5000/status', timeout=5)" || exit 1
+    CMD curl -f http://localhost:5000/status || exit 1
 
 # Expose port
 EXPOSE 5000
 
-# Production server command with proper permissions
-# Production server command using Python directly to avoid permission issues
-CMD ["python", "main.py"]
+# 🔒 SECURITY: Use Gunicorn production server (NOT Flask dev server)
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "120", "--worker-class", "sync", "--max-requests", "1000", "--max-requests-jitter", "100", "main:app"]

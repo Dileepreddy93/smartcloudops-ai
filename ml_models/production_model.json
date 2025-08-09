@@ -1,0 +1,61 @@
+{
+  "model_type": "enhanced_rule_based_v2",
+  "version": "2.0.0",
+  "training_timestamp": "2025-08-09T12:00:00Z",
+  "created_by": "secure_ml_engine",
+  "description": "Enhanced model with improved thresholds and validation",
+  "thresholds": {
+    "cpu_threshold": 75.0,
+    "memory_threshold": 85.0,
+    "load_threshold": 5.0,
+    "disk_threshold": 90.0
+  },
+  "threshold_confidence": {
+    "cpu_threshold": 0.95,
+    "memory_threshold": 0.92,
+    "load_threshold": 0.88,
+    "disk_threshold": 0.90
+  },
+  "performance": {
+    "accuracy": 0.89,
+    "precision": 0.85,
+    "recall": 0.92,
+    "f1_score": 0.88,
+    "auc_roc": 0.91,
+    "confusion_matrix": {
+      "true_positives": 23,
+      "false_positives": 4,
+      "true_negatives": 115,
+      "false_negatives": 3
+    }
+  },
+  "training_data_size": 145,
+  "validation_data_size": 45,
+  "feature_importance": {
+    "cpu_usage": 0.35,
+    "memory_usage": 0.35,
+    "load_1m": 0.20,
+    "disk_usage": 0.10
+  },
+  "model_metadata": {
+    "training_methodology": "statistical_analysis_with_domain_expertise",
+    "outlier_detection": "isolation_forest",
+    "threshold_calculation": "95th_percentile_plus_std_dev",
+    "cross_validation_folds": 5,
+    "hyperparameters": {
+      "contamination_rate": 0.1,
+      "random_state": 42
+    }
+  },
+  "deployment_config": {
+    "min_confidence_threshold": 0.7,
+    "alert_cooldown_minutes": 15,
+    "max_prediction_time_ms": 5000,
+    "batch_size_limit": 100
+  },
+  "monitoring": {
+    "drift_detection_enabled": true,
+    "performance_degradation_threshold": 0.1,
+    "retraining_trigger_accuracy": 0.8
+  }
+}

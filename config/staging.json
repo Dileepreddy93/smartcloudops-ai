@@ -1,0 +1,29 @@
+{
+  "database": {
+    "type": "postgresql",
+    "host": "staging-db.smartcloudops.ai",
+    "port": 5432,
+    "name": "smartcloudops_staging",
+    "ssl_mode": "require"
+  },
+  "security": {
+    "api_key_expiry_days": 7,
+    "rate_limit_per_minute": 120,
+    "rate_limit_per_hour": 2000,
+    "max_login_attempts": 5,
+    "session_timeout_minutes": 30
+  },
+  "ml": {
+    "min_f1_score": 0.7,
+    "prediction_timeout_seconds": 5,
+    "max_batch_size": 100,
+    "enable_real_data": true
+  },
+  "monitoring": {
+    "prometheus_endpoint": "https://prometheus-staging.smartcloudops.ai",
+    "grafana_endpoint": "https://grafana-staging.smartcloudops.ai",
+    "enable_metrics": true,
+    "enable_health_checks": true,
+    "log_level": "INFO"
+  }
+}

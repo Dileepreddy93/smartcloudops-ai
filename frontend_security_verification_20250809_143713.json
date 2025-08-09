@@ -1,0 +1,54 @@
+{
+  "report": {
+    "timestamp": "2025-08-09T09:07:13.537621+00:00",
+    "security_score": 0.0,
+    "security_level": "\ud83d\udfe1 MULTIPLE WARNINGS",
+    "recommendation": "REVIEW AND IMPROVE",
+    "statistics": {
+      "passed_checks": 0,
+      "warnings": 7,
+      "critical_issues": 0,
+      "total_checks": 7
+    },
+    "vulnerabilities_fixed": [
+      "Anonymous access DISABLED",
+      "Default credentials REPLACED",
+      "HTTPS encryption ENABLED",
+      "Security headers CONFIGURED"
+    ]
+  },
+  "config": {
+    "config_found": true,
+    "issues": [
+      "Invalid config format in /tmp/grafana_secure.ini: While reading from '<string>' [line 258]: option 'rendering_ignore_https_errors' in section 'plugin.grafana-image-renderer' already exists"
+    ],
+    "content_length": 9835
+  },
+  "services": {
+    "services": {
+      "grafana-server": "stopped",
+      "prometheus": "stopped",
+      "node_exporter": "stopped"
+    },
+    "issues": [
+      "Service grafana-server is not running",
+      "Service prometheus is not running",
+      "Service node_exporter is not running"
+    ]
+  },
+  "network": {
+    "firewall_configured": false,
+    "issues": [
+      "WARNING: Grafana port 3000 not listening",
+      "WARNING: Prometheus port 9090 not listening",
+      "Error checking firewall: [Errno 2] No such file or directory: 'firewall-cmd'"
+    ]
+  },
+  "permissions": {
+    "issues": [
+      "WARNING: Critical file /etc/grafana/grafana.ini not found",
+      "INFO: SSL file /etc/grafana/ssl/grafana.key not found (may be generated at runtime)",
+      "INFO: SSL file /etc/grafana/ssl/grafana.crt not found (may be generated at runtime)"
+    ]
+  }
+}

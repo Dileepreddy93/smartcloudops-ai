@@ -1,0 +1,31 @@
+{
+  "created_at": "2025-08-08T23:32:27.317293",
+  "keys": {
+    "read": {
+      "key": "a7uNSROYGfnR_woFqla0Hc1fmt-cqa0KNmL8N4YFBIo",
+      "hash": "ffcaf8e19575eedf098ce585dae1156db641ee6637061a58eb55eed4589f4305",
+      "user": "monitoring-system",
+      "level": "read",
+      "description": "For monitoring dashboards and health checks"
+    },
+    "write": {
+      "key": "52bxE8phL4QP6VZPXfwe2UJC6LwUfRn-oDVkLN3RTH8",
+      "hash": "556fa27a575c55e1f6d4d98b07eea69356f8ecd324833b81a03d2959181eb592",
+      "user": "chatops-operator",
+      "level": "write",
+      "description": "For ChatOps and ML prediction operations"
+    },
+    "admin": {
+      "key": "bWkFG4oEwEcbfGP5U3KBiGdAF_PzRtdT7l8hn6mQvC4",
+      "hash": "dcf5a00a331ca90836722b4ea4efebc304bbab881b660086072c6870682e58fe",
+      "user": "system-admin",
+      "level": "admin",
+      "description": "For metrics access and system administration"
+    }
+  },
+  "usage_examples": {
+    "read": "curl -H \"X-API-Key: a7uNSROYGfnR_woFqla0Hc1fmt-cqa0KNmL8N4YFBIo\" http://44.200.14.5:5000/status",
+    "write": "curl -H \"X-API-Key: 52bxE8phL4QP6VZPXfwe2UJC6LwUfRn-oDVkLN3RTH8\" -H \"Content-Type: application/json\" -d '{\"message\": \"What is the system status?\"}' http://44.200.14.5:5000/chat",
+    "admin": "curl -H \"X-API-Key: bWkFG4oEwEcbfGP5U3KBiGdAF_PzRtdT7l8hn6mQvC4\" http://44.200.14.5:5000/metrics"
+  }
+}

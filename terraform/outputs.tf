@@ -48,6 +48,93 @@ output "application_instance_public_dns" {
 }
 
 # Application URLs
+output "application_url" {
+  description = "URL to access the SmartCloudOps AI application"
+  value       = var.enable_https ? "https://${aws_lb.main[0].dns_name}" : "http://${aws_instance.application.public_ip}:5000"
+}
+
+output "application_status_url" {
+  description = "URL to check application status"
+  value       = var.enable_https ? "https://${aws_lb.main[0].dns_name}/status" : "http://${aws_instance.application.public_ip}:5000/status"
+}
+
+# ===== PHASE 3: HTTPS/TLS OUTPUTS =====
+output "load_balancer_dns" {
+  description = "DNS name of the Application Load Balancer"
+  value       = var.enable_https ? aws_lb.main[0].dns_name : null
+}
+
+output "load_balancer_arn" {
+  description = "ARN of the Application Load Balancer"
+  value       = var.enable_https ? aws_lb.main[0].arn : null
+}
+
+output "ssl_certificate_arn" {
+  description = "ARN of the SSL certificate"
+  value       = var.enable_https && var.certificate_arn == "" ? aws_acm_certificate.main[0].arn : var.certificate_arn
+}
+
+output "ssl_certificate_domain_validation_options" {
+  description = "Domain validation options for SSL certificate (for DNS validation)"
+  value       = var.enable_https && var.certificate_arn == "" ? aws_acm_certificate.main[0].domain_validation_options : null
+}
+
+output "https_enabled" {
+  description = "Whether HTTPS is enabled"
+  value       = var.enable_https
+}
+
+output "alb_security_group_id" {
+  description = "Security group ID for the Application Load Balancer"
+  value       = var.enable_https ? aws_security_group.alb[0].id : null
+}
+
+# ===== PHASE 3: SECRETS MANAGER OUTPUTS =====
+output "secrets_manager_enabled" {
+  description = "Whether AWS Secrets Manager is enabled"
+  value       = var.enable_secrets_manager
+}
+
+output "openai_secret_arn" {
+  description = "ARN of the OpenAI API key secret"
+  value       = var.enable_secrets_manager ? aws_secretsmanager_secret.openai_api_key[0].arn : null
+}
+
+output "gemini_secret_arn" {
+  description = "ARN of the Gemini API key secret"
+  value       = var.enable_secrets_manager ? aws_secretsmanager_secret.gemini_api_key[0].arn : null
+}
+
+output "app_api_keys_secret_arn" {
+  description = "ARN of the application API keys database secret"
+  value       = var.enable_secrets_manager ? aws_secretsmanager_secret.app_api_keys[0].arn : null
+}
+
+# ===== PHASE 3: ADVANCED MONITORING OUTPUTS =====
+output "advanced_monitoring_enabled" {
+  description = "Whether advanced monitoring is enabled"
+  value       = var.enable_advanced_monitoring
+}
+
+output "cloudtrail_arn" {
+  description = "ARN of the CloudTrail"
+  value       = var.enable_advanced_monitoring ? aws_cloudtrail.main[0].arn : null
+}
+
+output "guardduty_detector_id" {
+  description = "ID of the GuardDuty detector"
+  value       = var.enable_advanced_monitoring ? aws_guardduty_detector.main[0].id : null
+}
+
+output "vpc_flow_logs_log_group" {
+  description = "CloudWatch log group for VPC Flow Logs"
+  value       = var.enable_advanced_monitoring ? aws_cloudwatch_log_group.vpc_flow_logs[0].name : null
+}
+
+output "cloudtrail_s3_bucket" {
+  description = "S3 bucket for CloudTrail logs"
+  value       = var.enable_advanced_monitoring ? aws_s3_bucket.cloudtrail_logs[0].bucket : null
+}
 output "flask_app_url" {
   description = "URL to access the Flask application"
   value       = "http://${aws_instance.application.public_ip}:5000"

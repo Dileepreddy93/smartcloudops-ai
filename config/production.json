@@ -1,0 +1,29 @@
+{
+  "database": {
+    "type": "postgresql",
+    "host": "prod-db.smartcloudops.ai",
+    "port": 5432,
+    "name": "smartcloudops_prod",
+    "ssl_mode": "require"
+  },
+  "security": {
+    "api_key_expiry_days": 30,
+    "rate_limit_per_minute": 100,
+    "rate_limit_per_hour": 5000,
+    "max_login_attempts": 3,
+    "session_timeout_minutes": 60
+  },
+  "ml": {
+    "min_f1_score": 0.85,
+    "prediction_timeout_seconds": 3,
+    "max_batch_size": 200,
+    "enable_real_data": true
+  },
+  "monitoring": {
+    "prometheus_endpoint": "https://prometheus.smartcloudops.ai",
+    "grafana_endpoint": "https://grafana.smartcloudops.ai",
+    "enable_metrics": true,
+    "enable_health_checks": true,
+    "log_level": "WARNING"
+  }
+}

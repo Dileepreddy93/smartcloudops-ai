@@ -27,10 +27,11 @@
 
 ## 🏆 **CURRENT STATUS: 95% COMPLETE - WORLD-CLASS ACHIEVEMENT**
 
-📋 **[📊 VIEW COMPLETE PROJECT STATUS →](MASTER_PROJECT_STATUS.md)**  
+📋 **[📊 VIEW COMPLETE PROJECT STATUS →](docs/MASTER_PROJECT_STATUS.md)**  
 🏗️ **[⚙️ VIEW TERRAFORM INFRASTRUCTURE DOCS →](terraform/TERRAFORM_MASTER_DOCUMENTATION.md)**  
 🤖 **[🔥 VIEW GEMINI 2.0 INTEGRATION GUIDE →](docs/GEMINI_INTEGRATION.md)**  
-📘 **[📄 VIEW COMPREHENSIVE PROJECT PLAN →](docs/PROJECT_PLAN.md)**
+📘 **[📄 VIEW COMPREHENSIVE PROJECT PLAN →](docs/PROJECT_PLAN.md)**  
+🏛️ **[📁 VIEW PROJECT STRUCTURE & ARCHITECTURE →](PROJECT_STRUCTURE.md)**
 
 ### ✅ **PRODUCTION INFRASTRUCTURE & ACHIEVEMENTS**
 - **🏆 ML Model Excellence**: 99.7% accuracy with 1,645 real data points (109.7% of target)
@@ -275,23 +276,24 @@ graph TB
 
 ```
 smartcloudops-ai/
-├── terraform/                 # Infrastructure as Code
-│   ├── main.tf               # Main Terraform configuration
-│   ├── variables.tf          # Variable definitions
-│   ├── outputs.tf            # Output values
-│   ├── user_data/            # EC2 bootstrap scripts
-│   └── FREE_TIER_DEPLOYMENT.md
-├── app/                      # Flask application
-│   ├── main.py              # Main application
-│   └── requirements.txt     # Python dependencies
-├── scripts/                  # Automation scripts
-│   └── remediation/         # Auto-healing scripts
-├── ml_models/               # ML models and training
-├── docs/                    # Documentation
-├── .github/workflows/       # CI/CD pipelines
-├── PROJECT_STATUS.md        # Detailed progress tracking
-└── README.md               # This file
+├── README.md                    # Main project documentation
+├── PROJECT_STRUCTURE.md         # Professional architecture guide
+├── CONTRIBUTING.md              # Contribution guidelines  
+├── Dockerfile                   # Container configuration
+├── smartcloudops.db            # Production database
+├── app/                        # 🚀 Main application (Flask + Multi-AI)
+├── terraform/                  # ☁️ Infrastructure as Code (AWS Free Tier)
+├── scripts/                    # 🔧 Automation & production tools
+├── ml_models/                  # 🧠 ML models (99.7% accuracy)
+├── docs/                       # 📚 Comprehensive documentation
+├── config/                     # ⚙️ Prometheus & Grafana configs
+├── data/                       # 📊 Metrics and training data
+├── database/                   # 🗄️ Database migrations & seeds
+├── .github/workflows/          # 🔄 CI/CD pipelines
+└── archive/                    # 📦 Historical files (legacy)
 ```
+
+👉 **See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for detailed architecture**
 
 ---
 
@@ -439,9 +441,11 @@ python app/main.py
 ## 🆘 Support
 
 ### **Documentation**
-- 📖 [PROJECT_STATUS.md](PROJECT_STATUS.md) - Detailed progress
-- 🚀 [FREE_TIER_DEPLOYMENT.md](terraform/FREE_TIER_DEPLOYMENT.md) - Deployment guide
-- 🏗️ [Architecture docs](docs/) - Technical details
+- 📖 [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) - Professional architecture guide
+- 📊 [docs/MASTER_PROJECT_STATUS.md](docs/MASTER_PROJECT_STATUS.md) - Detailed progress tracking
+- 🚀 [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md) - Production deployment guide
+- 🏗️ [terraform/README.md](terraform/README.md) - Infrastructure documentation
+- 💰 [docs/FREE_TIER_PRODUCTION_PLAN.md](docs/FREE_TIER_PRODUCTION_PLAN.md) - Cost optimization guide
 
 ### **Community**
 - 🐛 [Issues](https://github.com/Dileepreddy93/smartcloudops-ai/issues) - Bug reports

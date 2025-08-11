@@ -1,7 +1,8 @@
 # SmartCloudOps AI 🤖☁️
 
 > **Intelligent DevOps Automation Platform - PRODUCTION READY & FULLY OPERATIONAL**  
-> Enterprise-grade infrastructure monitoring, ML-powered anomaly detection, and Multi-AI ChatOps for proactive cloud management.
+> Enterprise-grade infrastructure monitoring, ML-powered anomaly detection, and Multi-AI ChatOps for proactive cloud management.  
+> **Created by: Dileep Reddy** | [GitHub](https://github.com/Dileepreddy93) | [LinkedIn](https://linkedin.com/in/dileepreddy93)
 
 [![AWS Free Tier](https://img.shields.io/badge/AWS-Free%20Tier-green)](https://aws.amazon.com/free/)
 [![Terraform](https://img.shields.io/badge/Terraform-1.12+-blue)](https://terraform.io)
@@ -9,6 +10,7 @@
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-PRODUCTION%20READY-success)](README.md)
 [![ML Model](https://img.shields.io/badge/ML%20Accuracy-99.7%25-brightgreen)](README.md)
+[![Author](https://img.shields.io/badge/Author-Dileep%20Reddy-blue)](https://github.com/Dileepreddy93)
 
 ---
 
@@ -476,7 +478,23 @@ Access real-time performance metrics at:
 
 ---
 
-## 📄 License
+## �‍💻 About the Author
+
+**Dileep Reddy** is a DevOps Engineer and Cloud Architect with expertise in:
+- ☁️ **Cloud Infrastructure**: AWS, Azure, Multi-cloud deployments
+- 🔧 **DevOps Tools**: Terraform, Docker, Kubernetes, CI/CD
+- 🤖 **AI/ML Integration**: Machine Learning for infrastructure automation
+- 📊 **Monitoring & Observability**: Prometheus, Grafana, ELK Stack
+- 🛡️ **Security**: Infrastructure security, compliance, and best practices
+
+**Connect with Dileep:**
+- 💼 [LinkedIn Profile](https://linkedin.com/in/dileepreddy93)
+- 🐙 [GitHub Profile](https://github.com/Dileepreddy93)  
+- 📧 [Email Contact](mailto:dileepreddy93@example.com)
+
+---
+
+## �📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 

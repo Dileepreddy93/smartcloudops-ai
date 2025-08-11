@@ -1,0 +1,395 @@
+name: SmartCloudOps AI - Production CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+
+jobs:
+  # Security and Code Quality
+  security-scan:
+    runs-on: ubuntu-latest
+    name: Security & Code Quality
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit safety flake8 black isort
+          pip install -r app/requirements.txt
+      
+      - name: Code formatting check
+        run: |
+          black --check app/
+          isort --check-only app/
+      
+      - name: Lint code
+        run: |
+          flake8 app/ --max-line-length=88 --extend-ignore=E203,W503
+      
+      - name: Security scan with Bandit
+        run: |
+          bandit -r app/ -f json -o bandit-report.json
+      
+      - name: Dependency vulnerability scan
+        run: |
+          safety check --json --output safety-report.json
+      
+      - name: Upload security reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            safety-report.json
+
+  # Unit and Integration Tests
+  test:
+    runs-on: ubuntu-latest
+    name: Test Suite
+    needs: security-scan
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_USER: testuser
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r app/requirements.txt
+          pip install pytest pytest-cov pytest-asyncio pytest-mock
+      
+      - name: Set up test environment
+        run: |
+          export DB_TYPE=postgresql
+          export DB_HOST=localhost
+          export DB_PORT=5432
+          export DB_NAME=testdb
+          export DB_USER=testuser
+          export DB_PASSWORD=testpass
+          export REDIS_HOST=localhost
+          export REDIS_PORT=6379
+          
+          # Initialize test database
+          python scripts/database_migrator.py
+      
+      - name: Run unit tests
+        run: |
+          cd app
+          python -m pytest tests/ -v --cov=. --cov-report=xml --cov-report=html
+      
+      - name: Run integration tests
+        run: |
+          cd app
+          python -m pytest tests/integration/ -v
+      
+      - name: Upload test coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./app/coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+
+  # Load Testing
+  load-test:
+    runs-on: ubuntu-latest
+    name: Performance & Load Testing
+    needs: test
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r app/requirements.txt
+          pip install aiohttp psutil
+      
+      - name: Start application
+        run: |
+          cd app
+          python main.py &
+          sleep 10  # Wait for app to start
+      
+      - name: Run load tests
+        run: |
+          cd scripts
+          python load_tester.py http://localhost:5000 5 30
+      
+      - name: Upload load test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: load-test-results
+          path: |
+            load_test_*.log
+            load_test_results_*.json
+            resource_usage_*.json
+
+  # Build and Package
+  build:
+    runs-on: ubuntu-latest
+    name: Build & Package
+    needs: [security-scan, test, load-test]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Amazon ECR
+        if: github.ref == 'refs/heads/main'
+        uses: aws-actions/amazon-ecr-login@v1
+        env:
+          AWS_REGION: us-east-1
+      
+      - name: Build Docker image
+        run: |
+          docker build -t smartcloudops-ai:latest .
+          docker tag smartcloudops-ai:latest smartcloudops-ai:${{ github.sha }}
+      
+      - name: Test Docker image
+        run: |
+          docker run -d --name test-container -p 8000:8000 smartcloudops-ai:latest
+          sleep 10
+          curl -f http://localhost:8000/health || exit 1
+          docker stop test-container
+      
+      - name: Push to ECR
+        if: github.ref == 'refs/heads/main'
+        run: |
+          docker tag smartcloudops-ai:latest $ECR_REGISTRY/smartcloudops-ai:latest
+          docker tag smartcloudops-ai:latest $ECR_REGISTRY/smartcloudops-ai:${{ github.sha }}
+          docker push $ECR_REGISTRY/smartcloudops-ai:latest
+          docker push $ECR_REGISTRY/smartcloudops-ai:${{ github.sha }}
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+
+  # Infrastructure Validation
+  infrastructure:
+    runs-on: ubuntu-latest
+    name: Infrastructure Validation
+    needs: security-scan
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+      
+      - name: Terraform Format Check
+        run: |
+          cd terraform
+          terraform fmt -check
+      
+      - name: Terraform Validation
+        run: |
+          cd terraform
+          terraform init
+          terraform validate
+      
+      - name: Terraform Plan
+        if: github.event_name == 'pull_request'
+        run: |
+          cd terraform
+          terraform plan -out=tfplan
+      
+      - name: Upload Terraform Plan
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-plan
+          path: terraform/tfplan
+
+  # Staging Deployment
+  deploy-staging:
+    runs-on: ubuntu-latest
+    name: Deploy to Staging
+    needs: [build, infrastructure]
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      
+      - name: Deploy to staging
+        run: |
+          cd terraform
+          terraform init
+          terraform workspace select staging || terraform workspace new staging
+          terraform apply -auto-approve \
+            -var="environment=staging" \
+            -var="desired_capacity=1" \
+            -var="min_capacity=1" \
+            -var="max_capacity=3"
+      
+      - name: Run staging tests
+        run: |
+          # Wait for deployment
+          sleep 60
+          
+          # Get staging URL
+          STAGING_URL=$(cd terraform && terraform output -raw alb_dns_name)
+          
+          # Run smoke tests
+          curl -f http://$STAGING_URL/health
+          python scripts/load_tester.py http://$STAGING_URL 2 30
+
+  # Production Deployment
+  deploy-production:
+    runs-on: ubuntu-latest
+    name: Deploy to Production
+    needs: [build, infrastructure]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      
+      - name: Deploy to production
+        run: |
+          cd terraform
+          terraform init
+          terraform workspace select production || terraform workspace new production
+          terraform apply -auto-approve \
+            -var="environment=production" \
+            -var="desired_capacity=3" \
+            -var="min_capacity=2" \
+            -var="max_capacity=10"
+      
+      - name: Update Auto Scaling Group
+        run: |
+          # Trigger rolling deployment
+          aws autoscaling start-instance-refresh \
+            --auto-scaling-group-name smartcloudops-ai-asg \
+            --preferences MinHealthyPercentage=50,InstanceWarmup=300
+      
+      - name: Wait for deployment
+        run: |
+          # Wait for instance refresh to complete
+          aws autoscaling describe-instance-refreshes \
+            --auto-scaling-group-name smartcloudops-ai-asg \
+            --query 'InstanceRefreshes[0].Status' \
+            --output text
+      
+      - name: Run production health checks
+        run: |
+          PROD_URL=$(cd terraform && terraform output -raw alb_dns_name)
+          
+          # Health check
+          curl -f http://$PROD_URL/health
+          
+          # Basic functionality test
+          curl -f http://$PROD_URL/status
+      
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "🚀 Production deployment successful!"
+          echo "URL: http://$(cd terraform && terraform output -raw alb_dns_name)"
+      
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed, initiating rollback..."
+          aws autoscaling cancel-instance-refresh \
+            --auto-scaling-group-name smartcloudops-ai-asg
+
+  # Post-deployment monitoring
+  post-deployment:
+    runs-on: ubuntu-latest
+    name: Post-deployment Monitoring
+    needs: deploy-production
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      
+      - name: Set up monitoring alerts
+        run: |
+          # Create CloudWatch dashboard
+          aws cloudwatch put-dashboard \
+            --dashboard-name "SmartCloudOps-Production" \
+            --dashboard-body file://monitoring/dashboard.json
+      
+      - name: Run post-deployment tests
+        run: |
+          PROD_URL=$(cd terraform && terraform output -raw alb_dns_name)
+          
+          # Extended load test
+          python scripts/load_tester.py http://$PROD_URL 10 120
+      
+      - name: Send notification
+        run: |
+          echo "✅ SmartCloudOps AI deployed successfully to production!"
+          echo "🔗 URL: http://$(cd terraform && terraform output -raw alb_dns_name)"
+          echo "📊 Monitor: https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:name=SmartCloudOps-Production"

@@ -413,6 +413,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **⭐ Star this repository if you find it helpful!**
 
-Made with ❤️ by [Dileep Reddy](https://github.com/Dileepreddy93)
+Made with ❤️ by [Dileepreddy93](https://github.com/Dileepreddy93)
 
 </div>

@@ -319,6 +319,13 @@ class SmartCloudOpsAnomalyDetector:
         X = X.replace([np.inf, -np.inf], np.nan)
         X = X.fillna(0)
         
+        # Convert all columns to numeric, coercing errors to NaN
+        for col in X.columns:
+            X[col] = pd.to_numeric(X[col], errors='coerce')
+        
+        # Fill any remaining NaN values
+        X = X.fillna(0)
+        
         # Ensure all values are finite
         for col in X.columns:
             X[col] = np.clip(X[col], -1e6, 1e6)

@@ -24,10 +24,9 @@ class AnomalyInferenceEngine:
     Real-time anomaly detection inference engine.
     """
     
-    def __init__(self, model_path="ml_models/optimized", 
-                 prometheus_url="http://3.89.229.102:9090"):
+    def __init__(self, model_path="ml_models/optimized", prometheus_url: str | None = None):
         self.model_path = model_path
-        self.prometheus_url = prometheus_url
+        self.prometheus_url = prometheus_url or os.getenv('PROMETHEUS_URL', 'http://localhost:9090')
         self.model = None
         self.scaler = None
         self.feature_columns = None
@@ -37,9 +36,9 @@ class AnomalyInferenceEngine:
     def load_models(self):
         """Load trained models and metadata."""
         try:
-            # Load the optimized model
-            model_file = os.path.join(self.model_path, "optimized_isolation_forest_model.pkl")
-            scaler_file = os.path.join(self.model_path, "optimized_isolation_forest_scaler.pkl")
+            # Load the anomaly model
+            model_file = os.path.join(self.model_path, "anomaly_model.pkl")
+            scaler_file = os.path.join(self.model_path, "anomaly_scaler.pkl")
             
             if os.path.exists(model_file) and os.path.exists(scaler_file):
                 self.model = joblib.load(model_file)

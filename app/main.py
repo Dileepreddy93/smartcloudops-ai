@@ -29,8 +29,11 @@ from werkzeug.exceptions import RequestEntityTooLarge
 import time
 from collections import defaultdict
 
-# Import centralized configuration manager
-from config_manager import get_config
+# Import secure configuration
+try:
+    from config import config as secure_config
+except Exception as _e:
+    secure_config = None
 
 # Import our secure modules
 from auth_secure import (
@@ -109,11 +112,20 @@ logger = logging.getLogger(__name__)
 # Initialize Flask application with centralized configuration
 app = Flask(__name__)
 
-# Get environment configuration
-config = get_config()
-
-# Apply centralized configuration to Flask app
-app.config.update(config.get_flask_config())
+# Load secure configuration if available
+if secure_config is not None:
+    app.config.update({
+        'SECRET_KEY': secure_config.secret_key,
+        'ENV': secure_config.environment,
+        'DEBUG': secure_config.debug,
+        'LOG_LEVEL': secure_config.log_level,
+    })
+else:
+    # Fallback minimal config
+    app.config.update({
+        'ENV': os.environ.get('ENVIRONMENT', 'development'),
+        'DEBUG': os.environ.get('DEBUG', 'false').lower() == 'true',
+    })
 
 # Additional security configuration
 app.config.update({
@@ -121,11 +133,20 @@ app.config.update({
     'JSON_SORT_KEYS': False,
     'PROPAGATE_EXCEPTIONS': False,  # Handle exceptions securely
     # API keys from environment or defaults for development
-    'ADMIN_API_KEY': os.environ.get('ADMIN_API_KEY', 'sk-admin-demo-key-12345678901234567890'),
-    'ML_API_KEY': os.environ.get('ML_API_KEY', 'sk-ml-demo-key-12345678901234567890123'),
-    'READONLY_API_KEY': os.environ.get('READONLY_API_KEY', 'sk-readonly-demo-key-12345678901234567890'),
+    'ADMIN_API_KEY': os.environ.get('ADMIN_API_KEY', ''),
+    'ML_API_KEY': os.environ.get('ML_API_KEY', ''),
+    'READONLY_API_KEY': os.environ.get('READONLY_API_KEY', ''),
     'API_KEY_SALT': os.environ.get('API_KEY_SALT', 'smartcloudops_secure_salt_2024')
 })
+
+# Enforce no default API keys in production
+if app.config['ENV'] == 'production':
+    missing = []
+    for key in ('ADMIN_API_KEY', 'ML_API_KEY', 'READONLY_API_KEY'):
+        if not app.config.get(key):
+            missing.append(key)
+    if missing:
+        raise RuntimeError(f"Missing required API keys in production: {', '.join(missing)}")
 
 # Initialize simple rate limiting (without external dependencies)
 class SimpleRateLimiter:
@@ -391,6 +412,72 @@ def chat():
         return jsonify(build_error_response(
             ErrorCode.INTERNAL_ERROR,
             "Chat service temporarily unavailable",
+            request_id=get_request_id()
+        )), 500
+
+@app.route('/query', methods=['POST'])
+@require_api_key('read')
+@rate_limit(per_minute=15, per_hour=150)
+def query():
+    """
+    Query endpoint for system operations.
+    """
+    try:
+        user = get_current_user()
+        logger.info(f"Query request from user: {user.get('user_id', 'unknown')}")
+        
+        # Basic placeholder implementation
+        query_data = {
+            'status': 'endpoint not implemented',
+            'message': 'Query functionality is not yet implemented',
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'user_id': user.get('user_id', 'unknown')
+        }
+        
+        return jsonify(build_success_response(
+            query_data,
+            request_id=get_request_id()
+        )), 200
+        
+    except Exception as e:
+        logger.error(f"Query endpoint error: {e}")
+        return jsonify(build_error_response(
+            ErrorCode.INTERNAL_ERROR,
+            "Query service temporarily unavailable",
+            request_id=get_request_id()
+        )), 500
+
+@app.route('/logs', methods=['GET'])
+@require_api_key('read')
+@rate_limit(per_minute=10, per_hour=100)
+def logs():
+    """
+    Logs endpoint for system monitoring.
+    """
+    try:
+        user = get_current_user()
+        logger.info(f"Logs request from user: {user.get('user_id', 'unknown')}")
+        
+        # Basic placeholder implementation
+        logs_data = {
+            'status': 'endpoint not implemented',
+            'message': 'Logs functionality is not yet implemented',
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'user_id': user.get('user_id', 'unknown'),
+            'log_count': 0,
+            'logs': []
+        }
+        
+        return jsonify(build_success_response(
+            logs_data,
+            request_id=get_request_id()
+        )), 200
+        
+    except Exception as e:
+        logger.error(f"Logs endpoint error: {e}")
+        return jsonify(build_error_response(
+            ErrorCode.INTERNAL_ERROR,
+            "Logs service temporarily unavailable",
             request_id=get_request_id()
         )), 500
 

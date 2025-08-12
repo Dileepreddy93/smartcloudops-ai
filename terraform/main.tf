@@ -284,8 +284,10 @@ resource "aws_instance" "monitoring" {
   subnet_id              = aws_subnet.public_1.id
   iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
 
-  user_data = base64encode(templatefile("${path.module}/user_data/secure_monitoring.sh", {
-    project_name = var.project_name
+  user_data = base64encode(templatefile("${path.module}/user_data/monitoring.sh", {
+    project_name           = var.project_name,
+    application_private_ip = aws_instance.application.private_ip,
+    grafana_admin_password = random_password.grafana_admin.result
   }))
   user_data_replace_on_change = true
 
@@ -293,6 +295,13 @@ resource "aws_instance" "monitoring" {
     Name = "${var.project_name}-monitoring"
     Type = "monitoring"
   }
+}
+
+# Secure password for Grafana admin
+resource "random_password" "grafana_admin" {
+  length           = 20
+  special          = true
+  override_characters = "!@#%^*-_+?"
 }
 
 # EC2 Instance for Application (Phase 1.1.4 - ec2_application)

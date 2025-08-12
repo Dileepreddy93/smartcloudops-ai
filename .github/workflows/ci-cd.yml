@@ -51,6 +51,35 @@ jobs:
     runs-on: ubuntu-latest
     needs: security-scan
     
+    env:
+      # Test Configuration
+      TESTING_MODE: "true"
+      ENVIRONMENT: "ci"
+      DEBUG: "false"
+      CORS_ORIGINS: "*"
+      RATE_LIMIT: "100"
+      PROMETHEUS_URL: "http://localhost:9090"
+      PROMETHEUS_TIMEOUT: "30"
+      PROMETHEUS_SSL_VERIFY: "false"
+      LOG_LEVEL: "INFO"
+      AI_PROVIDER: "fallback"
+      
+      # ML Configuration
+      ML_MODEL_PATH: "./ml_models/"
+      ML_DATA_PATH: "./data/"
+      ML_CONFIDENCE_THRESHOLD: "0.8"
+      ML_MAX_PREDICTION_TIME: "5000"
+      
+      # API Keys (from secrets - safe for testing)
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      
+      # Test API Keys
+      ADMIN_API_KEY: "test-admin-key-12345"
+      ML_API_KEY: "test-ml-key-12345"
+      READONLY_API_KEY: "test-readonly-key-12345"
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -72,6 +101,28 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r app/requirements.txt
         pip install flake8 black pytest-cov
+        
+    - name: Create mock ML model files
+      run: |
+        mkdir -p ml_models
+        python -c "
+        import joblib
+        import numpy as np
+        from sklearn.ensemble import IsolationForest
+        from sklearn.preprocessing import StandardScaler
+        
+        # Create mock model and scaler
+        model = IsolationForest(random_state=42)
+        X_mock = np.random.rand(100, 10)
+        model.fit(X_mock)
+        scaler = StandardScaler()
+        scaler.fit(X_mock)
+        
+        # Save files
+        joblib.dump(model, 'ml_models/anomaly_model.pkl')
+        joblib.dump(scaler, 'ml_models/anomaly_scaler.pkl')
+        print('✅ Mock ML models created successfully')
+        "
         
     - name: Lint code
       run: |

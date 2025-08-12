@@ -437,9 +437,9 @@ class SmartCloudOpsAnomalyDetector:
             # Save Isolation Forest model and scaler
             if 'isolation_forest' in self.models:
                 # Save model
-                model_path = '/tmp/isolation_forest_model.pkl'
+                model_path = '/tmp/anomaly_model.pkl'
                 joblib.dump(self.models['isolation_forest'], model_path)
-                self.s3_client.upload_file(model_path, self.s3_bucket, 'models/isolation_forest_model.pkl')
+                self.s3_client.upload_file(model_path, self.s3_bucket, 'models/anomaly_model.pkl')
                 
                 # Save scaler
                 scaler_path = '/tmp/isolation_forest_scaler.pkl'
@@ -485,7 +485,7 @@ class SmartCloudOpsAnomalyDetector:
             
             # Save Isolation Forest
             if 'isolation_forest' in self.models:
-                joblib.dump(self.models['isolation_forest'], '../ml_models/isolation_forest_model.pkl')
+                joblib.dump(self.models['isolation_forest'], '../ml_models/anomaly_model.pkl')
                 joblib.dump(self.scalers['isolation_forest'], '../ml_models/isolation_forest_scaler.pkl')
                 logger.info("✅ Isolation Forest saved locally")
             

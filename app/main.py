@@ -415,6 +415,72 @@ def chat():
             request_id=get_request_id()
         )), 500
 
+@app.route('/query', methods=['POST'])
+@require_api_key('read')
+@rate_limit(per_minute=15, per_hour=150)
+def query():
+    """
+    Query endpoint for system operations.
+    """
+    try:
+        user = get_current_user()
+        logger.info(f"Query request from user: {user.get('user_id', 'unknown')}")
+        
+        # Basic placeholder implementation
+        query_data = {
+            'status': 'endpoint not implemented',
+            'message': 'Query functionality is not yet implemented',
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'user_id': user.get('user_id', 'unknown')
+        }
+        
+        return jsonify(build_success_response(
+            query_data,
+            request_id=get_request_id()
+        )), 200
+        
+    except Exception as e:
+        logger.error(f"Query endpoint error: {e}")
+        return jsonify(build_error_response(
+            ErrorCode.INTERNAL_ERROR,
+            "Query service temporarily unavailable",
+            request_id=get_request_id()
+        )), 500
+
+@app.route('/logs', methods=['GET'])
+@require_api_key('read')
+@rate_limit(per_minute=10, per_hour=100)
+def logs():
+    """
+    Logs endpoint for system monitoring.
+    """
+    try:
+        user = get_current_user()
+        logger.info(f"Logs request from user: {user.get('user_id', 'unknown')}")
+        
+        # Basic placeholder implementation
+        logs_data = {
+            'status': 'endpoint not implemented',
+            'message': 'Logs functionality is not yet implemented',
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'user_id': user.get('user_id', 'unknown'),
+            'log_count': 0,
+            'logs': []
+        }
+        
+        return jsonify(build_success_response(
+            logs_data,
+            request_id=get_request_id()
+        )), 200
+        
+    except Exception as e:
+        logger.error(f"Logs endpoint error: {e}")
+        return jsonify(build_error_response(
+            ErrorCode.INTERNAL_ERROR,
+            "Logs service temporarily unavailable",
+            request_id=get_request_id()
+        )), 500
+
 @app.route('/ml/health', methods=['GET'])
 @require_api_key('read')
 @rate_limit(per_minute=30, per_hour=300)

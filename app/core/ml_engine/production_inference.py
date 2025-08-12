@@ -53,12 +53,12 @@ class ProductionModelRegistry:
                 latest = max(candidates, key=lambda x: x['LastModified'])
                 return latest['Key']
 
-            # default to optimized naming
-            return 'models/optimized/optimized_isolation_forest_model.pkl'
+            # default to anomaly model naming
+            return 'models/anomaly_model.pkl'
 
         except Exception as e:
             logger.error(f"Error getting latest model: {e}")
-            return 'models/optimized/optimized_isolation_forest_model.pkl'
+            return 'models/anomaly_model.pkl'
     
     def load_model_from_s3(self, model_key: str, scaler_key: str) -> Tuple[object, object]:
         """Load model and scaler from S3."""
@@ -189,11 +189,11 @@ class ProductionInferenceEngine:
         try:
             # Try multiple local paths
             candidate_local_paths = [
-                ("../ml_models/optimized/optimized_isolation_forest_model.pkl", "../ml_models/optimized/optimized_isolation_forest_scaler.pkl"),
-                ("../ml_models/optimized_isolation_forest_model.pkl", "../ml_models/optimized_isolation_forest_scaler.pkl"),
+                ("../ml_models/anomaly_model.pkl", "../ml_models/anomaly_scaler.pkl"),
+                ("../ml_models/optimized/anomaly_model.pkl", "../ml_models/optimized/anomaly_scaler.pkl"),
                 ("../ml_models/isolation_forest_model.pkl", "../ml_models/isolation_forest_scaler.pkl"),
-                ("/opt/smartcloudops-ai/ml_models/optimized/optimized_isolation_forest_model.pkl", 
-                 "/opt/smartcloudops-ai/ml_models/optimized/optimized_isolation_forest_scaler.pkl")
+                ("/opt/smartcloudops-ai/ml_models/optimized/anomaly_model.pkl", 
+                 "/opt/smartcloudops-ai/ml_models/optimized/anomaly_scaler.pkl")
             ]
 
             loaded = False

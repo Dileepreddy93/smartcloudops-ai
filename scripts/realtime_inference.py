@@ -36,9 +36,9 @@ class AnomalyInferenceEngine:
     def load_models(self):
         """Load trained models and metadata."""
         try:
-            # Load the optimized model
-            model_file = os.path.join(self.model_path, "optimized_isolation_forest_model.pkl")
-            scaler_file = os.path.join(self.model_path, "optimized_isolation_forest_scaler.pkl")
+            # Load the anomaly model
+            model_file = os.path.join(self.model_path, "anomaly_model.pkl")
+            scaler_file = os.path.join(self.model_path, "anomaly_scaler.pkl")
             
             if os.path.exists(model_file) and os.path.exists(scaler_file):
                 self.model = joblib.load(model_file)

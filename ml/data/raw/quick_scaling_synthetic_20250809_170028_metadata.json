@@ -1,0 +1,9 @@
+{
+  "generation_timestamp": "2025-08-09T17:00:28.627694",
+  "total_points": 1138,
+  "anomaly_count": 57,
+  "anomaly_rate": 0.05008787346221441,
+  "purpose": "quick_scaling_to_optimal_targets",
+  "quality_level": "high_synthetic",
+  "batch_count": 12
+}

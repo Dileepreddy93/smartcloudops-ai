@@ -1,0 +1,33 @@
+{
+  "model_type": "complete_real_data_model",
+  "version": "1.0.0",
+  "training_timestamp": "2025-08-09T17:57:34.569978",
+  "description": "Trained on 1645 complete real data points",
+  "data_sources": {
+    "original_real_data": 145,
+    "turbo_real_data": 1500,
+    "total_real_points": 1645
+  },
+  "performance": {
+    "train_accuracy": 1.0,
+    "test_accuracy": 0.9969604863221885,
+    "precision": 1.0,
+    "recall": 0.9969604863221885,
+    "f1_score": 0.9984779299847791,
+    "auc_roc": NaN,
+    "anomaly_rate": 0.0
+  },
+  "model_parameters": {
+    "contamination": 0.05,
+    "n_estimators": 200,
+    "max_features": 1.0,
+    "feature_count": 24
+  },
+  "data_quality": {
+    "total_samples": 1645,
+    "training_samples": 1316,
+    "test_samples": 329,
+    "feature_dimension": 24,
+    "data_source": "100_percent_real_infrastructure"
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "model_type": "advanced_ensemble",
+  "version": "3.0.0",
+  "training_timestamp": "2025-08-09T15:53:44.195717",
+  "created_by": "advanced_ml_trainer",
+  "description": "Advanced ML model with feature engineering and optimization",
+  "best_model": {
+    "name": "gradient_boosting",
+    "training_time": 53.090959
+  },
+  "performance": {
+    "accuracy": 0.99,
+    "precision": 1.0,
+    "recall": 0.6666666666666666,
+    "f1_score": 0.8,
+    "auc_roc": 0.9536082474226804,
+    "confusion_matrix": {
+      "true_positives": 4,
+      "false_positives": 0,
+      "true_negatives": 194,
+      "false_negatives": 2
+    },
+    "cv_scores": [
+      0.9900332225913622,
+      0.9933774834437086,
+      1.0,
+      0.9966555183946488,
+      1.0
+    ],
+    "cv_mean": 0.9960132448859438,
+    "cv_std": 0.0038706292243757476
+  },
+  "target_achievement": {
+    "accuracy_achieved": true,
+    "precision_achieved": true,
+    "recall_achieved": false,
+    "f1_achieved": false,
+    "auc_achieved": "True"
+  },
+  "features": {
+    "total_engineered": 42,
+    "selected_features": [
+      "cpu_usage",
+      "disk_io",
+      "disk_io_read",
+      "disk_io_write",
+      "disk_usage",
+      "load_1m",
+      "load_5m",
+      "memory_usage",
+      "network_io",
+      "network_rx",
+      "network_tx",
+      "response_time",
+      "cpu_usage_rolling_3",
+      "cpu_usage_rolling_5",
+      "cpu_usage_rolling_10",
+      "cpu_usage_rolling_std",
+      "cpu_usage_rate_change",
+      "cpu_usage_ema",
+      "memory_usage_rolling_3",
+      "memory_usage_rolling_5"
+    ],
+    "feature_engineering": [
+      "rolling_statistics",
+      "interaction_features",
+      "statistical_features",
+      "anomaly_scores",
+      "binning_features",
+      "time_features"
+    ]
+  },
+  "techniques_used": [
+    "advanced_feature_engineering",
+    "class_imbalance_handling",
+    "hyperparameter_optimization",
+    "cross_validation",
+    "ensemble_methods",
+    "feature_selection"
+  ],
+  "model_metadata": {
+    "preprocessing": "RobustScaler + SelectKBest",
+    "class_balancing": "SMOTE/ADASYN/SMOTETomek",
+    "hyperparameter_tuning": "GridSearchCV/RandomizedSearchCV",
+    "cross_validation_folds": 5,
+    "feature_selection_method": "SelectKBest with f_classif"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "collection_timestamp": "2025-08-09T16:52:35.480022",
+  "total_data_points": 10,
+  "anomaly_count": 0,
+  "anomaly_rate": 0.0,
+  "features_count": 30,
+  "collection_interval_seconds": 30,
+  "enhancement_version": "1.0",
+  "quality_metrics": {
+    "avg_quality_score": 1.0,
+    "complete_data_points": 10
+  }
+}

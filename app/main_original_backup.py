@@ -6,14 +6,15 @@ SmartCloudOps AI - Production Flask Application
 Security-hardened multi-AI ChatOps application with real data ML integration.
 """
 
-from flask import Flask, request, jsonify
+import json
+import logging
 import os
 import sys
-import logging
 import traceback
 from datetime import datetime, timezone
-import json
 from pathlib import Path
+
+from flask import Flask, jsonify, request
 
 # Secure path handling for ML imports
 app_dir = Path(__file__).parent
@@ -33,7 +34,7 @@ except ImportError:
 
 # Import authentication module
 try:
-    from auth import auth, require_api_key, require_read, require_write, require_admin
+    from auth import auth, require_admin, require_api_key, require_read, require_write
 
     AUTH_AVAILABLE = True
     logger.info("✅ Authentication module loaded")
@@ -214,10 +215,10 @@ def validate_json_input(data, required_fields):
 # Prometheus metrics support
 try:
     from prometheus_client import (
+        CONTENT_TYPE_LATEST,
         Counter,
         Histogram,
         generate_latest,
-        CONTENT_TYPE_LATEST,
     )
 
     PROMETHEUS_AVAILABLE = True

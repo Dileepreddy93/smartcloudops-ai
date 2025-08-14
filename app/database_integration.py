@@ -7,12 +7,12 @@ Provides database access layer for Flask application.
 Integrates SQLite/PostgreSQL database with application logic.
 """
 
-import sys
-import logging
-from pathlib import Path
-from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any
 import json
+import logging
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 # Add database path to imports
 app_dir = Path(__file__).parent

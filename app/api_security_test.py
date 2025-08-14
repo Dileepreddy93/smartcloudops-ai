@@ -6,10 +6,11 @@ SmartCloudOps AI - API Security Testing Demo
 Demonstrate the fixed security vulnerabilities with actual API tests.
 """
 
-import requests
 import json
 import time
 from datetime import datetime
+
+import requests
 
 # Server configuration
 BASE_URL = "http://localhost:5000"

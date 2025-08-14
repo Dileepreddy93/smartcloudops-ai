@@ -7,20 +7,21 @@ Enterprise-grade authentication with fail-secure patterns, comprehensive
 rate limiting, session management, and audit logging.
 """
 
-from flask import request, jsonify, g, current_app
-from functools import wraps
-import logging
 import hashlib
 import hmac
-import secrets
-import time
 import json
-import uuid
-from typing import Dict, Optional, Set, Tuple, List
-from datetime import datetime, timezone, timedelta
-from dataclasses import dataclass, asdict
+import logging
+import secrets
 import threading
+import time
+import uuid
 from collections import defaultdict
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta, timezone
+from functools import wraps
+from typing import Dict, List, Optional, Set, Tuple
+
+from flask import current_app, g, jsonify, request
 
 # Configure logging
 logger = logging.getLogger(__name__)

@@ -4,11 +4,12 @@ SmartCloudOps AI - Secrets Manager Integration
 Helper functions to retrieve secrets from AWS Secrets Manager
 """
 
-import boto3
 import json
 import logging
 from functools import lru_cache
 from typing import Dict, Optional
+
+import boto3
 
 logger = logging.getLogger(__name__)
 

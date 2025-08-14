@@ -6,8 +6,8 @@ SmartCloudOps AI - Security Fixes Verification
 Verify that all critical API security vulnerabilities have been fixed.
 """
 
-import sys
 import os
+import sys
 import traceback
 
 print("🔒 SMARTCLOUDOPS AI - API SECURITY FIXES VERIFICATION")
@@ -20,7 +20,7 @@ try:
 
     print("   ✅ auth_secure.py: Available")
 
-    from secure_api import ValidationError, SecurityError, ErrorCode
+    from secure_api import ErrorCode, SecurityError, ValidationError
 
     print("   ✅ secure_api.py: Available")
 
@@ -61,7 +61,7 @@ except Exception as e:
 # Test 3: Input validation
 print("\n3. INPUT VALIDATION SYSTEM:")
 try:
-    from secure_api import validate_ml_metrics, ValidationError
+    from secure_api import ValidationError, validate_ml_metrics
 
     # Test invalid metrics
     try:

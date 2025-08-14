@@ -61,8 +61,7 @@ typing-extensions==4.12.2
 annotated-types==0.7.0
 
 # Pinned transitive dependencies for security tools compatibility
-safety==3.2.7
-safety-schemas==0.0.2
+safety
 packaging==24.1
 click==8.1.7
 rich==13.8.1

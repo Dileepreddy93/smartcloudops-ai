@@ -1,4 +1,17 @@
-security_code_quality:
+# A name for your workflow
+name: Production CI/CD
+
+# Defines when the workflow runs
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# A workflow run is made up of one or more jobs
+jobs:
+  # This is the job we've been working on. Notice it is indented under 'jobs:'
+  security_code_quality:
     name: Security & Code Quality
     runs-on: ubuntu-latest
     steps:
@@ -13,12 +26,10 @@ security_code_quality:
       - name: Install dependencies
         run: |
           pip install -r app/requirements.txt
-          pip install ruff  # Install the new all-in-one tool
+          pip install ruff
 
       - name: Auto-fix linting and formatting issues
         run: |
-          # This command finds issues and fixes them in the files directly
-          # It replaces black, isort, and most of flake8's auto-fixable rules
           ruff check . --fix --exit-zero
 
       - name: Commit and push changes
@@ -29,6 +40,7 @@ security_code_quality:
           
       - name: Final lint check
         run: |
-          # This will now run on the auto-fixed code to confirm it's clean
-          # It will fail if there are issues ruff couldn't fix automatically
           ruff check .
+          
+  # If you have other jobs like 'docker_build_and_push', they would go here
+  # at the same indentation level as 'security_code_quality'.

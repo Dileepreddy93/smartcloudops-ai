@@ -9,6 +9,7 @@ Provides secure, production-hardened ML prediction capabilities.
 # Safe import with fallback for missing dependencies
 try:
     from .secure_inference import SecureMLInferenceEngine
+
     SECURE_ENGINE_AVAILABLE = True
 except ImportError as e:
     SecureMLInferenceEngine = None
@@ -16,6 +17,7 @@ except ImportError as e:
 
 try:
     from .production_inference import MLInferenceEngine
+
     PRODUCTION_ENGINE_AVAILABLE = True
 except ImportError as e:
     MLInferenceEngine = None
@@ -24,6 +26,6 @@ except ImportError as e:
 # Export what's available
 __all__ = []
 if SECURE_ENGINE_AVAILABLE:
-    __all__.append('SecureMLInferenceEngine')
+    __all__.append("SecureMLInferenceEngine")
 if PRODUCTION_ENGINE_AVAILABLE:
-    __all__.append('MLInferenceEngine')
+    __all__.append("MLInferenceEngine")

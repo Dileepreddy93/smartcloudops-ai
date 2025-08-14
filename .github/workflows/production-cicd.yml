@@ -54,6 +54,7 @@ jobs:
           path: |
             bandit-report.json
             safety-report.json
+
   # Unit and Integration Tests
   test:
     runs-on: ubuntu-latest
@@ -169,6 +170,7 @@ jobs:
             load_test_*.log
             load_test_results_*.json
             resource_usage_*.json
+
   # Build and Package
   build:
     runs-on: ubuntu-latest
@@ -287,6 +289,7 @@ jobs:
           # Run smoke tests
           curl -f http://$STAGING_URL/health
           python scripts/load_tester.py http://$STAGING_URL 2 30
+
   # Production Deployment
   deploy-production:
     runs-on: ubuntu-latest
@@ -353,6 +356,7 @@ jobs:
           echo "❌ Deployment failed, initiating rollback..."
           aws autoscaling cancel-instance-refresh \
             --auto-scaling-group-name smartcloudops-ai-asg
+
   # Post-deployment monitoring
   post-deployment:
     runs-on: ubuntu-latest

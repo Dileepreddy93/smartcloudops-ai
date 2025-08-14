@@ -2,10 +2,11 @@
 """Simple Real Data Collector"""
 
 import csv
-import psutil
+import os
 import time
 from datetime import datetime
-import os
+
+import psutil
 
 
 def collect_system_metrics():

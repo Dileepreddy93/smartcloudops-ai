@@ -7,19 +7,20 @@ Production-ready inference service for anomaly detection models.
 Integrates with Flask app for real-time predictions.
 """
 
-import os
 import json
 import logging
+import os
+import threading
 import time
-import pandas as pd
-import numpy as np
-import joblib
-import boto3
-import requests
+from collections import deque
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
-import threading
-from collections import deque
+
+import boto3
+import joblib
+import numpy as np
+import pandas as pd
+import requests
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

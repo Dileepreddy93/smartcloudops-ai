@@ -7,13 +7,14 @@ Migrates from SQLite to PostgreSQL for production scalability.
 Handles concurrent users and provides backup/restore capabilities.
 """
 
+import json
+import logging
 import os
 import sqlite3
-import psycopg2
-import logging
-from typing import Dict, Any, List
 from datetime import datetime
-import json
+from typing import Any, Dict, List
+
+import psycopg2
 
 
 class DatabaseMigrator:

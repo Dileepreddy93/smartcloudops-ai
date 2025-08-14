@@ -6,15 +6,16 @@ SmartCloudOps AI - Real-time Anomaly Detection Inference
 Real-time inference system for deployed anomaly detection models.
 """
 
-import os
 import json
 import logging
-import pandas as pd
-import numpy as np
-import joblib
-import boto3
-import requests
+import os
 from datetime import datetime, timedelta
+
+import boto3
+import joblib
+import numpy as np
+import pandas as pd
+import requests
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

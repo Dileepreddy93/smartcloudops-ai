@@ -7,17 +7,18 @@ Implements comprehensive monitoring with proactive alerting.
 Critical for production operations with 10-50 users.
 """
 
+import json
+import logging
 import os
+import smtplib
 import time
+from datetime import datetime, timedelta
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from typing import Any, Dict, List
+
 import psutil
 import requests
-import smtplib
-import logging
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from datetime import datetime, timedelta
-from typing import Dict, List, Any
-import json
 
 
 class ProductionMonitor:

@@ -11,23 +11,24 @@ Data Source: Prometheus metrics from monitoring infrastructure
 Storage: S3 bucket for model persistence
 """
 
-import os
-import sys
 import json
 import logging
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from datetime import datetime, timedelta
-import requests
-import boto3
-from sklearn.ensemble import IsolationForest
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import classification_report, f1_score, confusion_matrix
-from prophet import Prophet
-import joblib
+import os
+import sys
 import warnings
+from datetime import datetime, timedelta
+
+import boto3
+import joblib
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import requests
+import seaborn as sns
+from prophet import Prophet
+from sklearn.ensemble import IsolationForest
+from sklearn.metrics import classification_report, confusion_matrix, f1_score
+from sklearn.preprocessing import StandardScaler
 
 warnings.filterwarnings("ignore")
 

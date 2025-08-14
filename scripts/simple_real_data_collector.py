@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Simple Real Data Collector"""
 
-import csv
 import os
 import time
 from datetime import datetime

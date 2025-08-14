@@ -6,6 +6,13 @@ on:
   pull_request:
     branches: [ main ]
 
+# Add explicit permissions for security
+permissions:
+  contents: read
+  actions: read
+  checks: write
+  pull-requests: write
+
 env:
   PYTHON_VERSION: '3.11'
 
@@ -19,14 +26,15 @@ jobs:
       uses: actions/checkout@v4
       
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
         
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flask psutil pandas scikit-learn joblib pytest
+        pip install -r app/requirements.txt
         
     - name: Test Flask application
       run: |
@@ -71,8 +79,21 @@ jobs:
     - name: Test Docker container
       run: |
         docker run -d --name test-app -p 5000:5000 smartcloudops-ai:${{ github.sha }}
-        sleep 10
-        curl -f http://localhost:5000/ || exit 1
+        sleep 15
+        # Add retries for container health check
+        for i in {1..5}; do
+          if curl -f http://localhost:5000/; then
+            echo "✅ Container is responding"
+            break
+          elif [ $i -eq 5 ]; then
+            echo "❌ Container failed to respond after 5 attempts"
+            docker logs test-app
+            exit 1
+          else
+            echo "Attempt $i failed, retrying in 5 seconds..."
+            sleep 5
+          fi
+        done
         docker stop test-app && docker rm test-app
         echo "✅ Docker test completed"
 

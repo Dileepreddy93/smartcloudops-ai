@@ -7,13 +7,12 @@ Enterprise-grade input validation, output sanitization, and DTO management.
 """
 
 import html
-import json
 import logging
 import re
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -281,7 +280,7 @@ class SecureValidator:
 
             return float_value
 
-        except (ValueError, TypeError) as e:
+        except (ValueError, TypeError):
             raise ValidationError(f"Invalid numeric value for {field_name}: {value}")
 
     @classmethod

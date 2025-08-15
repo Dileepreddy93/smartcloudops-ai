@@ -6,7 +6,6 @@ SmartCloudOps AI - API Security Testing Demo
 Demonstrate the fixed security vulnerabilities with actual API tests.
 """
 
-import json
 import time
 from datetime import datetime
 

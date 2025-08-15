@@ -23,7 +23,6 @@ import uuid
 from collections import defaultdict
 from datetime import datetime, timezone
 from functools import wraps
-from typing import Any, Dict, List, Optional
 
 # Import our secure modules
 from auth_secure import (
@@ -33,7 +32,6 @@ from auth_secure import (
     require_admin,
     require_api_key,
     require_ml_access,
-    require_write_access,
 )
 
 # Flask and security imports

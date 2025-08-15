@@ -8,7 +8,6 @@ Identifies performance bottlenecks before production deployment.
 """
 
 import asyncio
-import concurrent.futures
 import json
 import logging
 import os
@@ -379,7 +378,7 @@ async def main():
     num_users = int(sys.argv[2]) if len(sys.argv) > 2 else 10
     duration = int(sys.argv[3]) if len(sys.argv) > 3 else 60
 
-    print(f"🚀 Starting Load Test")
+    print("🚀 Starting Load Test")
     print(f"Target: {base_url}")
     print(f"Concurrent Users: {num_users}")
     print(f"Duration: {duration}s")

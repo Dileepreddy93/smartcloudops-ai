@@ -7,14 +7,13 @@ Production-ready inference service for anomaly detection models.
 Integrates with Flask app for real-time predictions.
 """
 
-import json
 import logging
 import os
 import threading
 import time
 from collections import deque
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import Dict, Optional, Tuple
 
 import boto3
 import joblib

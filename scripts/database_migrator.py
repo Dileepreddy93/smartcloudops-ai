@@ -7,12 +7,9 @@ Migrates from SQLite to PostgreSQL for production scalability.
 Handles concurrent users and provides backup/restore capabilities.
 """
 
-import json
 import logging
 import os
 import sqlite3
-from datetime import datetime
-from typing import Any, Dict, List
 
 import psycopg2
 

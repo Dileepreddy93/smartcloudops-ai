@@ -11,7 +11,7 @@ try:
     from .secure_inference import SecureMLInferenceEngine
 
     SECURE_ENGINE_AVAILABLE = True
-except ImportError as e:
+except ImportError:
     SecureMLInferenceEngine = None
     SECURE_ENGINE_AVAILABLE = False
 
@@ -19,7 +19,7 @@ try:
     from .production_inference import MLInferenceEngine
 
     PRODUCTION_ENGINE_AVAILABLE = True
-except ImportError as e:
+except ImportError:
     MLInferenceEngine = None
     PRODUCTION_ENGINE_AVAILABLE = False
 

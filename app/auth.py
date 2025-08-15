@@ -8,12 +8,8 @@ rate limiting, session management, and audit logging.
 """
 
 import hashlib
-import hmac
-import json
 import logging
-import secrets
 import threading
-import time
 import uuid
 from collections import defaultdict
 from dataclasses import asdict, dataclass
@@ -21,7 +17,7 @@ from datetime import datetime, timedelta, timezone
 from functools import wraps
 from typing import Dict, List, Optional, Set, Tuple
 
-from flask import current_app, g, jsonify, request
+from flask import g, jsonify, request
 
 # Configure logging
 logger = logging.getLogger(__name__)

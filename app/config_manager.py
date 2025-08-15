@@ -364,8 +364,8 @@ class EnvironmentConfigManager:
 
     def print_summary(self):
         """Print configuration summary"""
-        print(f"\n🔧 SmartCloudOps AI Configuration Summary")
-        print(f"=" * 50)
+        print("\n🔧 SmartCloudOps AI Configuration Summary")
+        print("=" * 50)
         print(f"Environment: {self.environment}")
         print(
             f"Database: {self.database.type} at {self.database.host}:{self.database.port}"

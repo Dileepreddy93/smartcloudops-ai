@@ -103,7 +103,7 @@ class SmartCloudOpsAnomalyDetector:
             "n_estimators": 100,
         }
 
-        logger.info(f"🚀 SmartCloudOps Anomaly Detector initialized")
+        logger.info("🚀 SmartCloudOps Anomaly Detector initialized")
         logger.info(f"📊 Prometheus URL: {self.prometheus_url}")
         logger.info(f"🗄️ S3 Bucket: {self.s3_bucket}")
 
@@ -799,7 +799,7 @@ class SmartCloudOpsAnomalyDetector:
         # Isolation Forest Results
         if "isolation_forest" in results:
             iso_results = results["isolation_forest"]
-            print(f"\n🌲 ISOLATION FOREST RESULTS:")
+            print("\n🌲 ISOLATION FOREST RESULTS:")
             print(f"   Features Used: {iso_results['feature_count']}")
 
             if "f1_score" in iso_results:
@@ -814,7 +814,7 @@ class SmartCloudOpsAnomalyDetector:
 
         # Prophet Results
         if "prophet_models" in results:
-            print(f"\n📈 PROPHET MODELS TRAINED:")
+            print("\n📈 PROPHET MODELS TRAINED:")
             for metric, model_results in results["prophet_models"].items():
                 anomaly_rate = model_results["predictions"].mean()
                 print(f"   {metric}: {anomaly_rate:.2%} anomalies detected")
@@ -822,7 +822,7 @@ class SmartCloudOpsAnomalyDetector:
         # Data Summary
         if "data_summary" in results:
             summary = results["data_summary"]
-            print(f"\n📊 DATA SUMMARY:")
+            print("\n📊 DATA SUMMARY:")
             print(f"   Total Data Points: {summary['total_points']:,}")
             print(f"   Features Engineered: {summary['feature_count']}")
             print(f"   Ground Truth Anomaly Rate: {summary['anomaly_rate']:.2%}")
@@ -830,18 +830,18 @@ class SmartCloudOpsAnomalyDetector:
                 f"   Time Range: {summary['time_range']['start']} to {summary['time_range']['end']}"
             )
 
-        print(f"\n💾 MODELS SAVED:")
+        print("\n💾 MODELS SAVED:")
         print(f"   S3 Bucket: {self.s3_bucket}")
-        print(f"   Local Backup: ../ml_models/")
+        print("   Local Backup: ../ml_models/")
 
-        print(f"\n📊 VISUALIZATIONS:")
-        print(f"   Analysis Chart: ../docs/anomaly_detection_analysis.png")
+        print("\n📊 VISUALIZATIONS:")
+        print("   Analysis Chart: ../docs/anomaly_detection_analysis.png")
 
-        print(f"\n🚀 NEXT STEPS:")
-        print(f"   1. Review model performance metrics")
-        print(f"   2. Deploy models for real-time inference")
-        print(f"   3. Set up automated retraining pipeline")
-        print(f"   4. Integrate with alerting system")
+        print("\n🚀 NEXT STEPS:")
+        print("   1. Review model performance metrics")
+        print("   2. Deploy models for real-time inference")
+        print("   3. Set up automated retraining pipeline")
+        print("   4. Integrate with alerting system")
 
         print("\n" + "=" * 80)
         print("✅ PHASE 3 TRAINING PIPELINE COMPLETED SUCCESSFULLY")

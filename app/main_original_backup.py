@@ -6,7 +6,6 @@ SmartCloudOps AI - Production Flask Application
 Security-hardened multi-AI ChatOps application with real data ML integration.
 """
 
-import json
 import logging
 import os
 import sys

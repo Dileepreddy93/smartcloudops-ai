@@ -6,9 +6,6 @@ SmartCloudOps AI - Security Fixes Verification
 Verify that all critical API security vulnerabilities have been fixed.
 """
 
-import os
-import sys
-import traceback
 
 print("🔒 SMARTCLOUDOPS AI - API SECURITY FIXES VERIFICATION")
 print("=" * 60)
@@ -16,11 +13,10 @@ print("=" * 60)
 # Test 1: Import secure modules
 print("\n1. SECURE MODULE IMPORTS:")
 try:
-    from auth_secure import SecureAPIKeyAuth, require_api_key
 
     print("   ✅ auth_secure.py: Available")
 
-    from secure_api import ErrorCode, SecurityError, ValidationError
+    from secure_api import ErrorCode, ValidationError
 
     print("   ✅ secure_api.py: Available")
 

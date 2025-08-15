@@ -7,12 +7,11 @@ Provides database access layer for Flask application.
 Integrates SQLite/PostgreSQL database with application logic.
 """
 
-import json
 import logging
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 # Add database path to imports
 app_dir = Path(__file__).parent
@@ -23,7 +22,7 @@ try:
     from sqlite_models import db_manager
 
     DATABASE_AVAILABLE = True
-except ImportError as e:
+except ImportError:
     DATABASE_AVAILABLE = False
     db_manager = None
 

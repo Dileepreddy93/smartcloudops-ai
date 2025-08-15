@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 # Configure secure logging
 logging.basicConfig(
@@ -386,7 +386,7 @@ class SecureMLInferenceEngine:
 
                 validated_metrics[metric] = float_value
 
-            except (ValueError, TypeError) as e:
+            except (ValueError, TypeError):
                 logger.warning(f"Invalid metric value for {metric}: {value}, using 0.0")
                 validated_metrics[metric] = 0.0
 

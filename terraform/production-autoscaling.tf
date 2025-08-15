@@ -49,7 +49,7 @@ data "aws_availability_zones" "available" {
 data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
-  
+
   filter {
     name   = "name"
     values = ["amzn2-ami-hvm-*-x86_64-gp2"]
@@ -63,7 +63,7 @@ resource "aws_vpc" "main" {
   enable_dns_support   = true
 
   tags = {
-    Name = "${var.project_name}-vpc"
+    Name        = "${var.project_name}-vpc"
     Environment = var.environment
   }
 }
@@ -72,21 +72,21 @@ resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 
   tags = {
-    Name = "${var.project_name}-igw"
+    Name        = "${var.project_name}-igw"
     Environment = var.environment
   }
 }
 
 # Public subnets for ALB
 resource "aws_subnet" "public" {
-  count             = 2
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.${count.index + 1}.0/24"
-  availability_zone = data.aws_availability_zones.available.names[count.index]
+  count                   = 2
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.${count.index + 1}.0/24"
+  availability_zone       = data.aws_availability_zones.available.names[count.index]
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "${var.project_name}-public-${count.index + 1}"
+    Name        = "${var.project_name}-public-${count.index + 1}"
     Environment = var.environment
   }
 }
@@ -99,7 +99,7 @@ resource "aws_subnet" "private" {
   availability_zone = data.aws_availability_zones.available.names[count.index]
 
   tags = {
-    Name = "${var.project_name}-private-${count.index + 1}"
+    Name        = "${var.project_name}-private-${count.index + 1}"
     Environment = var.environment
   }
 }
@@ -110,7 +110,7 @@ resource "aws_eip" "nat" {
   domain = "vpc"
 
   tags = {
-    Name = "${var.project_name}-nat-eip-${count.index + 1}"
+    Name        = "${var.project_name}-nat-eip-${count.index + 1}"
     Environment = var.environment
   }
 }
@@ -121,7 +121,7 @@ resource "aws_nat_gateway" "main" {
   subnet_id     = aws_subnet.public[count.index].id
 
   tags = {
-    Name = "${var.project_name}-nat-${count.index + 1}"
+    Name        = "${var.project_name}-nat-${count.index + 1}"
     Environment = var.environment
   }
 }
@@ -136,7 +136,7 @@ resource "aws_route_table" "public" {
   }
 
   tags = {
-    Name = "${var.project_name}-public-rt"
+    Name        = "${var.project_name}-public-rt"
     Environment = var.environment
   }
 }
@@ -151,7 +151,7 @@ resource "aws_route_table" "private" {
   }
 
   tags = {
-    Name = "${var.project_name}-private-rt-${count.index + 1}"
+    Name        = "${var.project_name}-private-rt-${count.index + 1}"
     Environment = var.environment
   }
 }
@@ -196,7 +196,7 @@ resource "aws_security_group" "alb" {
   }
 
   tags = {
-    Name = "${var.project_name}-alb-sg"
+    Name        = "${var.project_name}-alb-sg"
     Environment = var.environment
   }
 }
@@ -216,7 +216,7 @@ resource "aws_security_group" "app" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/16"]  # Only from VPC
+    cidr_blocks = ["10.0.0.0/16"] # Only from VPC
   }
 
   egress {
@@ -227,7 +227,7 @@ resource "aws_security_group" "app" {
   }
 
   tags = {
-    Name = "${var.project_name}-app-sg"
+    Name        = "${var.project_name}-app-sg"
     Environment = var.environment
   }
 }
@@ -238,38 +238,38 @@ resource "aws_db_subnet_group" "main" {
   subnet_ids = aws_subnet.private[*].id
 
   tags = {
-    Name = "${var.project_name}-db-subnet-group"
+    Name        = "${var.project_name}-db-subnet-group"
     Environment = var.environment
   }
 }
 
 # RDS PostgreSQL Database
 resource "aws_db_instance" "main" {
-  identifier             = "${var.project_name}-db"
-  engine                 = "postgres"
-  engine_version         = "15.4"
-  instance_class         = "db.t3.micro"  # Free tier eligible
-  allocated_storage      = 20
-  max_allocated_storage  = 100
-  storage_type           = "gp2"
-  storage_encrypted      = true
+  identifier            = "${var.project_name}-db"
+  engine                = "postgres"
+  engine_version        = "15.4"
+  instance_class        = "db.t3.micro" # Free tier eligible
+  allocated_storage     = 20
+  max_allocated_storage = 100
+  storage_type          = "gp2"
+  storage_encrypted     = true
 
   db_name  = "smartcloudops"
   username = "smartcloudops"
-  password = "ChangeMe123!"  # Use AWS Secrets Manager in production
+  password = "ChangeMe123!" # Use AWS Secrets Manager in production
 
   vpc_security_group_ids = [aws_security_group.db.id]
   db_subnet_group_name   = aws_db_subnet_group.main.name
 
   backup_retention_period = 7
-  backup_window          = "03:00-04:00"
-  maintenance_window     = "sun:04:00-sun:05:00"
+  backup_window           = "03:00-04:00"
+  maintenance_window      = "sun:04:00-sun:05:00"
 
   skip_final_snapshot = true
   deletion_protection = false
 
   tags = {
-    Name = "${var.project_name}-database"
+    Name        = "${var.project_name}-database"
     Environment = var.environment
   }
 }
@@ -286,7 +286,7 @@ resource "aws_security_group" "db" {
   }
 
   tags = {
-    Name = "${var.project_name}-db-sg"
+    Name        = "${var.project_name}-db-sg"
     Environment = var.environment
   }
 }
@@ -302,7 +302,7 @@ resource "aws_lb" "main" {
   enable_deletion_protection = false
 
   tags = {
-    Name = "${var.project_name}-alb"
+    Name        = "${var.project_name}-alb"
     Environment = var.environment
   }
 }
@@ -326,7 +326,7 @@ resource "aws_lb_target_group" "app" {
   }
 
   tags = {
-    Name = "${var.project_name}-tg"
+    Name        = "${var.project_name}-tg"
     Environment = var.environment
   }
 }
@@ -346,7 +346,7 @@ resource "aws_lb_listener" "app" {
 resource "aws_launch_template" "app" {
   name_prefix   = "${var.project_name}-lt-"
   image_id      = data.aws_ami.amazon_linux.id
-  instance_type = "t3.small"  # Upgraded from t2.micro for better performance
+  instance_type = "t3.small" # Upgraded from t2.micro for better performance
 
   vpc_security_group_ids = [aws_security_group.app.id]
 
@@ -361,7 +361,7 @@ resource "aws_launch_template" "app" {
   tag_specifications {
     resource_type = "instance"
     tags = {
-      Name = "${var.project_name}-app"
+      Name        = "${var.project_name}-app"
       Environment = var.environment
     }
   }
@@ -369,10 +369,10 @@ resource "aws_launch_template" "app" {
 
 # Auto Scaling Group
 resource "aws_autoscaling_group" "app" {
-  name                = "${var.project_name}-asg"
-  vpc_zone_identifier = aws_subnet.private[*].id
-  target_group_arns   = [aws_lb_target_group.app.arn]
-  health_check_type   = "ELB"
+  name                      = "${var.project_name}-asg"
+  vpc_zone_identifier       = aws_subnet.private[*].id
+  target_group_arns         = [aws_lb_target_group.app.arn]
+  health_check_type         = "ELB"
   health_check_grace_period = 300
 
   min_size         = var.min_capacity
@@ -466,7 +466,7 @@ resource "aws_elasticache_cluster" "redis" {
   security_group_ids   = [aws_security_group.cache.id]
 
   tags = {
-    Name = "${var.project_name}-redis"
+    Name        = "${var.project_name}-redis"
     Environment = var.environment
   }
 }
@@ -483,7 +483,7 @@ resource "aws_security_group" "cache" {
   }
 
   tags = {
-    Name = "${var.project_name}-cache-sg"
+    Name        = "${var.project_name}-cache-sg"
     Environment = var.environment
   }
 }

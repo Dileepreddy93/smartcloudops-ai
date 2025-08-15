@@ -299,8 +299,8 @@ resource "aws_instance" "monitoring" {
 
 # Secure password for Grafana admin
 resource "random_password" "grafana_admin" {
-  length           = 20
-  special          = true
+  length              = 20
+  special             = true
   override_characters = "!@#%^*-_+?"
 }
 
@@ -314,10 +314,10 @@ resource "aws_instance" "application" {
   iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
 
   user_data = base64encode(templatefile("${path.module}/user_data/application.sh", {
-    project_name      = var.project_name,
-    ml_models_bucket  = aws_s3_bucket.ml_models.bucket,
-    prometheus_host   = aws_instance.monitoring.private_ip,
-    prometheus_port   = var.prometheus_port
+    project_name     = var.project_name,
+    ml_models_bucket = aws_s3_bucket.ml_models.bucket,
+    prometheus_host  = aws_instance.monitoring.private_ip,
+    prometheus_port  = var.prometheus_port
   }))
   user_data_replace_on_change = true
 
@@ -506,7 +506,7 @@ resource "aws_lb" "main" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb[0].id]
-  subnets           = [aws_subnet.public_1.id, aws_subnet.public_2.id]
+  subnets            = [aws_subnet.public_1.id, aws_subnet.public_2.id]
 
   enable_deletion_protection = false
 
@@ -611,7 +611,7 @@ resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.main[0].arn
   port              = "443"
   protocol          = "HTTPS"
-  ssl_policy        = "ELBSecurityPolicy-TLS-1-2-2017-01"  # TLS 1.2 minimum
+  ssl_policy        = "ELBSecurityPolicy-TLS-1-2-2017-01" # TLS 1.2 minimum
   certificate_arn   = var.certificate_arn != "" ? var.certificate_arn : aws_acm_certificate.main[0].arn
 
   default_action {
@@ -710,7 +710,7 @@ resource "aws_s3_bucket_policy" "alb_logs" {
       {
         Effect = "Allow"
         Principal = {
-          AWS = "arn:aws:iam::127311923021:root"  # ELB service account for us-east-1
+          AWS = "arn:aws:iam::127311923021:root" # ELB service account for us-east-1
         }
         Action   = "s3:PutObject"
         Resource = "${aws_s3_bucket.alb_logs[0].arn}/alb-logs/AWSLogs/${data.aws_caller_identity.current.account_id}/*"
@@ -760,8 +760,8 @@ resource "aws_secretsmanager_secret" "openai_api_key" {
 }
 
 resource "aws_secretsmanager_secret_version" "openai_api_key" {
-  count         = var.enable_secrets_manager && var.openai_api_key != "" ? 1 : 0
-  secret_id     = aws_secretsmanager_secret.openai_api_key[0].id
+  count     = var.enable_secrets_manager && var.openai_api_key != "" ? 1 : 0
+  secret_id = aws_secretsmanager_secret.openai_api_key[0].id
   secret_string = jsonencode({
     api_key = var.openai_api_key
   })
@@ -782,8 +782,8 @@ resource "aws_secretsmanager_secret" "gemini_api_key" {
 }
 
 resource "aws_secretsmanager_secret_version" "gemini_api_key" {
-  count         = var.enable_secrets_manager && var.gemini_api_key != "" ? 1 : 0
-  secret_id     = aws_secretsmanager_secret.gemini_api_key[0].id
+  count     = var.enable_secrets_manager && var.gemini_api_key != "" ? 1 : 0
+  secret_id = aws_secretsmanager_secret.gemini_api_key[0].id
   secret_string = jsonencode({
     api_key = var.gemini_api_key
   })
@@ -892,14 +892,14 @@ resource "aws_iam_role_policy_attachment" "secrets_policy_attachment" {
 resource "aws_cloudtrail" "main" {
   count                         = var.enable_advanced_monitoring ? 1 : 0
   name                          = "${var.project_name}-cloudtrail"
-  s3_bucket_name               = aws_s3_bucket.cloudtrail_logs[0].bucket
+  s3_bucket_name                = aws_s3_bucket.cloudtrail_logs[0].bucket
   include_global_service_events = true
-  is_multi_region_trail        = true
-  enable_logging               = true
+  is_multi_region_trail         = true
+  enable_logging                = true
 
   event_selector {
-    read_write_type                 = "All"
-    include_management_events       = true
+    read_write_type                  = "All"
+    include_management_events        = true
     exclude_management_event_sources = []
 
     data_resource {
@@ -995,7 +995,7 @@ resource "aws_s3_bucket_policy" "cloudtrail_logs" {
         Resource = "${aws_s3_bucket.cloudtrail_logs[0].arn}/AWSLogs/${data.aws_caller_identity.current.account_id}/*"
         Condition = {
           StringEquals = {
-            "s3:x-amz-acl" = "bucket-owner-full-control"
+            "s3:x-amz-acl"  = "bucket-owner-full-control"
             "AWS:SourceArn" = "arn:aws:cloudtrail:${var.aws_region}:${data.aws_caller_identity.current.account_id}:trail/${var.project_name}-cloudtrail"
           }
         }
@@ -1015,7 +1015,7 @@ resource "aws_guardduty_detector" "main" {
     }
     kubernetes {
       audit_logs {
-        enable = false  # Not using EKS
+        enable = false # Not using EKS
       }
     }
     malware_protection {

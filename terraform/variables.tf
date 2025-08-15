@@ -29,38 +29,38 @@ variable "environment" {
 variable "allowed_ssh_cidrs" {
   description = "CIDR blocks allowed for SSH access (port 22)"
   type        = list(string)
-  default     = []  # Must be explicitly set - no default SSH access
+  default     = [] # Must be explicitly set - no default SSH access
 }
 
 variable "allowed_app_cidrs" {
   description = "CIDR blocks allowed for application access (port 5000)"
   type        = list(string)
-  default     = []  # Must be explicitly set - no default app access
+  default     = [] # Must be explicitly set - no default app access
 }
 
 variable "allowed_monitoring_cidrs" {
   description = "CIDR blocks allowed for monitoring access (ports 3000, 9090)"
   type        = list(string)
-  default     = []  # Must be explicitly set - no default monitoring access
+  default     = [] # Must be explicitly set - no default monitoring access
 }
 
 # ===== PHASE 3: HTTPS/TLS CONFIGURATION =====
 variable "domain_name" {
   description = "Domain name for SSL certificate (e.g., smartcloudops.yourdomain.com)"
   type        = string
-  default     = ""  # Set to enable HTTPS
+  default     = "" # Set to enable HTTPS
 }
 
 variable "enable_https" {
   description = "Enable HTTPS with Application Load Balancer and SSL certificate"
   type        = bool
-  default     = false  # Set to true to enable HTTPS
+  default     = false # Set to true to enable HTTPS
 }
 
 variable "certificate_arn" {
   description = "ARN of existing SSL certificate in ACM (optional)"
   type        = string
-  default     = ""  # Leave empty to create new certificate
+  default     = "" # Leave empty to create new certificate
 }
 
 variable "enable_http_redirect" {

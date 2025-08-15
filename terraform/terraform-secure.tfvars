@@ -28,22 +28,22 @@ allowed_monitoring_cidrs = [
 ]
 
 # Emergency Admin Access - Replace with your current IP
-admin_ip_cidr = ""  # "203.0.113.100/32"  # Your current IP for emergency access
+admin_ip_cidr = "" # "203.0.113.100/32"  # Your current IP for emergency access
 
 # EC2 Configuration
-ec2_instance_type = "t2.micro"  # Free tier eligible
+ec2_instance_type = "t2.micro" # Free tier eligible
 
 # SSH Key - Provide your public key
-ssh_public_key = ""  # Add your SSH public key here
+ssh_public_key = "" # Add your SSH public key here
 
 # Storage (Free tier)
-ebs_volume_size = 8  # GB - Free tier includes 30GB EBS storage
+ebs_volume_size = 8 # GB - Free tier includes 30GB EBS storage
 
 # OpenAI Configuration (if using)
-openai_api_key = ""  # Set if using OpenAI integration
+openai_api_key = "" # Set if using OpenAI integration
 
 # Gemini Configuration  
-gemini_api_key = ""  # Set if using Gemini integration
+gemini_api_key = "" # Set if using Gemini integration
 
 # ===== SECURITY NOTICE =====
 # 

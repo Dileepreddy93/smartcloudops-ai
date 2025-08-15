@@ -6,14 +6,11 @@ SmartCloudOps AI - Real-time Anomaly Detection Inference
 Real-time inference system for deployed anomaly detection models.
 """
 
-import json
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 
-import boto3
 import joblib
-import numpy as np
 import pandas as pd
 import requests
 
@@ -178,14 +175,14 @@ def main():
     metrics = engine.collect_current_metrics()
 
     if metrics:
-        print(f"\n📊 Current Infrastructure Metrics:")
+        print("\n📊 Current Infrastructure Metrics:")
         for metric, value in metrics.items():
             print(f"   {metric}: {value:.2f}")
 
         # Predict anomaly
         result = engine.predict_anomaly(metrics)
 
-        print(f"\n🤖 Anomaly Detection Result:")
+        print("\n🤖 Anomaly Detection Result:")
         print(f"   Status: {result.get('status', 'ERROR')}")
         print(f"   Is Anomaly: {result.get('is_anomaly', 'N/A')}")
 
@@ -203,9 +200,9 @@ def main():
             print(f"   Confidence: {confidence}")
 
         if result.get("is_anomaly"):
-            print(f"   🚨 ALERT: Anomaly detected in infrastructure!")
+            print("   🚨 ALERT: Anomaly detected in infrastructure!")
         else:
-            print(f"   ✅ All systems operating normally")
+            print("   ✅ All systems operating normally")
     else:
         print("❌ Could not collect metrics")
 

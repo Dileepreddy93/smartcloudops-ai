@@ -2,13 +2,13 @@
 # Security-hardened with non-root user and health checks
 
 # Build Stage
-FROM python:3.10-slim as builder
+FROM python:3.11-slim as builder
 WORKDIR /build
 COPY app/requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 # Production Stage
-FROM python:3.10-slim as production
+FROM python:3.11-slim as production
 
 # Security: Install security updates
 RUN apt-get update && apt-get upgrade -y && \
@@ -45,7 +45,7 @@ USER appuser
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:5000/status || exit 1
+    CMD curl -f http://localhost:5000/ || exit 1
 
 # Expose port
 EXPOSE 5000

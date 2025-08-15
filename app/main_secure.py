@@ -63,8 +63,10 @@ except ImportError:
 # Import secure ML inference engine
 try:
     import sys
-
-    sys.path.append("/home/dileep-reddy/smartcloudops-ai/scripts")
+    import os
+    # Use relative path for scripts directory
+    scripts_path = os.path.join(os.path.dirname(__file__), '../scripts')
+    sys.path.append(os.path.abspath(scripts_path))
     # Try importing the existing ML inference engine
     try:
         from secure_ml_inference_engine import SecureMLInferenceEngine

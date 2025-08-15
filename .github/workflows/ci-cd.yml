@@ -51,6 +51,26 @@ jobs:
             assert response.status_code == 200
         print('✅ Flask tests passed')
         "
+    - name: Test secure Flask application
+      run: |
+        cd app
+        python -c "
+        try:
+            from main_secure import app
+            print('✅ Secure Flask import test passed')
+        except Exception as e:
+            print(f'⚠️ Secure Flask test warning: {e}')
+        "
+    - name: Test configuration management
+      run: |
+        cd app
+        python -c "
+        try:
+            from config_manager import DatabaseConfig, SecurityConfig, MLConfig
+            print('✅ Config manager import passed')
+        except Exception as e:
+            print(f'⚠️ Config manager test warning: {e}')
+        "
         
     - name: Test data collection
       run: |

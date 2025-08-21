@@ -3,8 +3,7 @@
 import pytest
 import os
 from unittest.mock import patch, MagicMock
-from flask import Flask
-from app.main import app as flask_app, get_chat_response, get_logs_data, get_status_info
+from app.main import app as flask_app
 
 # --- Conftest.py (or can be included here for simplicity) ---
 # This file provides shared fixtures and mock objects for the tests.

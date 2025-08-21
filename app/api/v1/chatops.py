@@ -1,4 +1,4 @@
-from flask import Blueprint, Request, Response, request
+from flask import Blueprint, request
 
 from app.main import get_chat_response
 from app.utils.response import make_response
@@ -20,7 +20,7 @@ def query():
     user_query = sanitize_string(json.get("query"))
     try:
         answer = get_chat_response(user_query)
-    except Exception as e:
+    except Exception:
         return make_response(error="Failed to process query", http_status=400)
 
     # Preserve legacy shape: top-level 'response'

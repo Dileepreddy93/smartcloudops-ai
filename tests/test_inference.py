@@ -1,4 +1,3 @@
-import os
 
 
 def test_secure_inference_health_basic():

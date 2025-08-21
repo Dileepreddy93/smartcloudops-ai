@@ -1,4 +1,3 @@
-import pytest
 
 
 def test_ml_health_endpoint(client):

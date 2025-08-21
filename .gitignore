@@ -1,4 +1,12 @@
 terraform/.terraform/
 venv/
+.venv/
 __pycache__/
 *.pyc
+.pytest_cache/
+.vscode/
+.idea/
+build/
+dist/
+.eggs/
+*.egg-info/

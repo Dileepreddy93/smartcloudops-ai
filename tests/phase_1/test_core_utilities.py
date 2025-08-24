@@ -4,7 +4,7 @@ Tests for response and validation utility modules.
 """
 
 import pytest
-from datetime import datetime, timezone
+from datetime import datetime
 from flask import Flask
 from app.utils.response import make_response, now_iso
 from app.utils.validation import require_json_keys, sanitize_string

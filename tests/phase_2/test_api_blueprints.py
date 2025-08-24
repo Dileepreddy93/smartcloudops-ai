@@ -28,7 +28,6 @@ class TestHealthBlueprint:
     def test_status_endpoint(self, client, monkeypatch):
         """Test the /status endpoint."""
         # Arrange
-        from app.core.ml_engine.secure_inference import get_secure_inference_engine
         
         class MockEngine:
             def health_check(self):
@@ -144,7 +143,6 @@ class TestLogsBlueprint:
     def test_logs_endpoint(self, client, monkeypatch):
         """Test the /logs endpoint."""
         # Arrange
-        from app.main import get_logs_data
         monkeypatch.setattr("app.main.get_logs_data", lambda: "Mocked log content")
         
         # Act
@@ -158,7 +156,6 @@ class TestLogsBlueprint:
     def test_logs_endpoint_empty_content(self, client, monkeypatch):
         """Test the /logs endpoint with empty content."""
         # Arrange
-        from app.main import get_logs_data
         monkeypatch.setattr("app.main.get_logs_data", lambda: "")
         
         # Act
@@ -189,7 +186,6 @@ class TestMLBlueprint:
     def test_ml_health_endpoint(self, client, monkeypatch):
         """Test the /ml/health endpoint."""
         # Arrange
-        from app.core.ml_engine.secure_inference import get_secure_inference_engine
         
         class MockEngine:
             def health_check(self):
@@ -209,7 +205,6 @@ class TestMLBlueprint:
     def test_ml_predict_endpoint_success(self, client, monkeypatch):
         """Test the /ml/predict endpoint with valid input."""
         # Arrange
-        from app.core.ml_engine.secure_inference import get_secure_inference_engine
         
         class MockEngine:
             def predict_anomaly(self, metrics=None, user_id=None):
@@ -257,7 +252,6 @@ class TestMLBlueprint:
     def test_ml_predict_endpoint_engine_error(self, client, monkeypatch):
         """Test the /ml/predict endpoint handles engine errors."""
         # Arrange
-        from app.core.ml_engine.secure_inference import get_secure_inference_engine
         
         class MockEngine:
             def predict_anomaly(self, metrics=None, user_id=None):
@@ -278,7 +272,6 @@ class TestMLBlueprint:
     def test_ml_metrics_endpoint(self, client, monkeypatch):
         """Test the /ml/metrics endpoint."""
         # Arrange
-        from app.core.ml_engine.secure_inference import get_secure_inference_engine
         
         class MockEngine:
             def health_check(self):

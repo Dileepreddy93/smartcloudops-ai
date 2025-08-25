@@ -8,9 +8,8 @@ Comprehensive test suite for Phase 4 auto-remediation functionality.
 
 import pytest
 import json
-import time
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch
 
 from app.services.remediation_service import (
     AutoRemediationEngine, 

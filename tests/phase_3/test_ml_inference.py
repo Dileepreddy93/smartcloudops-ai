@@ -4,8 +4,7 @@ Tests for ML inference engine, model loading, and prediction functionality.
 """
 
 import pytest
-import json
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock
 from datetime import datetime, timezone
 from app.core.ml_engine.secure_inference import (
     get_secure_inference_engine,

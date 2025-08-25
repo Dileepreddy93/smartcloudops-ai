@@ -4,8 +4,7 @@ Tests for Prometheus metrics collection, exposure, and monitoring functionality.
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
-from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import Counter, generate_latest
 from app.api.v1.metrics import bp as metrics_bp
 from app.api.v1.ml import ML_PREDICTION_REQUESTS
 

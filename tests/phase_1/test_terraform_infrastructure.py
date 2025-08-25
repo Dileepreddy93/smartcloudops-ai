@@ -5,7 +5,6 @@ Tests for VPC, subnets, security groups, and core infrastructure components.
 
 import pytest
 from pathlib import Path
-import re
 
 
 class TestTerraformInfrastructure:

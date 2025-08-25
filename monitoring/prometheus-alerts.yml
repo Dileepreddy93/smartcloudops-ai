@@ -1,0 +1,251 @@
+groups:
+  - name: smartcloudops-ai-alerts
+    rules:
+      # Application Health Alerts
+      - alert: ApplicationDown
+        expr: smartcloudops_application_health == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: smartcloudops-ai
+        annotations:
+          summary: "SmartCloudOps AI application is down"
+          description: "The SmartCloudOps AI application has been down for more than 1 minute"
+
+      - alert: MLEngineDown
+        expr: smartcloudops_ml_engine_health == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: ml-engine
+        annotations:
+          summary: "ML Engine is not healthy"
+          description: "The ML inference engine has been unhealthy for more than 2 minutes"
+
+      - alert: AutoRemediationDisabled
+        expr: smartcloudops_remediation_enabled == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: auto-remediation
+        annotations:
+          summary: "Auto-remediation system is disabled"
+          description: "The auto-remediation system has been disabled for more than 5 minutes"
+
+      # System Resource Alerts
+      - alert: HighCPUUsage
+        expr: smartcloudops_system_cpu_percent > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is above 80% for more than 5 minutes"
+
+      - alert: CriticalCPUUsage
+        expr: smartcloudops_system_cpu_percent > 95
+        for: 2m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "Critical CPU usage detected"
+          description: "CPU usage is above 95% for more than 2 minutes"
+
+      - alert: HighMemoryUsage
+        expr: smartcloudops_system_memory_percent > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is above 85% for more than 5 minutes"
+
+      - alert: CriticalMemoryUsage
+        expr: smartcloudops_system_memory_percent > 95
+        for: 2m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "Critical memory usage detected"
+          description: "Memory usage is above 95% for more than 2 minutes"
+
+      - alert: HighDiskUsage
+        expr: smartcloudops_system_disk_percent > 85
+        for: 10m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High disk usage detected"
+          description: "Disk usage is above 85% for more than 10 minutes"
+
+      - alert: CriticalDiskUsage
+        expr: smartcloudops_system_disk_percent > 95
+        for: 5m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "Critical disk usage detected"
+          description: "Disk usage is above 95% for more than 5 minutes"
+
+      # API Performance Alerts
+      - alert: HighErrorRate
+        expr: rate(smartcloudops_api_errors_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: "High API error rate detected"
+          description: "API error rate is above 0.1 errors per second for more than 2 minutes"
+
+      - alert: CriticalErrorRate
+        expr: rate(smartcloudops_api_errors_total[5m]) > 1.0
+        for: 1m
+        labels:
+          severity: critical
+          service: api
+        annotations:
+          summary: "Critical API error rate detected"
+          description: "API error rate is above 1.0 errors per second for more than 1 minute"
+
+      - alert: SlowResponseTime
+        expr: histogram_quantile(0.95, rate(smartcloudops_api_response_time_seconds_bucket[5m])) > 2.0
+        for: 5m
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: "Slow API response time detected"
+          description: "95th percentile API response time is above 2 seconds for more than 5 minutes"
+
+      - alert: VerySlowResponseTime
+        expr: histogram_quantile(0.95, rate(smartcloudops_api_response_time_seconds_bucket[5m])) > 5.0
+        for: 2m
+        labels:
+          severity: critical
+          service: api
+        annotations:
+          summary: "Very slow API response time detected"
+          description: "95th percentile API response time is above 5 seconds for more than 2 minutes"
+
+      # ML Engine Alerts
+      - alert: LowMLPredictionRate
+        expr: rate(smartcloudops_ml_predictions_total[1h]) < 0.1
+        for: 10m
+        labels:
+          severity: warning
+          service: ml-engine
+        annotations:
+          summary: "Low ML prediction rate detected"
+          description: "ML prediction rate is below 0.1 predictions per hour for more than 10 minutes"
+
+      - alert: MLPredictionErrors
+        expr: rate(smartcloudops_ml_prediction_errors_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: warning
+          service: ml-engine
+        annotations:
+          summary: "ML prediction errors detected"
+          description: "ML prediction errors are occurring for more than 2 minutes"
+
+      # Auto-Remediation Alerts
+      - alert: HighRemediationRate
+        expr: rate(smartcloudops_remediation_actions_total[1h]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: auto-remediation
+        annotations:
+          summary: "High auto-remediation rate detected"
+          description: "Auto-remediation actions are occurring at a rate above 10 per hour for more than 5 minutes"
+
+      - alert: RemediationFailure
+        expr: rate(smartcloudops_remediation_failures_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: critical
+          service: auto-remediation
+        annotations:
+          summary: "Auto-remediation failures detected"
+          description: "Auto-remediation actions are failing for more than 2 minutes"
+
+      # Integration Alerts
+      - alert: IntegrationDown
+        expr: smartcloudops_integration_running == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: integration
+        annotations:
+          summary: "ML-Remediation integration is down"
+          description: "The ML-Remediation integration service has been down for more than 2 minutes"
+
+      - alert: NoActiveRules
+        expr: smartcloudops_remediation_active_rules == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: auto-remediation
+        annotations:
+          summary: "No active remediation rules"
+          description: "No active remediation rules are configured for more than 5 minutes"
+
+      # System Load Alerts
+      - alert: HighSystemLoad
+        expr: smartcloudops_system_load_average > 2.0
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High system load detected"
+          description: "System load average is above 2.0 for more than 5 minutes"
+
+      - alert: CriticalSystemLoad
+        expr: smartcloudops_system_load_average > 5.0
+        for: 2m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "Critical system load detected"
+          description: "System load average is above 5.0 for more than 2 minutes"
+
+      # Service Availability Alerts
+      - alert: ServiceUnavailable
+        expr: up{job="smartcloudops-ai"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: smartcloudops-ai
+        annotations:
+          summary: "SmartCloudOps AI service is unavailable"
+          description: "The SmartCloudOps AI service target is down for more than 1 minute"
+
+      # Custom Business Logic Alerts
+      - alert: AnomalyDetected
+        expr: smartcloudops_ml_anomaly_detected > 0
+        for: 0m
+        labels:
+          severity: warning
+          service: ml-engine
+        annotations:
+          summary: "ML anomaly detected"
+          description: "The ML engine has detected an anomaly in system behavior"
+
+      - alert: RemediationTriggered
+        expr: increase(smartcloudops_remediation_actions_total[1m]) > 0
+        for: 0m
+        labels:
+          severity: info
+          service: auto-remediation
+        annotations:
+          summary: "Auto-remediation action triggered"
+          description: "An auto-remediation action has been triggered by the system"

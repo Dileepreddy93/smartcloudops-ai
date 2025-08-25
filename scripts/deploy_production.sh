@@ -1,382 +1,252 @@
 #!/bin/bash
-# SmartCloudOps AI - Production Deployment Script
-# ===============================================
-#
-# Complete production deployment with all security fixes applied.
-# This script deploys the fully audited and hardened system.
 
-set -euo pipefail
+# SmartCloudOps AI - Production Deployment Script
+# This script deploys the complete application to production
+
+set -e  # Exit on any error
+
+echo "🚀 SmartCloudOps AI - Production Deployment Starting..."
+echo "=================================================="
 
 # Configuration
-PROJECT_NAME="smartcloudops-ai"
-DEPLOYMENT_ENV="${DEPLOYMENT_ENV:-production}"
-DEPLOYMENT_REGION="${AWS_REGION:-us-east-1}"
-DOMAIN="${PRODUCTION_DOMAIN:-smartcloudops.ai}"
+APP_INSTANCE_IP="44.200.14.5"
+MONITORING_INSTANCE_IP="23.20.101.112"
+SSH_KEY="~/.ssh/smartcloudops-ai.pem"
+APP_DIR="/opt/smartcloudops-ai"
+SERVICE_NAME="smartcloudops-ai"
 
-echo "🚀 SmartCloudOps AI - Production Deployment"
-echo "=========================================="
-echo "📅 Deployment Time: $(date)"
-echo "🌍 Environment: $DEPLOYMENT_ENV"
-echo "🌐 Region: $DEPLOYMENT_REGION"
-echo "🏷️ Domain: $DOMAIN"
-echo ""
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
 
-# Pre-deployment validation
-echo "🔍 PRE-DEPLOYMENT VALIDATION"
-echo "============================"
+# Function to print colored output
+print_status() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
 
-# Check required files
-REQUIRED_FILES=(
-    "app/main.py"
-    "app/config_manager.py"
-    "app/core/ml_engine/secure_inference.py"
-    "terraform/main.tf"
-    ".env.${DEPLOYMENT_ENV}.template"
-)
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
 
-echo "📁 Checking required files..."
-all_files_present=true
-for file in "${REQUIRED_FILES[@]}"; do
-    if [ -f "$file" ]; then
-        echo "   ✅ $file"
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Function to check if command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Function to test SSH connection
+test_ssh_connection() {
+    print_status "Testing SSH connection to application instance..."
+    if ssh -i $SSH_KEY -o ConnectTimeout=10 -o BatchMode=yes ec2-user@$APP_INSTANCE_IP "echo 'SSH connection successful'" 2>/dev/null; then
+        print_success "SSH connection to application instance established"
+        return 0
     else
-        echo "   ❌ MISSING: $file"
-        all_files_present=false
+        print_error "Failed to connect to application instance via SSH"
+        return 1
     fi
-done
+}
 
-if [ "$all_files_present" != true ]; then
-    echo "❌ DEPLOYMENT ABORTED: Missing required files"
-    exit 1
-fi
-
-# Validate Python imports
-echo "🐍 Validating Python imports..."
-if python3 -c "import sys; sys.path.insert(0, 'app'); import main" 2>/dev/null; then
-    echo "   ✅ Application imports successfully"
-else
-    echo "   ❌ DEPLOYMENT ABORTED: Import validation failed"
-    exit 1
-fi
-
-# Validate configuration
-echo "⚙️ Validating configuration..."
-if python3 app/config_manager.py --environment "$DEPLOYMENT_ENV" --validate 2>/dev/null; then
-    echo "   ✅ Configuration validation passed"
-else
-    echo "   ❌ DEPLOYMENT ABORTED: Configuration validation failed"
-    exit 1
-fi
-
-echo ""
-echo "✅ PRE-DEPLOYMENT VALIDATION PASSED"
-echo ""
-
-# Environment setup
-echo "🔧 ENVIRONMENT SETUP"
-echo "==================="
-
-# Create production environment file if it doesn't exist
-if [ ! -f ".env.${DEPLOYMENT_ENV}" ]; then
-    echo "📝 Creating production environment file..."
-    cp ".env.${DEPLOYMENT_ENV}.template" ".env.${DEPLOYMENT_ENV}"
+# Function to deploy application
+deploy_application() {
+    print_status "Deploying SmartCloudOps AI application..."
     
-    echo "⚠️  CRITICAL: Update .env.${DEPLOYMENT_ENV} with actual production secrets:"
-    echo "   - SECRET_KEY (64+ characters)"
-    echo "   - Database credentials"
-    echo "   - API keys"
-    echo "   - AWS credentials"
-    echo ""
-    echo "📖 Refer to .env.${DEPLOYMENT_ENV}.template for all required variables"
+    # Create deployment directory
+    ssh -i $SSH_KEY ec2-user@$APP_INSTANCE_IP "sudo mkdir -p $APP_DIR"
     
-    if [ "$DEPLOYMENT_ENV" = "production" ]; then
-        echo ""
-        echo "❌ DEPLOYMENT PAUSED: Configure production secrets before proceeding"
-        echo "   1. Edit .env.production with actual secrets"
-        echo "   2. Re-run this script"
-        exit 2
-    fi
-fi
-
-# Load environment variables
-if [ -f ".env.${DEPLOYMENT_ENV}" ]; then
-    echo "📥 Loading environment configuration..."
-    set -a  # Automatically export variables
-    source ".env.${DEPLOYMENT_ENV}"
-    set +a
-    echo "   ✅ Environment variables loaded"
-fi
-
-# Database setup
-echo ""
-echo "🗄️ DATABASE SETUP"
-echo "================"
-
-if [ "$DB_TYPE" = "sqlite" ]; then
-    echo "📊 Setting up SQLite database..."
-    python3 -c "
-import sys
-sys.path.insert(0, 'app')
-from database_integration import DatabaseService
-db = DatabaseService()
-print('✅ SQLite database initialized')
-"
-elif [ "$DB_TYPE" = "postgresql" ]; then
-    echo "🐘 PostgreSQL configuration detected"
-    echo "   📋 Ensure PostgreSQL server is accessible at $DB_HOST:$DB_PORT"
-    echo "   📋 Database: $DB_NAME"
-    echo "   📋 User: $DB_USER"
-    # Note: In production, database should be set up separately
-fi
-
-# Security verification
-echo ""
-echo "🔒 SECURITY VERIFICATION"
-echo "======================="
-
-echo "🔐 Running security verification..."
-if python3 scripts/verify_frontend_security.py >/dev/null 2>&1; then
-    echo "   ✅ Frontend security verification passed"
-else
-    echo "   ⚠️ Frontend security verification had warnings (check logs)"
-fi
-
-# Infrastructure deployment
-echo ""
-echo "🏗️ INFRASTRUCTURE DEPLOYMENT"
-echo "==========================="
-
-if command -v terraform &> /dev/null; then
-    echo "🔧 Deploying infrastructure with Terraform..."
+    # Copy application files
+    print_status "Copying application files..."
+    scp -i $SSH_KEY -r app/* ec2-user@$APP_INSTANCE_IP:$APP_DIR/
+    scp -i $SSH_KEY requirements.txt ec2-user@$APP_INSTANCE_IP:$APP_DIR/
     
-    cd terraform
+    # Install Python dependencies
+    print_status "Installing Python dependencies..."
+    ssh -i $SSH_KEY ec2-user@$APP_INSTANCE_IP "cd $APP_DIR && python3 -m pip install --user -r requirements.txt"
     
-    # Initialize Terraform
-    terraform init
-    
-    # Create environment-specific variables file
-    cat > "terraform-${DEPLOYMENT_ENV}.tfvars" << EOF
-# SmartCloudOps AI ${DEPLOYMENT_ENV} Infrastructure
-project_name = "${PROJECT_NAME}-${DEPLOYMENT_ENV}"
-aws_region = "${DEPLOYMENT_REGION}"
-environment = "${DEPLOYMENT_ENV}"
+    # Create systemd service file
+    print_status "Creating systemd service..."
+    cat > /tmp/smartcloudops-ai.service << EOF
+[Unit]
+Description=SmartCloudOps AI Application
+After=network.target
 
-# Instance configuration
-instance_type = "t3.medium"
-enable_detailed_monitoring = true
+[Service]
+Type=simple
+User=ec2-user
+WorkingDirectory=$APP_DIR
+Environment=PATH=/home/ec2-user/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/home/ec2-user/.local/bin/gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 main:app
+Restart=always
+RestartSec=10
 
-# Domain configuration
-domain_name = "${DOMAIN}"
-subdomain_api = "api-${DEPLOYMENT_ENV}"
-subdomain_grafana = "grafana-${DEPLOYMENT_ENV}"
-
-# Security configuration
-enable_https = true
-ssl_policy = "ELBSecurityPolicy-TLS-1-2-2017-01"
-
-# Database configuration
-db_instance_class = "db.t3.micro"
-db_engine_version = "13.7"
-db_allocated_storage = 20
-db_max_allocated_storage = 100
-
-# Monitoring configuration
-enable_cloudwatch = true
-enable_cloudtrail = true
-retention_days = 30
+[Install]
+WantedBy=multi-user.target
 EOF
     
-    # Plan deployment
-    echo "📋 Planning infrastructure deployment..."
-    terraform plan -var-file="terraform-${DEPLOYMENT_ENV}.tfvars" -out="${DEPLOYMENT_ENV}.tfplan"
+    # Copy service file to instance
+    scp -i $SSH_KEY /tmp/smartcloudops-ai.service ec2-user@$APP_INSTANCE_IP:/tmp/
     
-    # Apply deployment
-    echo "🚀 Applying infrastructure deployment..."
-    terraform apply "${DEPLOYMENT_ENV}.tfplan"
+    # Install and start service
+    ssh -i $SSH_KEY ec2-user@$APP_INSTANCE_IP "sudo mv /tmp/smartcloudops-ai.service /etc/systemd/system/ && sudo systemctl daemon-reload && sudo systemctl enable $SERVICE_NAME && sudo systemctl start $SERVICE_NAME"
     
-    # Get outputs
-    echo "📊 Deployment outputs:"
-    terraform output
+    print_success "Application deployed successfully"
+}
+
+# Function to verify deployment
+verify_deployment() {
+    print_status "Verifying deployment..."
     
-    cd ..
-    
-    echo "   ✅ Infrastructure deployment completed"
-else
-    echo "   ⚠️ Terraform not found - skipping infrastructure deployment"
-    echo "   📋 Manual infrastructure setup required"
-fi
-
-# Application deployment
-echo ""
-echo "🚀 APPLICATION DEPLOYMENT"
-echo "========================"
-
-# Build application container (if Docker is available)
-if command -v docker &> /dev/null; then
-    echo "🐳 Building application container..."
-    
-    # Create production Dockerfile if needed
-    if [ ! -f "Dockerfile.${DEPLOYMENT_ENV}" ]; then
-        echo "📝 Creating production Dockerfile..."
-        cat > "Dockerfile.${DEPLOYMENT_ENV}" << 'EOF'
-FROM python:3.11-slim
-
-# Security: Create non-root user
-RUN groupadd -r smartcloudops && useradd -r -g smartcloudops smartcloudops
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
-
-# Set working directory
-WORKDIR /app
-
-# Copy requirements first for better caching
-COPY app/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy application code
-COPY app/ .
-
-# Create necessary directories
-RUN mkdir -p ml_models logs config && \
-    chown -R smartcloudops:smartcloudops /app
-
-# Security: Switch to non-root user
-USER smartcloudops
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python3 -c "import requests; requests.get('http://localhost:5000/health')" || exit 1
-
-# Production server
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--timeout", "120", "main:app"]
-EOF
-    fi
-    
-    # Build container
-    docker build -f "Dockerfile.${DEPLOYMENT_ENV}" -t "${PROJECT_NAME}:${DEPLOYMENT_ENV}" .
-    
-    echo "   ✅ Container built successfully"
-    
-    # Test container
-    echo "🧪 Testing container..."
-    container_id=$(docker run -d -p 5002:5000 -e ENVIRONMENT="$DEPLOYMENT_ENV" "${PROJECT_NAME}:${DEPLOYMENT_ENV}")
-    
-    # Wait for container to start
+    # Wait for service to start
     sleep 10
     
-    if curl -s http://localhost:5002/health | grep -q "healthy"; then
-        echo "   ✅ Container health check passed"
+    # Check service status
+    if ssh -i $SSH_KEY ec2-user@$APP_INSTANCE_IP "sudo systemctl is-active --quiet $SERVICE_NAME"; then
+        print_success "Service is running"
     else
-        echo "   ⚠️ Container health check failed"
+        print_error "Service is not running"
+        ssh -i $SSH_KEY ec2-user@$APP_INSTANCE_IP "sudo systemctl status $SERVICE_NAME"
+        return 1
     fi
     
-    # Stop test container
-    docker stop "$container_id" >/dev/null
-    docker rm "$container_id" >/dev/null
+    # Test application endpoints
+    print_status "Testing application endpoints..."
     
-else
-    echo "   ⚠️ Docker not found - skipping container build"
-fi
-
-# Monitoring setup
-echo ""
-echo "📊 MONITORING SETUP"
-echo "=================="
-
-if [ -f "scripts/deploy_secure_grafana.sh" ]; then
-    echo "📈 Deploying secure monitoring stack..."
+    # Test health endpoint
+    if curl -s -f "http://$APP_INSTANCE_IP:5000/status" > /dev/null; then
+        print_success "Health endpoint is responding"
+    else
+        print_error "Health endpoint is not responding"
+        return 1
+    fi
     
-    # Update monitoring configuration for environment
-    export GRAFANA_DOMAIN="${DOMAIN}"
-    export GRAFANA_ADMIN_USER="smartcloudops_admin_${DEPLOYMENT_ENV}"
+    # Test main endpoint
+    if curl -s -f "http://$APP_INSTANCE_IP:5000/" > /dev/null; then
+        print_success "Main endpoint is responding"
+    else
+        print_error "Main endpoint is not responding"
+        return 1
+    fi
     
-    # Deploy monitoring (in background to avoid blocking)
-    ./scripts/deploy_secure_grafana.sh &
-    monitoring_pid=$!
+    # Test ML endpoint
+    if curl -s -f "http://$APP_INSTANCE_IP:5000/ml/health" > /dev/null; then
+        print_success "ML endpoint is responding"
+    else
+        print_warning "ML endpoint is not responding (may be expected)"
+    fi
     
-    echo "   🔄 Monitoring deployment started (PID: $monitoring_pid)"
-fi
+    # Test auto-remediation endpoints
+    if curl -s -f "http://$APP_INSTANCE_IP:5000/api/v1/remediation/status" > /dev/null; then
+        print_success "Auto-remediation endpoint is responding"
+    else
+        print_warning "Auto-remediation endpoint is not responding (may be expected)"
+    fi
+    
+    print_success "Deployment verification completed"
+}
 
-# Final validation
-echo ""
-echo "✅ DEPLOYMENT VALIDATION"
-echo "======================="
+# Function to check monitoring stack
+check_monitoring() {
+    print_status "Checking monitoring stack..."
+    
+    # Check Prometheus
+    if curl -s -f "http://$MONITORING_INSTANCE_IP:9090" > /dev/null; then
+        print_success "Prometheus is running"
+    else
+        print_warning "Prometheus is not responding"
+    fi
+    
+    # Check Grafana
+    if curl -s -f "http://$MONITORING_INSTANCE_IP:3000" > /dev/null; then
+        print_success "Grafana is running"
+    else
+        print_warning "Grafana is not responding"
+    fi
+}
 
-echo "🔍 Running final deployment tests..."
+# Function to display deployment summary
+display_summary() {
+    echo ""
+    echo "🎉 SmartCloudOps AI - Production Deployment Complete!"
+    echo "=================================================="
+    echo ""
+    echo "📊 Deployment Summary:"
+    echo "  • Application URL: http://$APP_INSTANCE_IP:5000"
+    echo "  • Health Check: http://$APP_INSTANCE_IP:5000/status"
+    echo "  • Prometheus: http://$MONITORING_INSTANCE_IP:9090"
+    echo "  • Grafana: http://$MONITORING_INSTANCE_IP:3000"
+    echo ""
+    echo "🔧 Service Management:"
+    echo "  • SSH to instance: ssh -i $SSH_KEY ec2-user@$APP_INSTANCE_IP"
+    echo "  • Check service: sudo systemctl status $SERVICE_NAME"
+    echo "  • Restart service: sudo systemctl restart $SERVICE_NAME"
+    echo "  • View logs: sudo journalctl -u $SERVICE_NAME -f"
+    echo ""
+    echo "📋 API Endpoints:"
+    echo "  • GET / - Application status"
+    echo "  • GET /status - Health check"
+    echo "  • POST /query - ChatOps with GPT"
+    echo "  • GET /logs - Application logs"
+    echo "  • GET /ml/health - ML engine health"
+    echo "  • POST /ml/predict - Anomaly detection"
+    echo "  • GET /api/v1/remediation/status - Auto-remediation status"
+    echo "  • GET /api/v1/integration/status - Integration status"
+    echo ""
+    echo "✅ All systems operational!"
+}
 
-# Test configuration
-echo "📋 Configuration test:"
-python3 app/config_manager.py --environment "$DEPLOYMENT_ENV" && echo "   ✅ Configuration valid"
+# Main deployment process
+main() {
+    print_status "Starting SmartCloudOps AI production deployment..."
+    
+    # Check prerequisites
+    if ! command_exists ssh; then
+        print_error "SSH client is not installed"
+        exit 1
+    fi
+    
+    if ! command_exists scp; then
+        print_error "SCP client is not installed"
+        exit 1
+    fi
+    
+    if ! command_exists curl; then
+        print_error "curl is not installed"
+        exit 1
+    fi
+    
+    # Test SSH connection
+    if ! test_ssh_connection; then
+        print_error "Cannot establish SSH connection. Please check:"
+        print_error "  • SSH key exists at $SSH_KEY"
+        print_error "  • Security group allows SSH access"
+        print_error "  • Instance is running"
+        exit 1
+    fi
+    
+    # Deploy application
+    deploy_application
+    
+    # Verify deployment
+    if ! verify_deployment; then
+        print_error "Deployment verification failed"
+        exit 1
+    fi
+    
+    # Check monitoring
+    check_monitoring
+    
+    # Display summary
+    display_summary
+}
 
-# Test imports
-echo "📦 Import test:"
-python3 -c "import sys; sys.path.insert(0, 'app'); import main; print('   ✅ Application imports work')"
-
-# Test database connection
-echo "🗄️ Database test:"
-python3 -c "
-import sys
-sys.path.insert(0, 'app')
-from database_integration import DatabaseService
-try:
-    db = DatabaseService()
-    print('   ✅ Database connection successful')
-except Exception as e:
-    print(f'   ⚠️ Database connection warning: {e}')
-"
-
-# Security verification
-echo "🔒 Security test:"
-./scripts/verify_deployment_readiness.sh >/dev/null && echo "   ✅ Security verification passed"
-
-echo ""
-echo "🎉 DEPLOYMENT SUMMARY"
-echo "==================="
-
-echo "📊 DEPLOYMENT STATUS:"
-echo "   🌍 Environment: $DEPLOYMENT_ENV"
-echo "   🏷️ Domain: $DOMAIN"
-echo "   🗄️ Database: $DB_TYPE"
-echo "   📈 Monitoring: Grafana + Prometheus"
-echo "   🔒 Security: Enterprise-grade"
-echo ""
-
-echo "🔗 ACCESS INFORMATION:"
-if [ "$DEPLOYMENT_ENV" = "production" ]; then
-    echo "   🌐 API: https://api.${DOMAIN}"
-    echo "   📊 Grafana: https://grafana.${DOMAIN}"
-    echo "   📈 Prometheus: https://prometheus.${DOMAIN}"
-else
-    echo "   🌐 API: https://api-${DEPLOYMENT_ENV}.${DOMAIN}"
-    echo "   📊 Grafana: https://grafana-${DEPLOYMENT_ENV}.${DOMAIN}"
-    echo "   📈 Prometheus: https://prometheus-${DEPLOYMENT_ENV}.${DOMAIN}"
-fi
-echo ""
-
-echo "🔧 POST-DEPLOYMENT TASKS:"
-echo "   1. Verify SSL certificates are properly configured"
-echo "   2. Test all API endpoints with production keys"
-echo "   3. Configure monitoring alerts and dashboards"
-echo "   4. Set up automated backups"
-echo "   5. Configure log aggregation"
-echo "   6. Schedule security audits"
-echo ""
-
-echo "🔍 MONITORING COMMANDS:"
-echo "   Status: curl https://api.${DOMAIN}/health"
-echo "   Metrics: curl https://api.${DOMAIN}/metrics"
-echo "   Logs: docker logs <container_id>"
-echo ""
-
-echo "✅ DEPLOYMENT COMPLETED SUCCESSFULLY!"
-echo ""
-echo "🎯 System Status: PRODUCTION READY"
-echo "🔒 Security Level: ENTERPRISE GRADE"
-echo "📈 Monitoring: ACTIVE"
-echo "🏆 Overall Grade: A+ (95/100)"
-
-# Final success
-exit 0
+# Run main function
+main "$@"

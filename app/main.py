@@ -44,12 +44,16 @@ def create_app():
         from app.api.v1 import logs as logs_v1
         from app.api.v1 import ml as ml_v1
         from app.api.v1 import metrics as metrics_v1
+        from app.api.v1 import remediation as remediation_v1
+        from app.api.v1 import integration as integration_v1
 
         app.register_blueprint(health_v1.bp)
         app.register_blueprint(chatops_v1.bp)
         app.register_blueprint(logs_v1.bp)
         app.register_blueprint(ml_v1.bp)
         app.register_blueprint(metrics_v1.bp)
+        app.register_blueprint(remediation_v1.bp)
+        app.register_blueprint(integration_v1.bp)
     except Exception:
         # Fallback to legacy inline routes if blueprints fail to import
         @app.route("/")

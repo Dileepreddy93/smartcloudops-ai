@@ -24,5 +24,3 @@ def test_query_validation_and_success(client, monkeypatch):
     r = client.post("/query", json={"query": "cpu?"})
     assert r.status_code == 200
     assert r.get_json()["response"] == "Mocked Answer"
-
-

@@ -15,7 +15,7 @@ class TestFlaskAppCreation:
         """Test create_app returns a Flask application instance."""
         # Act
         app = create_app()
-        
+
         # Assert
         assert isinstance(app, Flask)
         assert app.name == "app.main"
@@ -24,22 +24,22 @@ class TestFlaskAppCreation:
         """Test Flask app configuration."""
         # Act
         app = create_app()
-        
+
         # Assert
-        assert app.config['TESTING'] is False  # Default configuration
+        assert app.config["TESTING"] is False  # Default configuration
         assert app.name == "app.main"
 
     def test_create_app_with_testing_config(self):
         """Test create_app with testing configuration."""
         # Arrange
-        test_config = {'TESTING': True}
-        
+        test_config = {"TESTING": True}
+
         # Act
         app = create_app()
         app.config.update(test_config)
-        
+
         # Assert
-        assert app.config['TESTING'] is True
+        assert app.config["TESTING"] is True
 
 
 class TestHelperFunctions:
@@ -49,7 +49,7 @@ class TestHelperFunctions:
         """Test get_status_info returns a dictionary with required keys."""
         # Act
         status_info = get_status_info()
-        
+
         # Assert
         assert isinstance(status_info, dict)
         assert "status" in status_info
@@ -62,7 +62,7 @@ class TestHelperFunctions:
         """Test get_logs_data returns a string."""
         # Act
         logs_data = get_logs_data()
-        
+
         # Assert
         assert isinstance(logs_data, str)
 
@@ -71,7 +71,7 @@ class TestHelperFunctions:
         # Act
         logs_data1 = get_logs_data()
         logs_data2 = get_logs_data()
-        
+
         # Assert
         assert logs_data1 == logs_data2  # Should be cached
 
@@ -79,7 +79,7 @@ class TestHelperFunctions:
         """Test get_chat_response is a wrapper function."""
         # Arrange
         test_query = "test query"
-        
+
         # Act & Assert
         # This should not raise an exception even if OpenAI is not available
         # as it's designed to handle missing dependencies gracefully
@@ -98,15 +98,15 @@ class TestFlaskAppEndpoints:
     def client(self):
         """Create a test client for the Flask application."""
         app = create_app()
-        app.config['TESTING'] = True
+        app.config["TESTING"] = True
         with app.test_client() as client:
             yield client
 
     def test_home_endpoint(self, client):
         """Test the home endpoint (/) returns correct response."""
         # Act
-        response = client.get('/')
-        
+        response = client.get("/")
+
         # Assert
         assert response.status_code == 200
         data = response.get_json()
@@ -118,8 +118,8 @@ class TestFlaskAppEndpoints:
     def test_status_endpoint(self, client):
         """Test the status endpoint (/status) returns correct response."""
         # Act
-        response = client.get('/status')
-        
+        response = client.get("/status")
+
         # Assert
         assert response.status_code == 200
         data = response.get_json()
@@ -132,11 +132,12 @@ class TestFlaskAppEndpoints:
         """Test the query endpoint with successful response."""
         # Arrange
         from app.services import chatops_service
+
         monkeypatch.setattr(chatops_service, "chat", lambda q: "Mocked response")
-        
+
         # Act
-        response = client.post('/query', json={'query': 'test query'})
-        
+        response = client.post("/query", json={"query": "test query"})
+
         # Assert
         assert response.status_code == 200
         data = response.get_json()
@@ -145,8 +146,8 @@ class TestFlaskAppEndpoints:
     def test_query_endpoint_invalid_input(self, client):
         """Test the query endpoint with invalid input."""
         # Act
-        response = client.post('/query', json={'invalid': 'data'})
-        
+        response = client.post("/query", json={"invalid": "data"})
+
         # Assert
         assert response.status_code == 400
         assert b"Invalid request" in response.data
@@ -154,8 +155,8 @@ class TestFlaskAppEndpoints:
     def test_query_endpoint_missing_query(self, client):
         """Test the query endpoint with missing query field."""
         # Act
-        response = client.post('/query', json={})
-        
+        response = client.post("/query", json={})
+
         # Assert
         assert response.status_code == 400
         assert b"Invalid request" in response.data
@@ -163,8 +164,8 @@ class TestFlaskAppEndpoints:
     def test_logs_endpoint(self, client):
         """Test the logs endpoint returns text content."""
         # Act
-        response = client.get('/logs')
-        
+        response = client.get("/logs")
+
         # Assert
         assert response.status_code == 200
         assert response.mimetype == "text/plain"
@@ -173,8 +174,8 @@ class TestFlaskAppEndpoints:
     def test_nonexistent_endpoint(self, client):
         """Test that nonexistent endpoints return 404."""
         # Act
-        response = client.get('/nonexistent')
-        
+        response = client.get("/nonexistent")
+
         # Assert
         assert response.status_code == 404
 
@@ -186,7 +187,7 @@ class TestFlaskAppErrorHandling:
     def client(self):
         """Create a test client for the Flask application."""
         app = create_app()
-        app.config['TESTING'] = True
+        app.config["TESTING"] = True
         with app.test_client() as client:
             yield client
 
@@ -194,11 +195,16 @@ class TestFlaskAppErrorHandling:
         """Test query endpoint handles service errors gracefully."""
         # Arrange
         from app.services import chatops_service
-        monkeypatch.setattr(chatops_service, "chat", lambda q: (_ for _ in ()).throw(Exception("Service error")))
-        
+
+        monkeypatch.setattr(
+            chatops_service,
+            "chat",
+            lambda q: (_ for _ in ()).throw(Exception("Service error")),
+        )
+
         # Act
-        response = client.post('/query', json={'query': 'test query'})
-        
+        response = client.post("/query", json={"query": "test query"})
+
         # Assert
         assert response.status_code == 400
         data = response.get_json()
@@ -208,8 +214,10 @@ class TestFlaskAppErrorHandling:
     def test_query_endpoint_invalid_json(self, client):
         """Test query endpoint handles invalid JSON gracefully."""
         # Act
-        response = client.post('/query', data='invalid json', content_type='application/json')
-        
+        response = client.post(
+            "/query", data="invalid json", content_type="application/json"
+        )
+
         # Assert
         assert response.status_code == 400
         assert b"Invalid request" in response.data

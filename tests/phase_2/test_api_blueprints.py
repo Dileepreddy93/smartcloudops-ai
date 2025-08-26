@@ -16,7 +16,7 @@ class TestHealthBlueprint:
         """Create a test Flask application with health blueprint."""
         app = Flask(__name__)
         app.register_blueprint(health.bp)
-        app.config['TESTING'] = True
+        app.config["TESTING"] = True
         return app
 
     @pytest.fixture
@@ -28,16 +28,18 @@ class TestHealthBlueprint:
     def test_status_endpoint(self, client, monkeypatch):
         """Test the /status endpoint."""
         # Arrange
-        
+
         class MockEngine:
             def health_check(self):
                 return {"status": "healthy", "metrics": {"test": "data"}}
-        
-        monkeypatch.setattr("app.api.v1.health.get_secure_inference_engine", lambda: MockEngine())
-        
+
+        monkeypatch.setattr(
+            "app.api.v1.health.get_secure_inference_engine", lambda: MockEngine()
+        )
+
         # Act
-        response = client.get('/status')
-        
+        response = client.get("/status")
+
         # Assert
         assert response.status_code == 200
         data = response.get_json()
@@ -49,8 +51,8 @@ class TestHealthBlueprint:
     def test_home_endpoint(self, client):
         """Test the / endpoint."""
         # Act
-        response = client.get('/')
-        
+        response = client.get("/")
+
         # Assert
         assert response.status_code == 200
         data = response.get_json()
@@ -68,7 +70,7 @@ class TestChatOpsBlueprint:
         """Create a test Flask application with chatops blueprint."""
         app = Flask(__name__)
         app.register_blueprint(chatops.bp)
-        app.config['TESTING'] = True
+        app.config["TESTING"] = True
         return app
 
     @pytest.fixture
@@ -80,11 +82,13 @@ class TestChatOpsBlueprint:
     def test_query_endpoint_success(self, client, monkeypatch):
         """Test the /query endpoint with valid input."""
         # Arrange
-        monkeypatch.setattr("app.api.v1.chatops.get_chat_response", lambda q: "Mocked AI response")
-        
+        monkeypatch.setattr(
+            "app.api.v1.chatops.get_chat_response", lambda q: "Mocked AI response"
+        )
+
         # Act
-        response = client.post('/query', json={'query': 'test query'})
-        
+        response = client.post("/query", json={"query": "test query"})
+
         # Assert
         assert response.status_code == 200
         data = response.get_json()
@@ -93,8 +97,8 @@ class TestChatOpsBlueprint:
     def test_query_endpoint_missing_query(self, client):
         """Test the /query endpoint with missing query field."""
         # Act
-        response = client.post('/query', json={'other_field': 'value'})
-        
+        response = client.post("/query", json={"other_field": "value"})
+
         # Assert
         assert response.status_code == 400
         assert b"Invalid request" in response.data
@@ -102,8 +106,8 @@ class TestChatOpsBlueprint:
     def test_query_endpoint_empty_json(self, client):
         """Test the /query endpoint with empty JSON."""
         # Act
-        response = client.post('/query', json={})
-        
+        response = client.post("/query", json={})
+
         # Assert
         assert response.status_code == 400
         assert b"Invalid request" in response.data
@@ -111,11 +115,14 @@ class TestChatOpsBlueprint:
     def test_query_endpoint_service_error(self, client, monkeypatch):
         """Test the /query endpoint handles service errors."""
         # Arrange
-        monkeypatch.setattr("app.api.v1.chatops.get_chat_response", lambda q: (_ for _ in ()).throw(Exception("Service error")))
-        
+        monkeypatch.setattr(
+            "app.api.v1.chatops.get_chat_response",
+            lambda q: (_ for _ in ()).throw(Exception("Service error")),
+        )
+
         # Act
-        response = client.post('/query', json={'query': 'test query'})
-        
+        response = client.post("/query", json={"query": "test query"})
+
         # Assert
         assert response.status_code == 400
         data = response.get_json()
@@ -131,7 +138,7 @@ class TestLogsBlueprint:
         """Create a test Flask application with logs blueprint."""
         app = Flask(__name__)
         app.register_blueprint(logs.bp)
-        app.config['TESTING'] = True
+        app.config["TESTING"] = True
         return app
 
     @pytest.fixture
@@ -144,10 +151,10 @@ class TestLogsBlueprint:
         """Test the /logs endpoint."""
         # Arrange
         monkeypatch.setattr("app.main.get_logs_data", lambda: "Mocked log content")
-        
+
         # Act
-        response = client.get('/logs')
-        
+        response = client.get("/logs")
+
         # Assert
         assert response.status_code == 200
         assert response.mimetype == "text/plain"
@@ -157,10 +164,10 @@ class TestLogsBlueprint:
         """Test the /logs endpoint with empty content."""
         # Arrange
         monkeypatch.setattr("app.main.get_logs_data", lambda: "")
-        
+
         # Act
-        response = client.get('/logs')
-        
+        response = client.get("/logs")
+
         # Assert
         assert response.status_code == 200
         assert response.data.decode() == ""
@@ -174,7 +181,7 @@ class TestMLBlueprint:
         """Create a test Flask application with ML blueprint."""
         app = Flask(__name__)
         app.register_blueprint(ml.bp)
-        app.config['TESTING'] = True
+        app.config["TESTING"] = True
         return app
 
     @pytest.fixture
@@ -186,16 +193,18 @@ class TestMLBlueprint:
     def test_ml_health_endpoint(self, client, monkeypatch):
         """Test the /ml/health endpoint."""
         # Arrange
-        
+
         class MockEngine:
             def health_check(self):
                 return {"status": "healthy", "model_loaded": True}
-        
-        monkeypatch.setattr("app.api.v1.ml.get_secure_inference_engine", lambda: MockEngine())
-        
+
+        monkeypatch.setattr(
+            "app.api.v1.ml.get_secure_inference_engine", lambda: MockEngine()
+        )
+
         # Act
-        response = client.get('/ml/health')
-        
+        response = client.get("/ml/health")
+
         # Assert
         assert response.status_code == 200
         data = response.get_json()
@@ -205,23 +214,28 @@ class TestMLBlueprint:
     def test_ml_predict_endpoint_success(self, client, monkeypatch):
         """Test the /ml/predict endpoint with valid input."""
         # Arrange
-        
+
         class MockEngine:
             def predict_anomaly(self, metrics=None, user_id=None):
                 return {"anomaly": False, "confidence": 0.9, "metrics": metrics}
-        
-        monkeypatch.setattr("app.api.v1.ml.get_secure_inference_engine", lambda: MockEngine())
-        
+
+        monkeypatch.setattr(
+            "app.api.v1.ml.get_secure_inference_engine", lambda: MockEngine()
+        )
+
         # Act
-        response = client.post('/ml/predict', json={
-            'metrics': {
-                'cpu_usage': 50.0,
-                'memory_usage': 60.0,
-                'load_1m': 1.5,
-                'disk_usage': 30.0
-            }
-        })
-        
+        response = client.post(
+            "/ml/predict",
+            json={
+                "metrics": {
+                    "cpu_usage": 50.0,
+                    "memory_usage": 60.0,
+                    "load_1m": 1.5,
+                    "disk_usage": 30.0,
+                }
+            },
+        )
+
         # Assert
         assert response.status_code == 200
         data = response.get_json()
@@ -232,8 +246,8 @@ class TestMLBlueprint:
     def test_ml_predict_endpoint_invalid_metrics(self, client):
         """Test the /ml/predict endpoint with invalid metrics."""
         # Act
-        response = client.post('/ml/predict', json={'metrics': 'not a dict'})
-        
+        response = client.post("/ml/predict", json={"metrics": "not a dict"})
+
         # Assert
         assert response.status_code == 400
         data = response.get_json()
@@ -242,8 +256,8 @@ class TestMLBlueprint:
     def test_ml_predict_endpoint_missing_metrics(self, client):
         """Test the /ml/predict endpoint with missing metrics."""
         # Act
-        response = client.post('/ml/predict', json={})
-        
+        response = client.post("/ml/predict", json={})
+
         # Assert
         assert response.status_code == 400
         data = response.get_json()
@@ -252,18 +266,18 @@ class TestMLBlueprint:
     def test_ml_predict_endpoint_engine_error(self, client, monkeypatch):
         """Test the /ml/predict endpoint handles engine errors."""
         # Arrange
-        
+
         class MockEngine:
             def predict_anomaly(self, metrics=None, user_id=None):
                 return {"error": "Engine error", "anomaly": False, "confidence": 0.0}
-        
-        monkeypatch.setattr("app.api.v1.ml.get_secure_inference_engine", lambda: MockEngine())
-        
+
+        monkeypatch.setattr(
+            "app.api.v1.ml.get_secure_inference_engine", lambda: MockEngine()
+        )
+
         # Act
-        response = client.post('/ml/predict', json={
-            'metrics': {'cpu_usage': 50.0}
-        })
-        
+        response = client.post("/ml/predict", json={"metrics": {"cpu_usage": 50.0}})
+
         # Assert
         assert response.status_code == 400
         data = response.get_json()
@@ -272,20 +286,22 @@ class TestMLBlueprint:
     def test_ml_metrics_endpoint(self, client, monkeypatch):
         """Test the /ml/metrics endpoint."""
         # Arrange
-        
+
         class MockEngine:
             def health_check(self):
                 return {
                     "status": "healthy",
                     "metrics": {"prediction_count": 100},
-                    "model_info": {"type": "iforest"}
+                    "model_info": {"type": "iforest"},
                 }
-        
-        monkeypatch.setattr("app.api.v1.ml.get_secure_inference_engine", lambda: MockEngine())
-        
+
+        monkeypatch.setattr(
+            "app.api.v1.ml.get_secure_inference_engine", lambda: MockEngine()
+        )
+
         # Act
-        response = client.get('/ml/metrics')
-        
+        response = client.get("/ml/metrics")
+
         # Assert
         assert response.status_code == 200
         data = response.get_json()

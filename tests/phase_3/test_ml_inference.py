@@ -11,7 +11,7 @@ from app.core.ml_engine.secure_inference import (
     SecureMLInferenceEngine,
     ModelConfig,
     PredictionResult,
-    HealthStatus
+    HealthStatus,
 )
 
 
@@ -28,7 +28,7 @@ class TestSecureMLInferenceEngine:
                 "cpu_threshold": 80.0,
                 "memory_threshold": 85.0,
                 "load_threshold": 5.0,
-                "disk_threshold": 90.0
+                "disk_threshold": 90.0,
             },
             performance={
                 "accuracy": 0.95,
@@ -39,10 +39,10 @@ class TestSecureMLInferenceEngine:
                     "true_positives": 100,
                     "false_positives": 8,
                     "true_negatives": 900,
-                    "false_negatives": 12
-                }
+                    "false_negatives": 12,
+                },
             },
-            training_data_size=1000
+            training_data_size=1000,
         )
 
     @pytest.fixture
@@ -62,18 +62,18 @@ class TestSecureMLInferenceEngine:
         """Test engine initialization."""
         # Act
         engine = SecureMLInferenceEngine()
-        
+
         # Assert
-        assert hasattr(engine, '_lock')
-        assert hasattr(engine, '_initialized')
-        assert hasattr(engine, '_model_config')
-        assert hasattr(engine, '_max_prediction_time')
+        assert hasattr(engine, "_lock")
+        assert hasattr(engine, "_initialized")
+        assert hasattr(engine, "_model_config")
+        assert hasattr(engine, "_max_prediction_time")
 
     def test_health_check_healthy_status(self, mock_engine):
         """Test health check with healthy status."""
         # Act
         health = mock_engine.health_check()
-        
+
         # Assert
         assert health["status"] == "healthy"
         assert health["components"]["model_loaded"] is True
@@ -90,10 +90,10 @@ class TestSecureMLInferenceEngine:
         engine._prediction_count = 100
         engine._error_count = 60  # High error rate to trigger unhealthy status
         engine._last_health_check = datetime.now(timezone.utc)
-        
+
         # Act
         health = engine.health_check()
-        
+
         # Assert
         assert health["status"] == "unhealthy"
 
@@ -104,12 +104,12 @@ class TestSecureMLInferenceEngine:
             "cpu_usage": 50.0,
             "memory_usage": 60.0,
             "load_1m": 1.5,
-            "disk_usage": 30.0
+            "disk_usage": 30.0,
         }
-        
+
         # Act
         result = mock_engine.predict_anomaly(metrics=test_metrics, user_id="test_user")
-        
+
         # Assert
         assert "anomaly" in result
         assert "confidence" in result
@@ -126,12 +126,12 @@ class TestSecureMLInferenceEngine:
             "cpu_usage": 95.0,  # Above threshold
             "memory_usage": 60.0,
             "load_1m": 1.5,
-            "disk_usage": 30.0
+            "disk_usage": 30.0,
         }
-        
+
         # Act
         result = mock_engine.predict_anomaly(metrics=test_metrics, user_id="test_user")
-        
+
         # Assert
         assert "anomaly" in result
         assert "confidence" in result
@@ -144,12 +144,12 @@ class TestSecureMLInferenceEngine:
             "cpu_usage": 90.0,  # Above threshold
             "memory_usage": 90.0,  # Above threshold
             "load_1m": 6.0,  # Above threshold
-            "disk_usage": 95.0  # Above threshold
+            "disk_usage": 95.0,  # Above threshold
         }
-        
+
         # Act
         result = mock_engine.predict_anomaly(metrics=test_metrics, user_id="test_user")
-        
+
         # Assert
         assert "anomaly" in result
         assert "confidence" in result
@@ -160,10 +160,12 @@ class TestSecureMLInferenceEngine:
         """Test anomaly prediction with invalid metrics."""
         # Arrange
         invalid_metrics = "not a dict"
-        
+
         # Act
-        result = mock_engine.predict_anomaly(metrics=invalid_metrics, user_id="test_user")
-        
+        result = mock_engine.predict_anomaly(
+            metrics=invalid_metrics, user_id="test_user"
+        )
+
         # Assert
         assert "error" in result
         assert result["error_code"] == "PREDICTION_ERROR"
@@ -175,10 +177,12 @@ class TestSecureMLInferenceEngine:
             "cpu_usage": 50.0
             # Missing other required metrics
         }
-        
+
         # Act
-        result = mock_engine.predict_anomaly(metrics=incomplete_metrics, user_id="test_user")
-        
+        result = mock_engine.predict_anomaly(
+            metrics=incomplete_metrics, user_id="test_user"
+        )
+
         # Assert
         assert "anomaly" in result
         assert "confidence" in result
@@ -189,10 +193,10 @@ class TestSecureMLInferenceEngine:
         # Arrange
         engine = SecureMLInferenceEngine()
         engine._initialized = False
-        
+
         # Act
         result = engine.predict_anomaly(metrics={}, user_id="test_user")
-        
+
         # Assert
         assert "error" in result
         assert result["error_code"] == "PREDICTION_ERROR"
@@ -201,7 +205,7 @@ class TestSecureMLInferenceEngine:
         """Test getting model information."""
         # Act
         model_info = mock_engine.get_model_info()
-        
+
         # Assert
         assert "model_type" in model_info
         assert "training_timestamp" in model_info
@@ -214,10 +218,10 @@ class TestSecureMLInferenceEngine:
         """Test getting model information when no model is loaded."""
         # Arrange
         engine = SecureMLInferenceEngine()
-        
+
         # Act
         model_info = engine.get_model_info()
-        
+
         # Assert
         assert "error" in model_info
         assert model_info["error"] == "No model loaded"
@@ -236,7 +240,7 @@ class TestModelConfig:
                 "cpu_threshold": 80.0,
                 "memory_threshold": 85.0,
                 "load_threshold": 5.0,
-                "disk_threshold": 90.0
+                "disk_threshold": 90.0,
             },
             performance={
                 "accuracy": 0.95,
@@ -247,15 +251,15 @@ class TestModelConfig:
                     "true_positives": 100,
                     "false_positives": 8,
                     "true_negatives": 900,
-                    "false_negatives": 12
-                }
+                    "false_negatives": 12,
+                },
             },
-            training_data_size=1000
+            training_data_size=1000,
         )
-        
+
         # Act
         result = config.validate()
-        
+
         # Assert
         assert result is True
 
@@ -273,11 +277,11 @@ class TestModelConfig:
                 "accuracy": 0.95,
                 "precision": 0.92,
                 "recall": 0.88,
-                "f1_score": 0.90
+                "f1_score": 0.90,
             },
-            training_data_size=1000
+            training_data_size=1000,
         )
-        
+
         # Act & Assert
         with pytest.raises(Exception):
             config.validate()
@@ -292,17 +296,17 @@ class TestModelConfig:
                 "cpu_threshold": 80.0,
                 "memory_threshold": 85.0,
                 "load_threshold": 5.0,
-                "disk_threshold": 90.0
+                "disk_threshold": 90.0,
             },
             performance={
                 "accuracy": 1.5,  # Invalid: > 1.0
                 "precision": 0.92,
                 "recall": 0.88,
-                "f1_score": 0.90
+                "f1_score": 0.90,
             },
-            training_data_size=1000
+            training_data_size=1000,
         )
-        
+
         # Act & Assert
         with pytest.raises(Exception):
             config.validate()
@@ -323,12 +327,12 @@ class TestPredictionResult:
             prediction_time_ms=150.0,
             timestamp="2023-01-01T00:00:00Z",
             model_version="iforest_v1.0",
-            risk_factors=["cpu_exceeded_1.2x"]
+            risk_factors=["cpu_exceeded_1.2x"],
         )
-        
+
         # Act
         result_dict = result.to_dict()
-        
+
         # Assert
         assert result_dict["anomaly"] is True
         assert result_dict["confidence"] == 0.85
@@ -347,7 +351,7 @@ class TestGlobalFunctions:
         # Act
         engine1 = get_secure_inference_engine()
         engine2 = get_secure_inference_engine()
-        
+
         # Assert
         assert engine1 is engine2
         assert isinstance(engine1, SecureMLInferenceEngine)

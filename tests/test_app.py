@@ -11,4 +11,3 @@ def test_status_route(client):
     assert res.status_code == 200
     data = res.get_json()
     assert data.get("status") in {"healthy", "unhealthy", "stale"}
-

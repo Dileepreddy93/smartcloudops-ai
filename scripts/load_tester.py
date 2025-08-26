@@ -231,7 +231,7 @@ class LoadTester:
             f"Resource monitoring data saved ({len(resource_data)} samples)"
         )
 
-    def analyze_results(self) -> Dict [str, Any]:
+    def analyze_results(self) -> Dict[str, Any]:
         """Analyze load test results"""
         if not self.results:
             return {}

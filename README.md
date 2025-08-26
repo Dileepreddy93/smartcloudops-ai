@@ -6,6 +6,10 @@
 **Status**: ✅ **All Phases 1-5 Complete - Production Ready**  
 **Verification**: ✅ **Project Verified Complete - All Systems Operational**
 
+[![CI/CD Pipeline](https://github.com/Dileepreddy93/smartcloudops-ai/workflows/SmartCloudOps%20AI%20-%20CI%2FCD%20Pipeline/badge.svg)](https://github.com/Dileepreddy93/smartcloudops-ai/actions/workflows/ci-cd.yml)
+[![Code Quality](https://github.com/Dileepreddy93/smartcloudops-ai/workflows/Code%20Quality%20%26%20Security/badge.svg)](https://github.com/Dileepreddy93/smartcloudops-ai/actions/workflows/code-quality.yml)
+[![Infrastructure](https://github.com/Dileepreddy93/smartcloudops-ai/workflows/Infrastructure%20Validation/badge.svg)](https://github.com/Dileepreddy93/smartcloudops-ai/actions/workflows/infra.yml)
+
 ---
 
 ## 📊 **Current Achievements**
@@ -118,6 +122,19 @@ python scripts/test_phase5_optimized.py
 # Check coverage reports
 pytest --cov=app --cov-report=html:reports/coverage/
 ```
+
+### **5. CI/CD Pipeline**
+The project includes a comprehensive CI/CD pipeline with:
+- **Matrix Testing**: Across Python 3.10, 3.11, 3.12 and Ubuntu versions
+- **Security Scanning**: Bandit, Safety, and tfsec integration
+- **Code Quality**: Black formatting, Ruff linting, MyPy type checking
+- **Infrastructure**: Terraform validation and deployment
+- **Docker**: Container build and testing
+- **Automated Deployment**: Production deployment on main branch
+
+**Pipeline Status**: All workflows are operational and passing ✅
+
+For detailed CI/CD documentation, see [`docs/CI-CD-Guide.md`](docs/CI-CD-Guide.md).
 
 ---
 

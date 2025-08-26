@@ -24,11 +24,11 @@ class TestResponseUtilities:
         """Test now_iso returns UTC timestamp in ISO format."""
         # Act
         timestamp = now_iso()
-        
+
         # Assert
         assert isinstance(timestamp, str)
         # Parse and verify it's a valid ISO timestamp
-        parsed_time = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+        parsed_time = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
         assert parsed_time.tzinfo is not None
         assert parsed_time.tzinfo.utcoffset(parsed_time) is not None
 
@@ -36,11 +36,11 @@ class TestResponseUtilities:
         """Test make_response with success data."""
         # Arrange
         test_data = {"message": "test", "count": 42}
-        
+
         # Act
         with app.app_context():
             response, status_code = make_response(data=test_data)
-        
+
         # Assert
         assert status_code == 200
         response_data = response.get_json()
@@ -52,11 +52,11 @@ class TestResponseUtilities:
         """Test make_response with error."""
         # Arrange
         error_message = "Test error"
-        
+
         # Act
         with app.app_context():
             response, status_code = make_response(error=error_message, http_status=400)
-        
+
         # Assert
         assert status_code == 400
         response_data = response.get_json()
@@ -69,11 +69,13 @@ class TestResponseUtilities:
         # Arrange
         test_data = {"message": "test"}
         compat_fields = {"version": "1.0.0", "timestamp": "2023-01-01T00:00:00Z"}
-        
+
         # Act
         with app.app_context():
-            response, status_code = make_response(data=test_data, compatibility=compat_fields)
-        
+            response, status_code = make_response(
+                data=test_data, compatibility=compat_fields
+            )
+
         # Assert
         response_data = response.get_json()
         assert response_data["status"] == "success"
@@ -90,10 +92,10 @@ class TestValidationUtilities:
         # Arrange
         test_obj = {"key1": "value1", "key2": "value2"}
         required_keys = ["key1", "key2"]
-        
+
         # Act
         is_valid, error = require_json_keys(test_obj, required_keys)
-        
+
         # Assert
         assert is_valid is True
         assert error is None
@@ -103,10 +105,10 @@ class TestValidationUtilities:
         # Arrange
         test_obj = {"key1": "value1"}
         required_keys = ["key1", "key2", "key3"]
-        
+
         # Act
         is_valid, error = require_json_keys(test_obj, required_keys)
-        
+
         # Assert
         assert is_valid is False
         assert "Missing keys: key2, key3" in error
@@ -116,10 +118,10 @@ class TestValidationUtilities:
         # Arrange
         test_obj = "not a dict"
         required_keys = ["key1"]
-        
+
         # Act
         is_valid, error = require_json_keys(test_obj, required_keys)
-        
+
         # Assert
         assert is_valid is False
         assert error == "Invalid JSON payload"
@@ -129,10 +131,10 @@ class TestValidationUtilities:
         # Arrange
         test_input = "  Hello World  "
         max_len = 50
-        
+
         # Act
         result = sanitize_string(test_input, max_len)
-        
+
         # Assert
         assert result == "Hello World"
 
@@ -141,19 +143,21 @@ class TestValidationUtilities:
         # Arrange
         test_input = "This is a very long string that should be truncated"
         max_len = 20
-        
+
         # Act
         result = sanitize_string(test_input, max_len)
-        
+
         # Assert
         assert len(result) == 20
-        assert result == "This is a very long "  # Note: space at end due to truncation after strip
+        assert (
+            result == "This is a very long "
+        )  # Note: space at end due to truncation after strip
 
     def test_sanitize_string_non_string_input(self):
         """Test sanitize_string with non-string input."""
         # Arrange
         test_inputs = [123, None, True, 3.14]
-        
+
         # Act & Assert
         for test_input in test_inputs:
             result = sanitize_string(test_input)
@@ -164,12 +168,12 @@ class TestValidationUtilities:
         """Test sanitize_string with empty input."""
         # Arrange
         test_inputs = ["", "   "]
-        
+
         # Act & Assert
         for test_input in test_inputs:
             result = sanitize_string(test_input)
             assert result == ""
-        
+
         # Test None separately as it converts to "None" string
         result = sanitize_string(None)
         assert result == "None"
@@ -178,9 +182,9 @@ class TestValidationUtilities:
         """Test sanitize_string with default max length."""
         # Arrange
         test_input = "x" * 3000  # Longer than default 2048
-        
+
         # Act
         result = sanitize_string(test_input)
-        
+
         # Assert
         assert len(result) == 2048

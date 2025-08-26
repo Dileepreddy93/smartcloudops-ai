@@ -20,10 +20,8 @@ def test_vpc_and_subnets_defined():
 def test_security_groups_hardened_ports():
     content = read_tf()
     # Prometheus 9090 restricted
-    assert 'from_port   = 9090' in content
+    assert "from_port   = 9090" in content
     # Grafana 3000 restricted
-    assert 'from_port   = 3000' in content
+    assert "from_port   = 3000" in content
     # Node Exporter internal 9100
-    assert 'from_port   = 9100' in content
-
-
+    assert "from_port   = 9100" in content

@@ -1,5 +1,3 @@
-
-
 def test_secure_inference_health_basic():
     # Prefer secure engine since it's self-contained and works with JSON configs
     from app.core.ml_engine.secure_inference import get_secure_inference_engine
@@ -47,4 +45,3 @@ def test_secure_inference_prediction_handles_bad_input():
     assert isinstance(result, dict)
     assert "anomaly" in result
     assert "confidence" in result
-

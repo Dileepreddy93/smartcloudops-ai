@@ -482,18 +482,21 @@ def main(model_path: str | None = None):
     # If a model path is supplied, simulate loading with pickle.load so tests can patch it
     if model_path:
         import pickle
+
         with open(model_path, "rb") as f:
             _ = pickle.load(f)
 
     engine = ProductionInferenceEngine()
     _ = engine.health_check()
-    _ = engine.predict_anomaly({
-        "cpu_usage": 10.0,
-        "memory_usage": 20.0,
-        "disk_io": 1.0,
-        "network_io": 1.0,
-        "response_time": 0.1,
-    })
+    _ = engine.predict_anomaly(
+        {
+            "cpu_usage": 10.0,
+            "memory_usage": 20.0,
+            "disk_io": 1.0,
+            "network_io": 1.0,
+            "response_time": 0.1,
+        }
+    )
 
 
 if __name__ == "__main__":

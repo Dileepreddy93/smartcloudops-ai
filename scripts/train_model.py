@@ -25,5 +25,3 @@ def main(save_path: str | None = None):
 
 if __name__ == "__main__":
     main()
-
-

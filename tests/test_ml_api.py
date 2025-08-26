@@ -1,5 +1,3 @@
-
-
 def test_ml_health_endpoint(client):
     res = client.get("/ml/health")
     assert res.status_code == 200
@@ -26,7 +24,9 @@ def test_ml_predict_valid_payload(client, monkeypatch):
             return {"anomaly": False, "confidence": 0.9, "metrics": metrics or {}}
 
     # Patch the function actually used inside the endpoint module
-    monkeypatch.setattr("app.api.v1.ml.get_secure_inference_engine", lambda: DummyEngine())
+    monkeypatch.setattr(
+        "app.api.v1.ml.get_secure_inference_engine", lambda: DummyEngine()
+    )
 
     res = client.post(
         "/ml/predict",
@@ -55,7 +55,9 @@ def test_ml_metrics_endpoint(client, monkeypatch):
                 "model_info": {"type": "iforest"},
             }
 
-    monkeypatch.setattr("app.api.v1.ml.get_secure_inference_engine", lambda: DummyEngine())
+    monkeypatch.setattr(
+        "app.api.v1.ml.get_secure_inference_engine", lambda: DummyEngine()
+    )
 
     res = client.get("/ml/metrics")
     assert res.status_code == 200
@@ -64,5 +66,3 @@ def test_ml_metrics_endpoint(client, monkeypatch):
     assert data["data"]["status"] == "healthy"
     assert "metrics" in data["data"]
     assert "model_info" in data["data"]
-
-

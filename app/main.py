@@ -54,6 +54,10 @@ def create_app():
         app.register_blueprint(metrics_v1.bp)
         app.register_blueprint(remediation_v1.bp)
         app.register_blueprint(integration_v1.bp)
+        
+        # Register Phase 5 ChatOps routes
+        from app.routes.phase5_routes import phase5_bp
+        app.register_blueprint(phase5_bp)
     except Exception:
         # Fallback to legacy inline routes if blueprints fail to import
         @app.route("/")

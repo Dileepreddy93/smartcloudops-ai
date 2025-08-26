@@ -10,10 +10,10 @@ import json
 import logging
 import time
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Any
 
 import boto3
-from botocore.exceptions import ClientError, NoCredentialsError
+from botocore.exceptions import NoCredentialsError
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -521,7 +521,7 @@ class AWSIntegrationService:
             )
 
             if deployments_response.get("deployments"):
-                deployment_id = deployments_response["deployments"][0]
+                deployments_response["deployments"][0]
 
                 # Create rollback deployment
                 rollback_response = self.codedeploy_client.create_deployment(

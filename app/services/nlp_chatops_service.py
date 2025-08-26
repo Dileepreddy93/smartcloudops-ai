@@ -6,12 +6,11 @@ Advanced natural language processing for DevOps ChatOps commands.
 Supports intent recognition and entity extraction for AWS operations.
 """
 
-import json
 import logging
 import re
 import os
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Any
 
 import boto3
 import nltk
@@ -488,10 +487,10 @@ class NLPEnhancedChatOps:
         """Perform health check of the NLP service."""
         try:
             # Test spaCy
-            test_doc = self.nlp("test")
+            self.nlp("test")
 
             # Test transformer with correct syntax
-            test_result = self.intent_classifier("test")
+            self.intent_classifier("test")
 
             return {
                 "status": "healthy",

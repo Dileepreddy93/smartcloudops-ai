@@ -8,14 +8,7 @@ Optimized for resource efficiency and test stability.
 
 import json
 import pytest
-from unittest.mock import Mock, patch, MagicMock
-from datetime import datetime
-
-from app.services.nlp_chatops_service import NLPEnhancedChatOps, nlp_chatops_service
-from app.services.aws_integration_service import (
-    AWSIntegrationService,
-    aws_integration_service,
-)
+from unittest.mock import patch
 
 
 class TestNLPEnhancedChatOps:
@@ -212,9 +205,7 @@ class TestAWSIntegrationService:
                 "AutoScalingGroups": [{"AutoScalingGroupName": "test-asg"}]
             }
 
-            with patch.object(
-                aws_service.autoscaling_client, "set_desired_capacity"
-            ) as mock_set:
+            with patch.object(aws_service.autoscaling_client, "set_desired_capacity"):
                 result = aws_service._execute_scale(parameters)
 
                 assert result["asg_name"] == "test-asg"

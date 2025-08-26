@@ -10,7 +10,6 @@ Demonstrates the key functionality of the SmartCloudOps AI platform:
 - API endpoints
 """
 
-import json
 import sys
 from pathlib import Path
 
@@ -175,7 +174,7 @@ def demo_infrastructure():
         terraform_dir = PROJECT_ROOT / "terraform"
         tf_files = list(terraform_dir.glob("*.tf"))
 
-        print(f"🏗️  Terraform Configuration:")
+        print("🏗️  Terraform Configuration:")
         print(f"   📁 Directory: {terraform_dir}")
         print(f"   📄 Files: {len(tf_files)}")
         for tf_file in tf_files:
@@ -184,15 +183,15 @@ def demo_infrastructure():
         # Check Docker configuration
         dockerfile = PROJECT_ROOT / "Dockerfile"
         if dockerfile.exists():
-            print(f"\n🐳 Docker Configuration:")
-            print(f"   ✅ Dockerfile exists")
+            print("\n🐳 Docker Configuration:")
+            print("   ✅ Dockerfile exists")
             print(f"   📄 Size: {dockerfile.stat().st_size} bytes")
 
         # Check application structure
         app_dir = PROJECT_ROOT / "app"
         python_files = list(app_dir.rglob("*.py"))
 
-        print(f"\n🐍 Application Structure:")
+        print("\n🐍 Application Structure:")
         print(f"   📁 App directory: {app_dir}")
         print(f"   📄 Python files: {len(python_files)}")
 
@@ -228,7 +227,7 @@ def demo_testing():
         tests_dir = PROJECT_ROOT / "tests"
         test_files = list(tests_dir.rglob("test_*.py"))
 
-        print(f"🧪 Test Structure:")
+        print("🧪 Test Structure:")
         print(f"   📁 Tests directory: {tests_dir}")
         print(f"   📄 Test files: {len(test_files)}")
 
@@ -244,7 +243,7 @@ def demo_testing():
                 print(f"      ❌ {phase}: missing")
 
         # Run a quick test
-        print(f"\n🚀 Quick Test Execution:")
+        print("\n🚀 Quick Test Execution:")
         import subprocess
 
         result = subprocess.run(
@@ -307,7 +306,7 @@ def main():
     print(f"\n📊 Overall Results: {passed}/{total} demos successful")
 
     if passed == total:
-        print_success("🎉 All demos successful! SmartCloudOps AI is fully operational.")
+        print("✅ 🎉 All demos successful! SmartCloudOps AI is fully operational.")
     else:
         print(f"⚠️  {total - passed} demos failed. Some components may need attention.")
 

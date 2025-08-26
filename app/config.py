@@ -466,7 +466,7 @@ class SecureConfig:
                 local_url = "http://localhost:9090"
                 requests.get(f"{local_url}/api/v1/status/config", timeout=2)
                 return local_url
-            except:
+            except Exception:
                 # NOTE: This should be replaced with your actual development Prometheus
                 logging.warning(
                     "Using fallback Prometheus URL - configure PROMETHEUS_URL in .env"

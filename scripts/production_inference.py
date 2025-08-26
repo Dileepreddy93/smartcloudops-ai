@@ -263,7 +263,7 @@ class ProductionInferenceEngine:
                 f"{self.prometheus_url}/api/v1/status/config", timeout=5
             )
             health["prometheus_connection"] = response.status_code == 200
-        except:
+        except Exception:
             pass
 
         # Get performance metrics

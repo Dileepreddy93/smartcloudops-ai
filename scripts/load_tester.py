@@ -162,7 +162,6 @@ class LoadTester:
             connector=connector, timeout=timeout
         ) as session:
             start_time = time.time()
-            all_tasks = []
 
             # Start monitoring system resources
             resource_monitor = asyncio.create_task(

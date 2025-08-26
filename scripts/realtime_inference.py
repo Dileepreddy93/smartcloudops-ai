@@ -85,7 +85,7 @@ class AnomalyInferenceEngine:
                     else:
                         metrics[metric_name] = 0.0
 
-                except:
+                except Exception:
                     metrics[metric_name] = 0.0
 
             return metrics

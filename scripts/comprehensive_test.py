@@ -12,10 +12,7 @@ Tests all major components of the SmartCloudOps AI platform:
 - Infrastructure validation
 """
 
-import json
-import os
 import sys
-import time
 import requests
 import subprocess
 from pathlib import Path
@@ -53,7 +50,7 @@ def test_core_utilities():
     print_header("Testing Core Utilities")
 
     try:
-        from app.utils.response import make_response, now_iso
+        from app.utils.response import make_response
         from app.utils.validation import require_json_keys, sanitize_string
         from app.main import create_app
 
@@ -70,7 +67,7 @@ def test_core_utilities():
             # Test validation utilities
             test_data = {"key1": "value1", "key2": "value2"}
             ok, err = require_json_keys(test_data, ["key1"])
-            assert ok == True
+            assert ok
             print_success("Validation utilities working")
 
             # Test sanitization
@@ -98,7 +95,7 @@ def test_flask_app():
         print_success("Flask app creation successful")
 
         # Test app configuration
-        assert app.config["TESTING"] == False
+        assert not app.config["TESTING"]
         print_success("Flask app configuration valid")
 
         return True

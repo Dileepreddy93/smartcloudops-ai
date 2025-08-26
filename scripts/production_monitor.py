@@ -95,7 +95,7 @@ class ProductionMonitor:
                 try:
                     app_data = response.json()
                     health_data.update(app_data)
-                except:
+                except Exception:
                     pass
 
             return health_data

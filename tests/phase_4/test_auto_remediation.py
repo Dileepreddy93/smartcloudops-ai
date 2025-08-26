@@ -26,8 +26,8 @@ class TestRemediationEngine:
         """Test that the remediation engine initializes correctly."""
         engine = AutoRemediationEngine()
 
-        assert engine.is_enabled == True
-        assert engine.manual_override == False
+        assert engine.is_enabled
+        assert not engine.manual_override
         assert len(engine.rules) == 5  # Default rules
         assert len(engine.action_history) == 0
 
@@ -69,12 +69,12 @@ class TestRemediationEngine:
         # Test condition that should trigger
         metrics = {"cpu_percent": 96, "memory_percent": 96, "ml_anomaly_score": 0.95}
 
-        assert engine.evaluate_conditions(rule, metrics) == True
+        assert engine.evaluate_conditions(rule, metrics)
 
         # Test condition that should not trigger
         metrics = {"cpu_percent": 50, "memory_percent": 50, "ml_anomaly_score": 0.3}
 
-        assert engine.evaluate_conditions(rule, metrics) == False
+        assert not engine.evaluate_conditions(rule, metrics)
 
     def test_cooldown_checking(self):
         """Test cooldown period checking."""
@@ -82,13 +82,13 @@ class TestRemediationEngine:
         rule = engine.rules[0]
 
         # Initially no cooldown
-        assert engine.check_cooldown(rule) == False
+        assert not engine.check_cooldown(rule)
 
         # Set last triggered time
         rule.last_triggered = datetime.utcnow()
 
         # Should be in cooldown
-        assert engine.check_cooldown(rule) == True
+        assert engine.check_cooldown(rule)
 
         # Wait for cooldown to expire
         rule.last_triggered = datetime.utcnow() - timedelta(
@@ -96,7 +96,7 @@ class TestRemediationEngine:
         )
 
         # Should not be in cooldown
-        assert engine.check_cooldown(rule) == False
+        assert not engine.check_cooldown(rule)
 
     @patch("subprocess.run")
     def test_restart_service_action(self, mock_run):
@@ -109,7 +109,7 @@ class TestRemediationEngine:
         context = {"service_name": "test-service"}
         result = engine._restart_service(context)
 
-        assert result == True
+        assert result
         mock_run.assert_called()
 
     @patch("subprocess.run")
@@ -122,7 +122,7 @@ class TestRemediationEngine:
         context = {}
         result = engine._clear_cache(context)
 
-        assert result == True
+        assert result
         mock_run.assert_called()
 
     def test_send_alert_action(self):
@@ -133,7 +133,7 @@ class TestRemediationEngine:
 
         result = engine._send_alert(context)
 
-        assert result == True
+        assert result
         assert len(engine.action_history) > 0
 
     def test_emergency_shutdown_action(self):
@@ -145,7 +145,7 @@ class TestRemediationEngine:
         with patch("subprocess.run") as mock_run:
             result = engine._emergency_shutdown(context)
 
-            assert result == True
+            assert result
             mock_run.assert_called()
 
     def test_process_metrics_with_ml_prediction(self):
@@ -176,30 +176,30 @@ class TestRemediationEngine:
         engine = AutoRemediationEngine()
 
         # Initially enabled
-        assert engine.is_enabled == True
+        assert engine.is_enabled
 
         # Disable
         engine.disable()
-        assert engine.is_enabled == False
+        assert not engine.is_enabled
 
         # Enable
         engine.enable()
-        assert engine.is_enabled == True
+        assert engine.is_enabled
 
     def test_manual_override(self):
         """Test manual override functionality."""
         engine = AutoRemediationEngine()
 
         # Initially no override
-        assert engine.manual_override == False
+        assert not engine.manual_override
 
         # Set override
         engine.set_manual_override(True)
-        assert engine.manual_override == True
+        assert engine.manual_override
 
         # Clear override
         engine.set_manual_override(False)
-        assert engine.manual_override == False
+        assert not engine.manual_override
 
     def test_add_remove_rules(self):
         """Test adding and removing remediation rules."""
@@ -218,12 +218,12 @@ class TestRemediationEngine:
 
         # Remove rule
         success = engine.remove_rule("Test Rule")
-        assert success == True
+        assert success
         assert len(engine.rules) == initial_count
 
         # Try to remove non-existent rule
         success = engine.remove_rule("Non-existent Rule")
-        assert success == False
+        assert not success
 
     def test_get_status(self):
         """Test getting engine status."""
@@ -247,7 +247,7 @@ class TestIntegrationService:
         """Test that the integration service initializes correctly."""
         integration = MLRemediationIntegration()
 
-        assert integration.is_running == False
+        assert not integration.is_running
         assert integration.monitoring_interval == 30
         assert integration.confidence_threshold == 0.7
         assert integration.buffer_size == 10
@@ -342,7 +342,7 @@ class TestIntegrationService:
         assert prediction is not None
         assert prediction["anomaly_score"] == 0.85
         assert prediction["confidence"] == 0.92
-        assert prediction["is_anomaly"] == True
+        assert prediction["is_anomaly"]
 
     def test_metrics_buffer_management(self):
         """Test metrics buffer management."""

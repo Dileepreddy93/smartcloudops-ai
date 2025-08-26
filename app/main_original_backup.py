@@ -8,9 +8,11 @@ Security-hardened multi-AI ChatOps application with real data ML integration.
 
 import logging
 import os
+import re
 import sys
 import traceback
 from datetime import datetime, timezone
+from html import escape
 from pathlib import Path
 
 from flask import Flask, jsonify, request
@@ -175,8 +177,6 @@ def add_security_headers(response):
 
 
 # 🔒 SECURITY: Input validation functions
-import re
-from html import escape
 
 
 def validate_and_sanitize_input(text, max_length=1000):
@@ -214,7 +214,6 @@ def validate_json_input(data, required_fields):
 # Prometheus metrics support
 try:
     from prometheus_client import (
-        CONTENT_TYPE_LATEST,
         Counter,
         Histogram,
         generate_latest,

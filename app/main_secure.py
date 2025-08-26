@@ -443,7 +443,7 @@ def chat():
 
         # Sanitize inputs
         message = sanitize_input(data["message"], max_length=1000)
-        context = (
+        (
             sanitize_input(data.get("context", ""), max_length=500)
             if data.get("context")
             else None
@@ -572,7 +572,7 @@ def ml_predict():
                 raise ValidationError("Threshold must be a number between 0 and 1")
             threshold = float(data["threshold"])
 
-        model_version = (
+        (
             sanitize_input(data.get("model_version", "latest"), max_length=50)
             if data.get("model_version")
             else "latest"

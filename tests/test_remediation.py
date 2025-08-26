@@ -9,8 +9,8 @@ def test_remediation_engine_initialization():
     """Test that the remediation engine initializes correctly."""
     engine = AutoRemediationEngine()
 
-    assert engine.is_enabled == True
-    assert engine.manual_override == False
+    assert engine.is_enabled
+    assert not engine.manual_override
     assert len(engine.rules) == 5  # Default rules
     assert len(engine.action_history) == 0
 
@@ -41,7 +41,7 @@ def test_remediation_rule_creation():
     )
 
     assert rule.name == "Test Rule"
-    assert rule.enabled == True
+    assert rule.enabled
     assert rule.priority == 1
     assert rule.cooldown_minutes == 5
     assert len(rule.actions) == 1

@@ -130,7 +130,7 @@ def run_optimized_tests():
 
     # Calculate resource usage
     memory_diff = (final_memory - initial_memory) / 1024 / 1024
-    print(f"\n📈 Resource Summary:")
+    print("\n📈 Resource Summary:")
     print(f"Memory Increase: {memory_diff:.2f} MB")
     print(f"CPU Usage: {final_cpu:.2f}%")
 

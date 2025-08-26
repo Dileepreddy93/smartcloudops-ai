@@ -643,7 +643,7 @@ class SecureMLInferenceEngine:
                         health["components"]["prometheus_connection"] = (
                             test_metrics is not None
                         )
-                    except:
+                    except Exception:
                         health["components"]["prometheus_connection"] = False
                 else:
                     health["components"]["prometheus_connection"] = False

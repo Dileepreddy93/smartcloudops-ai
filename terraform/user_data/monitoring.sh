@@ -64,15 +64,15 @@ global:
 scrape_configs:
   - job_name: 'prometheus'
     static_configs:
-      - targets: ['localhost:${prometheus_port:-9090}']
+      - targets: ['localhost:${prometheus_port}']
 
   - job_name: 'monitoring_node'
     static_configs:
-      - targets: ['localhost:${node_exporter_port:-9100}']
+      - targets: ['localhost:${node_exporter_port}']
 
   - job_name: 'application_node'
     static_configs:
-      - targets: ['${application_private_ip}:${node_exporter_port:-9100}']
+      - targets: ['${application_private_ip}:${node_exporter_port}']
 EOF
 
 chown prometheus:prometheus /etc/prometheus/prometheus.yml
@@ -116,7 +116,7 @@ yum install -y grafana
 # Configure Grafana (secure defaults)
 cat > /etc/grafana/grafana.ini << EOF
 [server]
-http_port = ${grafana_port:-3000}
+http_port = ${grafana_port}
 
 [security]
 admin_user = admin
@@ -169,7 +169,7 @@ datasources:
   - name: Prometheus
     type: prometheus
     access: proxy
-    url: http://localhost:${prometheus_port:-9090}
+    url: http://localhost:${prometheus_port}
     isDefault: true
     editable: false
 EOF
@@ -191,8 +191,8 @@ systemctl is-active prometheus && echo "✓ Prometheus: Running" || echo "✗ Pr
 systemctl is-active grafana-server && echo "✓ Grafana: Running" || echo "✗ Grafana: Stopped"
 echo ""
 echo "URLs:"
-echo "- Grafana: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):${grafana_port:-3000}"
-echo "- Prometheus: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):${prometheus_port:-9090}"
+echo "- Grafana: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):${grafana_port}"
+echo "- Prometheus: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):${prometheus_port}"
 echo ""
 echo "Grafana Login: admin/admin123"
 EOF
@@ -212,9 +212,9 @@ cat > /etc/motd << 'EOF'
   🔍 MONITORING INSTANCE - Phase 1 Setup Complete
   
   Services:
-  - Grafana Dashboard: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):${grafana_port:-3000}
-  - Prometheus: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):${prometheus_port:-9090}
-  - Node Exporter: :${node_exporter_port:-9100}
+  - Grafana Dashboard: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):${grafana_port}
+  - Prometheus: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):${prometheus_port}
+  - Node Exporter: :${node_exporter_port}
   
   Run './health-check.sh' to check service status
   

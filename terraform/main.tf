@@ -286,8 +286,11 @@ resource "aws_instance" "monitoring" {
 
   user_data = base64encode(templatefile("${path.module}/user_data/monitoring.sh", {
     project_name           = var.project_name,
-    application_private_ip = aws_instance.application.private_ip,
-    grafana_admin_password = random_password.grafana_admin.result
+    application_private_ip = "10.0.2.100", # Use static IP to avoid cycle
+    grafana_admin_password = random_password.grafana_admin.result,
+    prometheus_port        = var.prometheus_port,
+    node_exporter_port     = "9100",
+    grafana_port           = "3000"
   }))
   user_data_replace_on_change = true
 
@@ -299,9 +302,8 @@ resource "aws_instance" "monitoring" {
 
 # Secure password for Grafana admin
 resource "random_password" "grafana_admin" {
-  length              = 20
-  special             = true
-  override_characters = "!@#%^*-_+?"
+  length  = 20
+  special = true
 }
 
 # EC2 Instance for Application (Phase 1.1.4 - ec2_application)
@@ -316,7 +318,7 @@ resource "aws_instance" "application" {
   user_data = base64encode(templatefile("${path.module}/user_data/application.sh", {
     project_name     = var.project_name,
     ml_models_bucket = aws_s3_bucket.ml_models.bucket,
-    prometheus_host  = aws_instance.monitoring.private_ip,
+    prometheus_host  = "10.0.1.100", # Use static IP to avoid cycle
     prometheus_port  = var.prometheus_port
   }))
   user_data_replace_on_change = true

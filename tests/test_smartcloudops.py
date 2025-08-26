@@ -33,7 +33,9 @@ def mock_openai():
             mock_completion = MagicMock()
             mock_completion.choices = [MagicMock()]
             mock_completion.choices[0].message.content = "Test response from AI."
-            mock_client.return_value.chat.completions.create.return_value = mock_completion
+            mock_client.return_value.chat.completions.create.return_value = (
+                mock_completion
+            )
             yield mock_client
     except ImportError:
         # Skip this fixture if openai module is not available

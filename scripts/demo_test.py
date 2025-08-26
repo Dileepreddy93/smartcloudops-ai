@@ -78,7 +78,7 @@ def demo_auto_remediation():
         print(f"\n📋 Default Rules ({len(engine.rules)}):")
         for i, rule in enumerate(engine.rules, 1):
             print(f"   {i}. {rule.name} (Priority: {rule.priority})")
-            print(f"      Condition: {rule.condition}")
+            print(f"      Conditions: {rule.conditions}")
             print(f"      Action: {rule.action}")
         
         # Test with different scenarios

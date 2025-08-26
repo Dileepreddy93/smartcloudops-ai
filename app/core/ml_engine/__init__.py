@@ -12,15 +12,15 @@ try:
 
     SECURE_ENGINE_AVAILABLE = True
 except ImportError:
-    SecureMLInferenceEngine = None
+    SecureMLInferenceEngine = None  # type: ignore
     SECURE_ENGINE_AVAILABLE = False
 
 try:
-    from .production_inference import MLInferenceEngine
+    from .production_inference import ProductionInferenceEngine
 
     PRODUCTION_ENGINE_AVAILABLE = True
 except ImportError:
-    MLInferenceEngine = None
+    ProductionInferenceEngine = None  # type: ignore
     PRODUCTION_ENGINE_AVAILABLE = False
 
 # Export what's available
@@ -28,4 +28,4 @@ __all__ = []
 if SECURE_ENGINE_AVAILABLE:
     __all__.append("SecureMLInferenceEngine")
 if PRODUCTION_ENGINE_AVAILABLE:
-    __all__.append("MLInferenceEngine")
+    __all__.append("ProductionInferenceEngine")

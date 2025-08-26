@@ -61,13 +61,13 @@ try:
 except ImportError:
     try:
         # Try local import
-        from database_integration import db_service
+        from database_integration import db_service  # type: ignore
 
         DATABASE_AVAILABLE = True
         logger.info("✅ Database integration loaded (local)")
     except ImportError as e:
         DATABASE_AVAILABLE = False
-        db_service = None
+        db_service = None  # type: ignore
         logger.warning(f"⚠️ Database integration not available: {e}")
 
 # Import secrets manager for Phase 3 integration
@@ -107,7 +107,7 @@ RealDataInferenceEngine = None
 MLModel = None
 
 try:
-    from real_data_inference_engine import RealDataInferenceEngine
+    from real_data_inference_engine import RealDataInferenceEngine  # type: ignore
 
     ML_ENGINE_AVAILABLE = True
     logger.info("✅ Real Data ML Engine available")
@@ -115,7 +115,7 @@ except ImportError as e:
     logger.warning(f"❌ Real Data ML Engine not available: {e}")
     try:
         # Fallback to Phase 3 ML
-        from phase3_anomaly_detection import MLModel
+        from phase3_anomaly_detection import MLModel  # type: ignore
 
         ML_ENGINE_AVAILABLE = True
         logger.info("✅ Phase 3 ML Engine available as fallback")
@@ -342,10 +342,10 @@ if ML_ENGINE_AVAILABLE:
                 logger.warning(
                     "Secure ML Engine not available, falling back to real_data"
                 )
-                ml_engine_instance = RealDataInferenceEngine()
+                ml_engine_instance = RealDataInferenceEngine()  # type: ignore
                 ML_ENGINE_TYPE = "real_data"
         elif ml_engine_preference == "phase3" and MLModel:
-            ml_engine_instance = MLModel()
+            ml_engine_instance = MLModel()  # type: ignore
             ML_ENGINE_TYPE = "phase3"
             logger.info("✅ Phase 3 ML Engine initialized")
         elif ml_engine_preference == "auto":
@@ -358,11 +358,11 @@ if ML_ENGINE_AVAILABLE:
                 logger.info("✅ Secure ML Engine auto-selected")
             except ImportError:
                 if RealDataInferenceEngine:
-                    ml_engine_instance = RealDataInferenceEngine()
+                    ml_engine_instance = RealDataInferenceEngine()  # type: ignore
                     ML_ENGINE_TYPE = "real_data"
                     logger.info("✅ Real Data ML Engine auto-selected")
                 elif MLModel:
-                    ml_engine_instance = MLModel()
+                    ml_engine_instance = MLModel()  # type: ignore
                     ML_ENGINE_TYPE = "phase3"
                     logger.info("✅ Phase 3 ML Engine auto-selected")
         else:

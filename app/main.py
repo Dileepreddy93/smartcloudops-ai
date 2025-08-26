@@ -22,10 +22,10 @@ def get_logs_data() -> str:
     if not hasattr(get_logs_data, "_cache"):
         try:
             with open(log_path, "r", encoding="utf-8") as f:
-                get_logs_data._cache = f.read()
+                get_logs_data._cache = f.read()  # type: ignore
         except Exception:
-            get_logs_data._cache = ""
-    return get_logs_data._cache
+            get_logs_data._cache = ""  # type: ignore
+    return get_logs_data._cache  # type: ignore
 
 
 def get_chat_response(user_query: str) -> str:

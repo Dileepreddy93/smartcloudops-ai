@@ -27,7 +27,7 @@ class MLRemediationIntegration:
         self.ml_engine = ProductionInferenceEngine()
         self.is_running = False
         self.monitoring_thread = None
-        self.metrics_buffer = []
+        self.metrics_buffer: list = []
         self.last_prediction = None
 
         # Configuration

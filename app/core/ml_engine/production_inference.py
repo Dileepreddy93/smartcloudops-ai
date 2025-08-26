@@ -90,9 +90,9 @@ class ModelPerformanceMonitor:
 
     def __init__(self, window_size: int = 1000):
         self.window_size = window_size
-        self.predictions = deque(maxlen=window_size)
-        self.features = deque(maxlen=window_size)
-        self.prediction_times = deque(maxlen=window_size)
+        self.predictions: deque = deque(maxlen=window_size)
+        self.features: deque = deque(maxlen=window_size)
+        self.prediction_times: deque = deque(maxlen=window_size)
         self.lock = threading.Lock()
 
     def track_prediction(

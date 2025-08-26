@@ -401,7 +401,7 @@ class AWSIntegrationService:
             )
 
             total_cost = 0
-            service_costs = {}
+            service_costs: dict = {}
 
             for result in cost_response.get("ResultsByTime", []):
                 for group in result.get("Groups", []):
@@ -595,7 +595,7 @@ class AWSIntegrationService:
         if not self.execution_history:
             return {"total_executions": 0, "actions": {}}
 
-        action_counts = {}
+        action_counts: dict = {}
         total_executions = len(self.execution_history)
         successful_executions = len(
             [

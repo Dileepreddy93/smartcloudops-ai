@@ -491,7 +491,7 @@ class SecureMLInferenceEngine:
             Prediction result dictionary
         """
         start_time = time.time()
-        request_id = hashlib.md5(f"{start_time}_{user_id}".encode()).hexdigest()[:8]
+        request_id = hashlib.md5(f"{start_time}_{user_id}".encode(), usedforsecurity=False).hexdigest()[:8]
 
         try:
             with self._lock:

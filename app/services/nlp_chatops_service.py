@@ -467,7 +467,7 @@ class NLPEnhancedChatOps:
         if not self.command_history:
             return {"total_commands": 0, "intents": {}}
 
-        intent_counts = {}
+        intent_counts: dict = {}
         total_commands = len(self.command_history)
 
         for entry in self.command_history:

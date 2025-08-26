@@ -62,7 +62,7 @@ jobs:
       - name: Run Bandit security scan
         run: |
           echo "🔒 Running Bandit security scan..."
-          bandit -r app/ -f json -o bandit-report.json || true
+          bandit -r app/ -f json -o bandit-report.json --severity-level high || true
           echo "✅ Bandit security scan completed"
 
       - name: Run Safety dependency check

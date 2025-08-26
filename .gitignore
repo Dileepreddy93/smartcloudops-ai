@@ -51,6 +51,8 @@ htmlcov/
 coverage.xml
 *.cover
 .hypothesis/
+test_report_*.json
+security_audit_report_*.json
 
 # Logs
 *.log
@@ -67,6 +69,7 @@ log/
 *.joblib
 ml_models/
 models/
+services/ml_service/ml_models/
 
 # Terraform
 .terraform/
@@ -98,3 +101,10 @@ Thumbs.db
 *.temp
 temp/
 tmp/
+
+# Node.js
+node_modules/
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

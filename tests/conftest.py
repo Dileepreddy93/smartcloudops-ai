@@ -19,7 +19,7 @@ try:
     from app.main import create_app  # noqa: E402
 except ImportError:
     # Fallback for when app.main is not available
-    create_app = None
+    create_app = None  # type: ignore
 
 
 @pytest.fixture(scope="session")

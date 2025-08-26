@@ -10,5 +10,3 @@ bp = Blueprint("metrics", __name__)
 def metrics():
     output = generate_latest()
     return Response(output, mimetype=CONTENT_TYPE_LATEST)
-
-

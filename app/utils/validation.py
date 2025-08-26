@@ -18,5 +18,3 @@ def sanitize_string(s: Any, max_len: int = 2048) -> str:
     except Exception:
         value = ""
     return value[:max_len]
-
-

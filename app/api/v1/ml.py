@@ -55,5 +55,3 @@ def ml_metrics():
         "model_info": health.get("model_info", {}),
     }
     return make_response(data=data)
-
-

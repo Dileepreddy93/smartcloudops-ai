@@ -14,5 +14,3 @@ def logs():
     if content and len(content) > 20000:
         content = content[-20000:]
     return Response(content or "", mimetype="text/plain")
-
-

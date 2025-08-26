@@ -15,7 +15,10 @@ def status():
     data = {
         "message": "OK",
         "timestamp": now_iso(),
-        "ml": {"status": ml_health.get("status"), "metrics": ml_health.get("metrics", {})},
+        "ml": {
+            "status": ml_health.get("status"),
+            "metrics": ml_health.get("metrics", {}),
+        },
     }
     # Compatibility fields for existing consumers
     compat = {"status": "healthy"}
@@ -26,11 +29,10 @@ def status():
 def home():
     # Legacy home response expected by tests/clients
     from datetime import datetime
+
     return {
         "status": "success",
         "message": "SmartCloudOps AI Platform",
         "version": "1.0.0",
         "timestamp": datetime.utcnow().isoformat(),
     }
-
-

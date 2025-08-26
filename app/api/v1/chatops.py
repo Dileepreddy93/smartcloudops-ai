@@ -15,6 +15,7 @@ def query():
     if not ok:
         # Preserve legacy error body expected by tests
         from flask import Response
+
         return Response("Invalid request", status=400)
 
     user_query = sanitize_string(json.get("query"))
@@ -25,6 +26,5 @@ def query():
 
     # Preserve legacy shape: top-level 'response'
     from flask import jsonify
+
     return jsonify({"response": answer})
-
-

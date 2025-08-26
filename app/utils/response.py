@@ -34,5 +34,3 @@ def make_response(
         payload.update(compatibility)
 
     return jsonify(payload), http_status
-
-

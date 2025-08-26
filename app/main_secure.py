@@ -64,8 +64,9 @@ except ImportError:
 try:
     import sys
     import os
+
     # Use relative path for scripts directory
-    scripts_path = os.path.join(os.path.dirname(__file__), '../scripts')
+    scripts_path = os.path.join(os.path.dirname(__file__), "../scripts")
     sys.path.append(os.path.abspath(scripts_path))
     # Try importing the existing ML inference engine
     try:

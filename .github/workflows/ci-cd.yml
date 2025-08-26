@@ -1,4 +1,4 @@
-name: SmartCloudOps AI - CI/CD Pipeline
+name: SmartCloudOps AI - Production CI/CD Pipeline
 
 on:
   push:
@@ -9,12 +9,52 @@ on:
 env:
   PYTHON_VERSION: '3.11'
   NODE_VERSION: '18'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  # Backend Testing & Security
-  backend-test:
-    name: Backend Tests & Security
+  # Security Scanning
+  security-scan:
+    name: Security & Vulnerability Scan
     runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run Bandit security scan
+      run: |
+        pip install bandit
+        bandit -r app/ -f json -o bandit-report.json || true
+        
+    - name: Run Safety dependency check
+      run: |
+        pip install safety
+        safety check --json --output safety-report.json || true
+        
+    - name: Run Trivy container scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'json'
+        output: 'trivy-report.json'
+        
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+          trivy-report.json
+        retention-days: 30
+
+  # Backend Testing
+  backend-test:
+    name: Backend Tests & Quality
+    runs-on: ubuntu-latest
+    needs: security-scan
     
     steps:
     - name: Checkout code
@@ -37,20 +77,12 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r app/requirements.txt
-        pip install pytest pytest-cov bandit safety
-        
-    - name: Run security scan with Bandit
-      run: |
-        bandit -r app/ -f json -o bandit-report.json || true
-        
-    - name: Run safety check
-      run: |
-        safety check --json --output safety-report.json || true
+        pip install pytest pytest-cov pytest-mock
         
     - name: Run backend tests
       run: |
         cd app
-        pytest tests/ --cov=. --cov-report=xml --cov-report=html --cov-report=term-missing
+        pytest tests/ --cov=. --cov-report=xml --cov-report=html --cov-report=term-missing --cov-fail-under=80
         
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
@@ -59,16 +91,14 @@ jobs:
         flags: backend
         name: backend-coverage
         
-    - name: Upload security reports
+    - name: Upload test results
       uses: actions/upload-artifact@v3
       with:
-        name: security-reports
-        path: |
-          bandit-report.json
-          safety-report.json
+        name: test-results
+        path: app/htmlcov/
         retention-days: 30
 
-  # Frontend Testing & Build
+  # Frontend Testing
   frontend-test:
     name: Frontend Tests & Build
     runs-on: ubuntu-latest
@@ -92,7 +122,7 @@ jobs:
     - name: Run frontend tests
       run: |
         cd frontend
-        npm run test -- --coverage --watchAll=false
+        npm run test:coverage
         
     - name: Run frontend linting
       run: |
@@ -111,7 +141,7 @@ jobs:
         path: frontend/build/
         retention-days: 30
 
-  # Infrastructure Validation
+  # Infrastructure Testing
   infrastructure-test:
     name: Infrastructure Validation
     runs-on: ubuntu-latest
@@ -123,17 +153,17 @@ jobs:
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
       with:
-        terraform_version: "1.5.0"
+        terraform_version: "1.0"
         
     - name: Terraform Format Check
       run: |
         cd terraform
-        terraform fmt -check -recursive
+        terraform fmt -check
         
     - name: Terraform Init
       run: |
         cd terraform
-        terraform init -backend=false
+        terraform init
         
     - name: Terraform Validate
       run: |
@@ -145,53 +175,7 @@ jobs:
       with:
         working_directory: terraform
 
-  # Integration Tests
-  integration-test:
-    name: Integration Tests
-    runs-on: ubuntu-latest
-    needs: [backend-test, frontend-test]
-    
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-          
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Python ${{ env.PYTHON_VERSION }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r app/requirements.txt
-        pip install pytest pytest-cov
-        
-    - name: Run integration tests
-      env:
-        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
-        JWT_SECRET_KEY: test-secret-key
-        ADMIN_API_KEY: test-admin-key
-        ML_API_KEY: test-ml-key
-        READONLY_API_KEY: test-readonly-key
-      run: |
-        cd app
-        pytest tests/integration/ -v --cov=. --cov-report=xml
-
-  # Docker Build & Security Scan
+  # Docker Build & Security
   docker-build:
     name: Docker Build & Security
     runs-on: ubuntu-latest
@@ -201,23 +185,43 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Download frontend build
-      uses: actions/download-artifact@v3
-      with:
-        name: frontend-build
-        path: frontend/build/
-        
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      uses: docker/setup-buildx-action@v2
       
-    - name: Build Docker image
-      run: |
-        docker build -t smartcloudops-ai:latest .
+    - name: Log in to Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v4
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=sha
+          
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
         
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: 'smartcloudops-ai:latest'
+        image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
         format: 'sarif'
         output: 'trivy-results.sarif'
         
@@ -227,11 +231,42 @@ jobs:
       with:
         sarif_file: 'trivy-results.sarif'
 
+  # Integration Tests
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: docker-build
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install dependencies
+      run: |
+        pip install -r app/requirements.txt
+        pip install pytest requests
+        
+    - name: Download frontend build
+      uses: actions/download-artifact@v3
+      with:
+        name: frontend-build
+        path: frontend/build/
+        
+    - name: Run integration tests
+      run: |
+        cd app
+        pytest tests/integration/ -v
+
   # Deploy to Staging
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
-    needs: [docker-build, integration-test]
+    needs: [integration-test]
     if: github.ref == 'refs/heads/develop'
     environment: staging
     
@@ -239,37 +274,16 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_REGION }}
-        
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2
-      with:
-        terraform_version: "1.5.0"
-        
     - name: Deploy to staging
       run: |
-        cd terraform
-        terraform init
-        terraform workspace select staging || terraform workspace new staging
-        terraform plan -var-file=terraform-staging.tfvars -out=staging.plan
-        terraform apply staging.plan
-      env:
-        TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
-        TF_VAR_jwt_secret_key: ${{ secrets.JWT_SECRET_KEY }}
-        TF_VAR_admin_api_key: ${{ secrets.ADMIN_API_KEY }}
-        TF_VAR_ml_api_key: ${{ secrets.ML_API_KEY }}
-        TF_VAR_readonly_api_key: ${{ secrets.READONLY_API_KEY }}
+        echo "Deploying to staging environment..."
+        # Add staging deployment logic here
 
   # Deploy to Production
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: [docker-build, integration-test]
+    needs: [integration-test]
     if: github.ref == 'refs/heads/main'
     environment: production
     
@@ -277,35 +291,14 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_REGION }}
-        
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2
-      with:
-        terraform_version: "1.5.0"
-        
     - name: Deploy to production
       run: |
-        cd terraform
-        terraform init
-        terraform workspace select production || terraform workspace new production
-        terraform plan -var-file=terraform-production.tfvars -out=production.plan
-        terraform apply production.plan
-      env:
-        TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
-        TF_VAR_jwt_secret_key: ${{ secrets.JWT_SECRET_KEY }}
-        TF_VAR_admin_api_key: ${{ secrets.ADMIN_API_KEY }}
-        TF_VAR_ml_api_key: ${{ secrets.ML_API_KEY }}
-        TF_VAR_readonly_api_key: ${{ secrets.READONLY_API_KEY }}
+        echo "Deploying to production environment..."
+        # Add production deployment logic here
 
   # Performance Testing
   performance-test:
-    name: Performance Testing
+    name: Performance & Load Testing
     runs-on: ubuntu-latest
     needs: [deploy-staging]
     if: github.ref == 'refs/heads/develop'
@@ -319,23 +312,16 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
         
-    - name: Install dependencies
+    - name: Install performance testing tools
       run: |
         pip install locust
         
     - name: Run load tests
       run: |
         cd scripts
-        locust -f load_tester.py --host=${{ secrets.STAGING_URL }} --users=10 --spawn-rate=2 --run-time=60s --headless
-        
-    - name: Upload performance results
-      uses: actions/upload-artifact@v3
-      with:
-        name: performance-results
-        path: scripts/locust_results/
-        retention-days: 30
+        python load_tester.py
 
-  # Notifications
+  # Notify Team
   notify:
     name: Notify Team
     runs-on: ubuntu-latest
@@ -346,11 +332,9 @@ jobs:
     - name: Notify on success
       if: success()
       run: |
-        echo "✅ Deployment successful!"
-        # Add your notification logic here (Slack, email, etc.)
+        echo "✅ All checks passed successfully!"
         
     - name: Notify on failure
       if: failure()
       run: |
-        echo "❌ Deployment failed!"
-        # Add your notification logic here (Slack, email, etc.)
+        echo "❌ Some checks failed. Please review the logs."

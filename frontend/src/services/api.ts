@@ -1,242 +1,227 @@
 import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
-import toast from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 
-// Create axios instance with base configuration
-const api: AxiosInstance = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000',
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+// API Response Types
+export interface ApiResponse<T = any> {
+  status: 'success' | 'error';
+  data?: T;
+  message?: string;
+  error?: string;
+  error_code?: string;
+}
 
-// Request interceptor to add auth token
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
+export interface SystemStatus {
+  status: string;
+  message: string;
+  timestamp: string;
+  version: string;
+  services: {
+    ml_service: string;
+    model_loaded: boolean;
+  };
+}
+
+export interface SystemMetrics {
+  cpu_usage: number;
+  memory_usage: number;
+  disk_usage: number;
+  network_io: number;
+  response_time: number;
+  error_rate: number;
+  request_count: number;
+  active_alerts: number;
+}
+
+export interface ChatOpsStatistics {
+  total_commands: number;
+  success_rate: number;
+  avg_response_time: number;
+  recent_commands: Array<{
+    command: string;
+    response: string;
+    timestamp: string;
+    success: boolean;
+  }>;
+}
+
+export interface MLPrediction {
+  anomaly_score: number;
+  is_anomaly: boolean;
+  confidence: number;
+  model_version: string;
+  features_used: string[];
+  threshold: number;
+  timestamp: string;
+}
+
+// API Service Class
+class ApiService {
+  private api: AxiosInstance;
+  private baseURL: string;
+
+  constructor() {
+    this.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    
+    this.api = axios.create({
+      baseURL: this.baseURL,
+      timeout: 10000,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    // Request interceptor for authentication
+    this.api.interceptors.request.use(
+      (config) => {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
+
+    // Response interceptor for error handling
+    this.api.interceptors.response.use(
+      (response: AxiosResponse) => {
+        return response;
+      },
+      (error: AxiosError) => {
+        this.handleApiError(error);
+        return Promise.reject(error);
+      }
+    );
   }
-);
 
-// Response interceptor for error handling
-api.interceptors.response.use(
-  (response: AxiosResponse) => {
-    return response;
-  },
-  (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      // Unauthorized - redirect to login
-      localStorage.removeItem('token');
-      window.location.href = '/login';
-      toast.error('Session expired. Please login again.');
-    } else if (error.response?.status === 403) {
-      toast.error('Access denied. Insufficient permissions.');
-    } else if (error.response?.status >= 500) {
-      toast.error('Server error. Please try again later.');
-    } else if (error.code === 'ECONNABORTED') {
-      toast.error('Request timeout. Please try again.');
+  private handleApiError(error: AxiosError): void {
+    if (error.response) {
+      const status = error.response.status;
+      const data = error.response.data as any;
+
+      switch (status) {
+        case 401:
+          toast.error('Authentication required. Please log in.');
+          // Redirect to login
+          window.location.href = '/login';
+          break;
+        case 403:
+          toast.error('Access denied. Insufficient permissions.');
+          break;
+        case 404:
+          toast.error('Resource not found.');
+          break;
+        case 429:
+          toast.error('Too many requests. Please try again later.');
+          break;
+        case 500:
+          toast.error('Server error. Please try again later.');
+          break;
+        default:
+          toast.error(data?.message || 'An unexpected error occurred.');
+      }
+    } else if (error.request) {
+      toast.error('Network error. Please check your connection.');
     } else {
-      const message = error.response?.data?.error || 'An error occurred';
-      toast.error(message);
+      toast.error('An unexpected error occurred.');
     }
-    return Promise.reject(error);
   }
-);
 
-// API endpoints
-export const endpoints = {
-  // Authentication
-  auth: {
-    login: '/auth/login',
-    verify: '/auth/verify',
-  },
-  
-  // Dashboard
-  dashboard: {
-    status: '/status',
-    metrics: '/metrics',
-  },
-  
+  private async makeRequest<T>(
+    method: 'get' | 'post' | 'put' | 'delete',
+    url: string,
+    data?: any,
+    retries: number = 3
+  ): Promise<T> {
+    try {
+      const response = await this.api[method](url, data);
+      return response.data;
+    } catch (error) {
+      if (retries > 0 && this.isRetryableError(error as AxiosError)) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return this.makeRequest(method, url, data, retries - 1);
+      }
+      throw error;
+    }
+  }
+
+  private isRetryableError(error: AxiosError): boolean {
+    return (
+      !error.response ||
+      (error.response.status >= 500 && error.response.status < 600) ||
+      error.response.status === 429
+    );
+  }
+
+  // Health and Status
+  async getStatus(): Promise<SystemStatus> {
+    return this.makeRequest<SystemStatus>('get', '/status');
+  }
+
+  async getHealth(): Promise<ApiResponse> {
+    return this.makeRequest<ApiResponse>('get', '/health');
+  }
+
+  // Metrics
+  async getMetrics(): Promise<SystemMetrics> {
+    return this.makeRequest<SystemMetrics>('get', '/metrics');
+  }
+
   // ChatOps
-  chatops: {
-    process: '/api/v1/chatops/process',
-    intents: '/api/v1/chatops/intents',
-    history: '/api/v1/chatops/history',
-    statistics: '/api/v1/chatops/statistics',
-    execute: '/api/v1/chatops/execute',
-    executions: '/api/v1/chatops/executions',
-    health: '/api/v1/chatops/health',
-    test: '/api/v1/chatops/test',
-    safetyLimits: '/api/v1/chatops/safety-limits',
-  },
-  
-  // ML
-  ml: {
-    health: '/ml/health',
-    predict: '/ml/predict',
-    metrics: '/ml/metrics',
-  },
-  
-  // Monitoring
-  monitoring: {
-    logs: '/logs',
-    remediation: {
-      status: '/api/v1/remediation/status',
-      test: '/api/v1/remediation/test',
-      rules: '/api/v1/remediation/rules',
-    },
-    integration: {
-      status: '/api/v1/integration/status',
-      start: '/api/v1/integration/start',
-      health: '/api/v1/integration/health',
-    },
-  },
-};
+  async getChatOpsStatistics(): Promise<ChatOpsStatistics> {
+    return this.makeRequest<ChatOpsStatistics>('get', '/chatops/statistics');
+  }
 
-// API service functions
-export const apiService = {
+  async processChatOpsCommand(command: string): Promise<ApiResponse> {
+    return this.makeRequest<ApiResponse>('post', '/query', { command });
+  }
+
+  // ML Predictions
+  async predictAnomaly(metrics: Partial<SystemMetrics>): Promise<MLPrediction> {
+    return this.makeRequest<MLPrediction>('post', '/ml/predict', { metrics });
+  }
+
+  async getMLHealth(): Promise<ApiResponse> {
+    return this.makeRequest<ApiResponse>('get', '/ml/health');
+  }
+
+  async getModelInfo(): Promise<ApiResponse> {
+    return this.makeRequest<ApiResponse>('get', '/ml/model-info');
+  }
+
+  // Logs
+  async getLogs(): Promise<string> {
+    return this.makeRequest<string>('get', '/logs');
+  }
+
   // Authentication
-  login: async (username: string, password: string) => {
-    const response = await api.post(endpoints.auth.login, { username, password });
-    return response.data;
-  },
-  
-  verifyToken: async (token: string) => {
-    const response = await api.post(endpoints.auth.verify, { token });
-    return response.data;
-  },
-  
-  // Dashboard
-  getStatus: async () => {
-    const response = await api.get(endpoints.dashboard.status);
-    return response.data;
-  },
-  
-  getMetrics: async () => {
-    const response = await api.get(endpoints.dashboard.metrics);
-    return response.data;
-  },
-  
-  // ChatOps
-  processChatOpsCommand: async (command: string, userId?: string, channel?: string) => {
-    const response = await api.post(endpoints.chatops.process, {
-      command,
-      user_id: userId,
-      channel,
+  async login(username: string, password: string): Promise<ApiResponse> {
+    return this.makeRequest<ApiResponse>('post', '/auth/login', {
+      username,
+      password,
     });
-    return response.data;
-  },
-  
-  getSupportedIntents: async () => {
-    const response = await api.get(endpoints.chatops.intents);
-    return response.data;
-  },
-  
-  getCommandHistory: async (limit: number = 10) => {
-    const response = await api.get(`${endpoints.chatops.history}?limit=${limit}`);
-    return response.data;
-  },
-  
-  getChatOpsStatistics: async () => {
-    const response = await api.get(endpoints.chatops.statistics);
-    return response.data;
-  },
-  
-  executeAction: async (action: string, parameters: any) => {
-    const response = await api.post(endpoints.chatops.execute, {
-      action,
-      parameters,
-    });
-    return response.data;
-  },
-  
-  getExecutionHistory: async (limit: number = 10) => {
-    const response = await api.get(`${endpoints.chatops.executions}?limit=${limit}`);
-    return response.data;
-  },
-  
-  getChatOpsHealth: async () => {
-    const response = await api.get(endpoints.chatops.health);
-    return response.data;
-  },
-  
-  testCommand: async (command: string) => {
-    const response = await api.post(endpoints.chatops.test, { command });
-    return response.data;
-  },
-  
-  getSafetyLimits: async () => {
-    const response = await api.get(endpoints.chatops.safetyLimits);
-    return response.data;
-  },
-  
-  updateSafetyLimits: async (limits: any) => {
-    const response = await api.put(endpoints.chatops.safetyLimits, limits);
-    return response.data;
-  },
-  
-  // ML
-  getMLHealth: async () => {
-    const response = await api.get(endpoints.ml.health);
-    return response.data;
-  },
-  
-  predictAnomaly: async (metrics: any) => {
-    const response = await api.post(endpoints.ml.predict, { metrics });
-    return response.data;
-  },
-  
-  getMLMetrics: async () => {
-    const response = await api.get(endpoints.ml.metrics);
-    return response.data;
-  },
-  
-  // Monitoring
-  getLogs: async () => {
-    const response = await api.get(endpoints.monitoring.logs);
-    return response.data;
-  },
-  
-  getRemediationStatus: async () => {
-    const response = await api.get(endpoints.monitoring.remediation.status);
-    return response.data;
-  },
-  
-  testRemediation: async (metrics: any) => {
-    const response = await api.post(endpoints.monitoring.remediation.test, { metrics });
-    return response.data;
-  },
-  
-  getRemediationRules: async () => {
-    const response = await api.get(endpoints.monitoring.remediation.rules);
-    return response.data;
-  },
-  
-  addRemediationRule: async (rule: any) => {
-    const response = await api.post(endpoints.monitoring.remediation.rules, rule);
-    return response.data;
-  },
-  
-  getIntegrationStatus: async () => {
-    const response = await api.get(endpoints.monitoring.integration.status);
-    return response.data;
-  },
-  
-  startIntegration: async () => {
-    const response = await api.post(endpoints.monitoring.integration.start);
-    return response.data;
-  },
-  
-  getIntegrationHealth: async () => {
-    const response = await api.get(endpoints.monitoring.integration.health);
-    return response.data;
-  },
-};
+  }
 
-export { api };
+  async logout(): Promise<void> {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+  }
+
+  // Utility methods
+  isAuthenticated(): boolean {
+    return !!localStorage.getItem('authToken');
+  }
+
+  getAuthToken(): string | null {
+    return localStorage.getItem('authToken');
+  }
+
+  setAuthToken(token: string): void {
+    localStorage.setItem('authToken', token);
+  }
+}
+
+// Export singleton instance
+export const apiService = new ApiService();

@@ -54,7 +54,7 @@ FROM python:3.11-slim AS production
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     FLASK_ENV=production \
-    FLASK_APP=app.main:app
+    FLASK_APP=app.main_secure:app
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
@@ -79,22 +79,47 @@ COPY --from=backend-builder /app/app ./app
 # Copy frontend build
 COPY --from=frontend-builder /app/frontend/build ./app/static
 
-# Create necessary directories
+# Create necessary directories with proper permissions
 RUN mkdir -p /app/logs /app/data /app/ml_models \
-    && chown -R appuser:appuser /app
+    && chown -R appuser:appuser /app \
+    && chmod -R 755 /app
 
 # Switch to non-root user
 USER appuser
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+# Health check with proper timeout and retries
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
 # Expose port
 EXPOSE 5000
 
-# Set resource limits
-ENV PYTHONPATH=/app
+# Set resource limits and security
+ENV PYTHONPATH=/app \
+    PYTHONHASHSEED=random \
+    PYTHONDONTWRITEBYTECODE=1
 
-# Run the application
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--worker-class", "gevent", "--worker-connections", "1000", "--max-requests", "1000", "--max-requests-jitter", "100", "--timeout", "30", "--keep-alive", "2", "--log-level", "info", "--access-logfile", "-", "--error-logfile", "-", "app.main:app"]
+# Security: Set memory and CPU limits
+ENV GUNICORN_MAX_REQUESTS=1000 \
+    GUNICORN_MAX_REQUESTS_JITTER=100 \
+    GUNICORN_WORKERS=4 \
+    GUNICORN_WORKER_CLASS=gevent \
+    GUNICORN_WORKER_CONNECTIONS=1000 \
+    GUNICORN_TIMEOUT=30 \
+    GUNICORN_KEEPALIVE=2
+
+# Run the application with production settings
+CMD ["gunicorn", \
+     "--bind", "0.0.0.0:5000", \
+     "--workers", "4", \
+     "--worker-class", "gevent", \
+     "--worker-connections", "1000", \
+     "--max-requests", "1000", \
+     "--max-requests-jitter", "100", \
+     "--timeout", "30", \
+     "--keep-alive", "2", \
+     "--log-level", "info", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-", \
+     "--preload", \
+     "app.main_secure:app"]

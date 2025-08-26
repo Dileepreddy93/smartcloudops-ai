@@ -17,11 +17,12 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import IsolationForest
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import f1_score, precision_score, recall_score
-
-from app.config import config_manager
+from sklearn.ensemble import IsolationForest, RandomForestClassifier
+from sklearn.preprocessing import StandardScaler, RobustScaler
+from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.pipeline import Pipeline
+import joblib
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,7 @@ class MLModelManager:
         self.current_model = None
         self.current_scaler = None
         self.model_metadata = {}
+        self.model_version = None
         self._load_latest_model()
 
     def _load_latest_model(self) -> bool:
@@ -65,10 +67,12 @@ class MLModelManager:
                 self.current_model = model_data.get("model")
                 self.current_scaler = model_data.get("scaler")
                 self.model_metadata = model_data.get("metadata", {})
+                self.model_version = model_data.get("version", "1.0")
             else:
                 # Legacy format - assume it's just the model
                 self.current_model = model_data
                 self.current_scaler = None
+                self.model_version = "1.0"
 
             logger.info(f"✅ Model loaded successfully: {model_path.name}")
 
@@ -89,7 +93,7 @@ class MLModelManager:
                 "scaler": scaler,
                 "metadata": metadata or {},
                 "created_at": datetime.now().isoformat(),
-                "version": "1.0"
+                "version": self.model_version or "1.0"
             }
 
             with open(model_path, "wb") as f:
@@ -100,7 +104,7 @@ class MLModelManager:
             self.current_scaler = scaler
             self.model_metadata = metadata or {}
 
-            logger.info(f"✅ Model saved: {model_filename}")
+            logger.info(f"✅ Model saved: {model_path}")
             return str(model_path)
 
         except Exception as e:
@@ -108,386 +112,205 @@ class MLModelManager:
             raise
 
     def get_model_info(self) -> Dict[str, Any]:
-        """Get information about the current model."""
-        if not self.current_model:
-            return {"status": "no_model_loaded"}
-
+        """Get current model information."""
         return {
-            "status": "loaded",
-            "model_type": type(self.current_model).__name__,
-            "has_scaler": self.current_scaler is not None,
+            "version": self.model_version,
             "metadata": self.model_metadata,
-            "model_dir": str(self.model_dir)
-        }
-
-    def is_model_loaded(self) -> bool:
-        """Check if a model is currently loaded."""
-        return self.current_model is not None
-
-
-class AnomalyDetector:
-    """Anomaly detection service using machine learning."""
-
-    def __init__(self, model_manager: MLModelManager):
-        self.model_manager = model_manager
-        self.confidence_threshold = float(
-            config_manager.get_secret("ML_CONFIDENCE_THRESHOLD") or "0.7"
-        )
-        self.max_prediction_time = int(
-            config_manager.get_secret("ML_MAX_PREDICTION_TIME") or "30"
-        )
-
-    def detect_anomaly(self, metrics: Dict[str, float]) -> Dict[str, Any]:
-        """
-        Detect anomalies in system metrics.
-        
-        Args:
-            metrics: Dictionary of system metrics (cpu_usage, memory_usage, etc.)
-            
-        Returns:
-            Dictionary with anomaly detection results
-        """
-        if not self.model_manager.is_model_loaded():
-            return {
-                "error": "No model loaded",
-                "anomaly_score": None,
-                "is_anomaly": False,
-                "confidence": 0.0
-            }
-
-        try:
-            start_time = time.time()
-
-            # Prepare features
-            features = self._prepare_features(metrics)
-            if features is None:
-                return {
-                    "error": "Invalid metrics format",
-                    "anomaly_score": None,
-                    "is_anomaly": False,
-                    "confidence": 0.0
-                }
-
-            # Make prediction
-            anomaly_score = self._predict_anomaly(features)
-            
-            # Calculate confidence and determine if anomaly
-            confidence = self._calculate_confidence(anomaly_score)
-            is_anomaly = confidence > self.confidence_threshold
-
-            prediction_time = time.time() - start_time
-
-            return {
-                "anomaly_score": float(anomaly_score),
-                "is_anomaly": bool(is_anomaly),
-                "confidence": float(confidence),
-                "prediction_time": float(prediction_time),
-                "threshold": float(self.confidence_threshold),
-                "features_used": list(features.keys()),
-                "timestamp": datetime.now().isoformat()
-            }
-
-        except Exception as e:
-            logger.error(f"❌ Anomaly detection failed: {e}")
-            return {
-                "error": str(e),
-                "anomaly_score": None,
-                "is_anomaly": False,
-                "confidence": 0.0
-            }
-
-    def _prepare_features(self, metrics: Dict[str, float]) -> Optional[Dict[str, float]]:
-        """Prepare features for anomaly detection."""
-        try:
-            # Required features for anomaly detection
-            required_features = [
-                "cpu_usage", "memory_usage", "disk_usage", 
-                "network_in", "network_out", "response_time"
-            ]
-
-            # Create feature vector with defaults for missing values
-            features = {}
-            for feature in required_features:
-                features[feature] = metrics.get(feature, 0.0)
-
-            # Add derived features
-            features["cpu_memory_ratio"] = (
-                features["cpu_usage"] / (features["memory_usage"] + 1e-6)
-            )
-            features["disk_cpu_ratio"] = (
-                features["disk_usage"] / (features["cpu_usage"] + 1e-6)
-            )
-            features["network_total"] = features["network_in"] + features["network_out"]
-
-            # Validate features
-            for key, value in features.items():
-                if not isinstance(value, (int, float)) or np.isnan(value) or np.isinf(value):
-                    features[key] = 0.0
-
-            return features
-
-        except Exception as e:
-            logger.error(f"❌ Feature preparation failed: {e}")
-            return None
-
-    def _predict_anomaly(self, features: Dict[str, float]) -> float:
-        """Make anomaly prediction using the loaded model."""
-        try:
-            # Convert features to numpy array
-            feature_values = np.array(list(features.values())).reshape(1, -1)
-
-            # Scale features if scaler is available
-            if self.model_manager.current_scaler:
-                feature_values = self.model_manager.current_scaler.transform(feature_values)
-
-            # Make prediction
-            if hasattr(self.model_manager.current_model, 'predict'):
-                # For models that return -1 (anomaly) or 1 (normal)
-                prediction = self.model_manager.current_model.predict(feature_values)[0]
-                # Convert to anomaly score (0 = normal, 1 = anomaly)
-                anomaly_score = 1.0 if prediction == -1 else 0.0
-            elif hasattr(self.model_manager.current_model, 'score_samples'):
-                # For models that return anomaly scores
-                scores = self.model_manager.current_model.score_samples(feature_values)
-                # Normalize scores to 0-1 range
-                anomaly_score = 1.0 - (scores[0] + 0.5)  # Assuming scores are roughly -0.5 to 0.5
-                anomaly_score = max(0.0, min(1.0, anomaly_score))
-            else:
-                # Fallback
-                anomaly_score = 0.5
-
-            return float(anomaly_score)
-
-        except Exception as e:
-            logger.error(f"❌ Prediction failed: {e}")
-            return 0.5  # Neutral score on error
-
-    def _calculate_confidence(self, anomaly_score: float) -> float:
-        """Calculate confidence in the anomaly prediction."""
-        # Simple confidence calculation based on distance from decision boundary
-        # Higher confidence when score is further from 0.5
-        confidence = abs(anomaly_score - 0.5) * 2.0
-        return min(1.0, max(0.0, confidence))
-
-
-class ModelTrainer:
-    """Train and evaluate anomaly detection models."""
-
-    def __init__(self, model_manager: MLModelManager):
-        self.model_manager = model_manager
-
-    def train_model(self, training_data: List[Dict[str, float]], 
-                   test_data: Optional[List[Dict[str, float]]] = None) -> Dict[str, Any]:
-        """
-        Train a new anomaly detection model.
-        
-        Args:
-            training_data: List of metric dictionaries for training
-            test_data: Optional test data for evaluation
-            
-        Returns:
-            Training results and model performance metrics
-        """
-        try:
-            logger.info(f"🚀 Starting model training with {len(training_data)} samples")
-
-            # Prepare training features
-            X_train, y_train = self._prepare_training_data(training_data)
-            
-            # Prepare test features if provided
-            X_test, y_test = None, None
-            if test_data:
-                X_test, y_test = self._prepare_training_data(test_data)
-
-            # Train model
-            model, scaler, training_metrics = self._train_isolation_forest(
-                X_train, y_train, X_test, y_test
-            )
-
-            # Save model
-            model_path = self.model_manager.save_model(
-                model, scaler, training_metrics
-            )
-
-            logger.info(f"✅ Model training completed: {model_path}")
-            
-            return {
-                "status": "success",
-                "model_path": model_path,
-                "training_metrics": training_metrics,
-                "model_info": self.model_manager.get_model_info()
-            }
-
-        except Exception as e:
-            logger.error(f"❌ Model training failed: {e}")
-            return {
-                "status": "error",
-                "error": str(e)
-            }
-
-    def _prepare_training_data(self, data: List[Dict[str, float]]) -> Tuple[np.ndarray, np.ndarray]:
-        """Prepare training data from raw metrics."""
-        try:
-            features = []
-            labels = []
-
-            for sample in data:
-                # Extract features
-                feature_vector = [
-                    sample.get("cpu_usage", 0.0),
-                    sample.get("memory_usage", 0.0),
-                    sample.get("disk_usage", 0.0),
-                    sample.get("network_in", 0.0),
-                    sample.get("network_out", 0.0),
-                    sample.get("response_time", 0.0),
-                    sample.get("cpu_usage", 0.0) / (sample.get("memory_usage", 0.0) + 1e-6),
-                    sample.get("disk_usage", 0.0) / (sample.get("cpu_usage", 0.0) + 1e-6),
-                    sample.get("network_in", 0.0) + sample.get("network_out", 0.0)
-                ]
-
-                # Extract label (1 for normal, -1 for anomaly)
-                label = sample.get("is_anomaly", False)
-                label = -1 if label else 1
-
-                features.append(feature_vector)
-                labels.append(label)
-
-            return np.array(features), np.array(labels)
-
-        except Exception as e:
-            logger.error(f"❌ Training data preparation failed: {e}")
-            raise
-
-    def _train_isolation_forest(self, X_train: np.ndarray, y_train: np.ndarray,
-                               X_test: Optional[np.ndarray] = None,
-                               y_test: Optional[np.ndarray] = None) -> Tuple[Any, Any, Dict]:
-        """Train Isolation Forest model."""
-        try:
-            # Scale features
-            scaler = StandardScaler()
-            X_train_scaled = scaler.fit_transform(X_train)
-
-            # Train model
-            model = IsolationForest(
-                contamination=0.1,  # Expected proportion of anomalies
-                n_estimators=100,
-                max_samples='auto',
-                random_state=42
-            )
-            
-            model.fit(X_train_scaled)
-
-            # Evaluate model
-            training_metrics = self._evaluate_model(
-                model, scaler, X_train, y_train, X_test, y_test
-            )
-
-            return model, scaler, training_metrics
-
-        except Exception as e:
-            logger.error(f"❌ Model training failed: {e}")
-            raise
-
-    def _evaluate_model(self, model: Any, scaler: Any, 
-                       X_train: np.ndarray, y_train: np.ndarray,
-                       X_test: Optional[np.ndarray] = None,
-                       y_test: Optional[np.ndarray] = None) -> Dict[str, Any]:
-        """Evaluate model performance."""
-        try:
-            metrics = {}
-
-            # Training metrics
-            X_train_scaled = scaler.transform(X_train)
-            y_train_pred = model.predict(X_train_scaled)
-            
-            # Convert predictions to binary (1 for normal, 0 for anomaly)
-            y_train_binary = (y_train == 1).astype(int)
-            y_train_pred_binary = (y_train_pred == 1).astype(int)
-
-            metrics["train_f1"] = f1_score(y_train_binary, y_train_pred_binary, average='weighted')
-            metrics["train_precision"] = precision_score(y_train_binary, y_train_pred_binary, average='weighted')
-            metrics["train_recall"] = recall_score(y_train_binary, y_train_pred_binary, average='weighted')
-
-            # Test metrics if available
-            if X_test is not None and y_test is not None:
-                X_test_scaled = scaler.transform(X_test)
-                y_test_pred = model.predict(X_test_scaled)
-                
-                y_test_binary = (y_test == 1).astype(int)
-                y_test_pred_binary = (y_test_pred == 1).astype(int)
-
-                metrics["test_f1"] = f1_score(y_test_binary, y_test_pred_binary, average='weighted')
-                metrics["test_precision"] = precision_score(y_test_binary, y_test_pred_binary, average='weighted')
-                metrics["test_recall"] = recall_score(y_test_binary, y_test_pred_binary, average='weighted')
-
-            # Model info
-            metrics["model_type"] = "IsolationForest"
-            metrics["n_features"] = X_train.shape[1]
-            metrics["n_samples"] = X_train.shape[0]
-            metrics["contamination"] = model.contamination
-            metrics["n_estimators"] = model.n_estimators
-
-            return metrics
-
-        except Exception as e:
-            logger.error(f"❌ Model evaluation failed: {e}")
-            return {"error": str(e)}
-
-
-class MLService:
-    """Main ML service interface."""
-
-    def __init__(self):
-        self.model_manager = MLModelManager()
-        self.anomaly_detector = AnomalyDetector(self.model_manager)
-        self.model_trainer = ModelTrainer(self.model_manager)
-
-    def predict_anomaly(self, metrics: Dict[str, float]) -> Dict[str, Any]:
-        """Predict anomalies in system metrics."""
-        return self.anomaly_detector.detect_anomaly(metrics)
-
-    def train_model(self, training_data: List[Dict[str, float]], 
-                   test_data: Optional[List[Dict[str, float]]] = None) -> Dict[str, Any]:
-        """Train a new anomaly detection model."""
-        return self.model_trainer.train_model(training_data, test_data)
-
-    def get_model_info(self) -> Dict[str, Any]:
-        """Get information about the current model."""
-        return self.model_manager.get_model_info()
-
-    def get_model_accuracy(self) -> Dict[str, Any]:
-        """Get model accuracy metrics."""
-        info = self.model_manager.get_model_info()
-        if info.get("status") != "loaded":
-            return {"error": "No model loaded"}
-        
-        return {
-            "f1_score": info.get("metadata", {}).get("test_f1", 0.0),
-            "precision": info.get("metadata", {}).get("test_precision", 0.0),
-            "recall": info.get("metadata", {}).get("test_recall", 0.0),
-            "model_type": info.get("model_type", "unknown"),
-            "last_updated": info.get("metadata", {}).get("created_at", "unknown")
+            "model_type": type(self.current_model).__name__ if self.current_model else None,
+            "scaler_type": type(self.current_scaler).__name__ if self.current_scaler else None,
+            "created_at": self.model_metadata.get("created_at"),
+            "performance": self.model_metadata.get("performance", {})
         }
 
     def health_check(self) -> Dict[str, Any]:
-        """Health check for the ML service."""
+        """Check model health."""
+        return {
+            "status": "healthy" if self.current_model else "unhealthy",
+            "model_loaded": self.current_model is not None,
+            "model_type": type(self.current_model).__name__ if self.current_model else None,
+            "version": self.model_version,
+            "last_updated": self.model_metadata.get("created_at")
+        }
+
+
+class MLService:
+    """Production-ready ML service for anomaly detection."""
+
+    def __init__(self, config: Optional[Dict] = None):
+        self.config = config or {}
+        self.model_manager = MLModelManager()
+        self.feature_columns = [
+            'cpu_usage', 'memory_usage', 'disk_usage', 'network_io',
+            'response_time', 'error_rate', 'request_count'
+        ]
+        self.anomaly_threshold = -0.5
+
+    def _generate_training_data(self, num_samples: int = 1000) -> pd.DataFrame:
+        """Generate realistic training data for anomaly detection."""
+        np.random.seed(42)
+        
+        # Normal operation data (80% of samples)
+        normal_samples = int(num_samples * 0.8)
+        normal_data = {
+            'cpu_usage': np.random.normal(30, 10, normal_samples),
+            'memory_usage': np.random.normal(50, 15, normal_samples),
+            'disk_usage': np.random.normal(60, 20, normal_samples),
+            'network_io': np.random.normal(100, 30, normal_samples),
+            'response_time': np.random.normal(200, 50, normal_samples),
+            'error_rate': np.random.normal(2, 1, normal_samples),
+            'request_count': np.random.normal(1000, 200, normal_samples)
+        }
+        
+        # Anomaly data (20% of samples)
+        anomaly_samples = num_samples - normal_samples
+        anomaly_data = {
+            'cpu_usage': np.random.normal(85, 10, anomaly_samples),
+            'memory_usage': np.random.normal(90, 5, anomaly_samples),
+            'disk_usage': np.random.normal(95, 3, anomaly_samples),
+            'network_io': np.random.normal(500, 100, anomaly_samples),
+            'response_time': np.random.normal(1000, 200, anomaly_samples),
+            'error_rate': np.random.normal(15, 5, anomaly_samples),
+            'request_count': np.random.normal(5000, 1000, anomaly_samples)
+        }
+        
+        # Combine and create labels
+        normal_df = pd.DataFrame(normal_data)
+        normal_df['is_anomaly'] = 0
+        
+        anomaly_df = pd.DataFrame(anomaly_data)
+        anomaly_df['is_anomaly'] = 1
+        
+        combined_df = pd.concat([normal_df, anomaly_df], ignore_index=True)
+        combined_df = combined_df.sample(frac=1, random_state=42).reset_index(drop=True)
+        
+        return combined_df
+
+    def train_model(self, data: Optional[pd.DataFrame] = None) -> Dict[str, Any]:
+        """Train a new anomaly detection model."""
         try:
-            model_info = self.model_manager.get_model_info()
+            # Use provided data or generate training data
+            if data is None:
+                data = self._generate_training_data(2000)
+            
+            # Prepare features and labels
+            X = data[self.feature_columns]
+            y = data['is_anomaly'] if 'is_anomaly' in data.columns else None
+            
+            # Split data for validation
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=0.2, random_state=42, stratify=y
+            )
+            
+            # Create and train model pipeline
+            scaler = RobustScaler()
+            model = IsolationForest(
+                contamination=0.1,
+                random_state=42,
+                n_estimators=100,
+                max_samples='auto'
+            )
+            
+            # Fit scaler and model
+            X_train_scaled = scaler.fit_transform(X_train)
+            model.fit(X_train_scaled)
+            
+            # Evaluate model
+            X_test_scaled = scaler.transform(X_test)
+            predictions = model.predict(X_test_scaled)
+            scores = model.decision_function(X_test_scaled)
+            
+            # Convert isolation forest predictions to binary (1 = anomaly, -1 = normal)
+            binary_predictions = (predictions == -1).astype(int)
+            
+            # Calculate metrics
+            performance_metrics = {
+                'accuracy': accuracy_score(y_test, binary_predictions),
+                'precision': precision_score(y_test, binary_predictions, zero_division=0),
+                'recall': recall_score(y_test, binary_predictions, zero_division=0),
+                'f1_score': f1_score(y_test, binary_predictions, zero_division=0)
+            }
+            
+            # Cross-validation
+            cv_scores = cross_val_score(model, X_train_scaled, y_train, cv=5, scoring='f1')
+            performance_metrics['cv_f1_mean'] = cv_scores.mean()
+            performance_metrics['cv_f1_std'] = cv_scores.std()
+            
+            # Save model
+            metadata = {
+                'created_at': datetime.now().isoformat(),
+                'performance': performance_metrics,
+                'feature_columns': self.feature_columns,
+                'training_samples': len(data),
+                'anomaly_threshold': self.anomaly_threshold
+            }
+            
+            model_path = self.model_manager.save_model(model, scaler, metadata)
+            
+            logger.info(f"✅ Model trained successfully. F1 Score: {performance_metrics['f1_score']:.3f}")
             
             return {
-                "status": "healthy" if model_info.get("status") == "loaded" else "degraded",
-                "model_loaded": self.model_manager.is_model_loaded(),
-                "model_info": model_info,
-                "timestamp": datetime.now().isoformat()
+                'model_path': model_path,
+                'performance': performance_metrics,
+                'status': 'success'
             }
-
+            
         except Exception as e:
-            logger.error(f"❌ ML service health check failed: {e}")
+            logger.error(f"❌ Model training failed: {e}")
+            raise
+
+    def predict_anomaly(self, metrics: Dict[str, float]) -> Dict[str, Any]:
+        """Predict anomaly for given metrics."""
+        try:
+            if not self.model_manager.current_model:
+                raise ValueError("No model loaded. Please train a model first.")
+            
+            # Extract features
+            features = []
+            for col in self.feature_columns:
+                value = metrics.get(col, 0.0)
+                features.append(float(value))
+            
+            features_array = np.array(features).reshape(1, -1)
+            
+            # Scale features
+            if self.model_manager.current_scaler:
+                features_scaled = self.model_manager.current_scaler.transform(features_array)
+            else:
+                features_scaled = features_array
+            
+            # Make prediction
+            anomaly_score = self.model_manager.current_model.decision_function(features_scaled)[0]
+            is_anomaly = anomaly_score < self.anomaly_threshold
+            
+            # Calculate confidence based on distance from threshold
+            confidence = min(1.0, abs(anomaly_score - self.anomaly_threshold) / 2.0)
+            
             return {
-                "status": "unhealthy",
-                "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                'anomaly_score': float(anomaly_score),
+                'is_anomaly': bool(is_anomaly),
+                'confidence': float(confidence),
+                'model_version': self.model_manager.model_version,
+                'features_used': self.feature_columns,
+                'threshold': self.anomaly_threshold,
+                'timestamp': datetime.now().isoformat()
             }
+            
+        except Exception as e:
+            logger.error(f"❌ Prediction failed: {e}")
+            raise
+
+    def get_model_info(self) -> Dict[str, Any]:
+        """Get model information."""
+        return self.model_manager.get_model_info()
+
+    def health_check(self) -> Dict[str, Any]:
+        """Check service health."""
+        return self.model_manager.health_check()
+
+    def retrain_model(self, new_data: Optional[pd.DataFrame] = None) -> Dict[str, Any]:
+        """Retrain model with new data."""
+        logger.info("🔄 Starting model retraining...")
+        return self.train_model(new_data)
 
 
 # Global ML service instance

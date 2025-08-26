@@ -101,27 +101,32 @@ logger = logging.getLogger(__name__)
 # Initialize Flask application with security configuration
 app = Flask(__name__)
 
-# Security Configuration
+# SECURITY: Remove all hardcoded secrets - require environment variables
 app.config.update(
     {
-        "SECRET_KEY": os.environ.get("SECRET_KEY", "dev-key-change-in-production"),
-        "MAX_CONTENT_LENGTH": 16 * 1024 * 1024,  # 16MB max request size
-        "JSON_SORT_KEYS": False,
+        "SECRET_KEY": os.environ.get("SECRET_KEY"),  # Must be set
+        "DEBUG": os.environ.get("FLASK_DEBUG", "False").lower() == "true",
+        "TESTING": False,
         "PROPAGATE_EXCEPTIONS": False,  # Handle exceptions securely
-        "ADMIN_API_KEY": os.environ.get(
-            "ADMIN_API_KEY", "sk-admin-demo-key-12345678901234567890"
-        ),
-        "ML_API_KEY": os.environ.get(
-            "ML_API_KEY", "sk-ml-demo-key-12345678901234567890123"
-        ),
-        "READONLY_API_KEY": os.environ.get(
-            "READONLY_API_KEY", "sk-readonly-demo-key-12345678901234567890"
-        ),
-        "API_KEY_SALT": os.environ.get(
-            "API_KEY_SALT", "smartcloudops_secure_salt_2024"
-        ),
+        "ADMIN_API_KEY": os.environ.get("ADMIN_API_KEY"),  # Must be set
+        "ML_API_KEY": os.environ.get("ML_API_KEY"),  # Must be set
+        "READONLY_API_KEY": os.environ.get("READONLY_API_KEY"),  # Must be set
+        "API_KEY_SALT": os.environ.get("API_KEY_SALT"),  # Must be set
     }
 )
+
+# Validate required environment variables
+required_env_vars = [
+    "SECRET_KEY",
+    "ADMIN_API_KEY", 
+    "ML_API_KEY",
+    "READONLY_API_KEY",
+    "API_KEY_SALT"
+]
+
+missing_vars = [var for var in required_env_vars if not app.config.get(var)]
+if missing_vars:
+    raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
 
 
 # Initialize simple rate limiting (without external dependencies)

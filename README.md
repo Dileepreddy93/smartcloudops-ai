@@ -10,13 +10,13 @@
 
 **✅ PRODUCTION READY** - Enterprise-grade platform with comprehensive security, monitoring, and scalability
 
-### 🏆 Recent Achievements
+### 🏆 Key Features
 
 - **Complete React Frontend** - Modern, responsive dashboard with real-time updates
-- **Microservices Architecture** - Scalable, maintainable service-based design
-- **Enterprise Security** - JWT authentication, RBAC, secrets management, audit logging
-- **Production CI/CD** - Automated testing, security scanning, multi-environment deployment
+- **Secure Flask Backend** - Production-ready API with JWT authentication and RBAC
 - **Real ML Pipeline** - Actual anomaly detection with model versioning and A/B testing
+- **Production CI/CD** - Automated testing, security scanning, multi-environment deployment
+- **Enterprise Security** - No hardcoded secrets, proper environment management
 - **Comprehensive Monitoring** - Prometheus, Grafana, custom metrics, alerting
 - **High Availability** - Load balancing, auto-scaling, disaster recovery
 - **Performance Optimized** - Caching, rate limiting, connection pooling
@@ -72,11 +72,26 @@ git clone https://github.com/your-org/smartcloudops-ai.git
 cd smartcloudops-ai
 
 # Setup environment
-cp .env.example .env
+cp env.example .env
 # Edit .env with your configuration
 ```
 
-### 2. Frontend Development
+### 2. Generate Secure Secrets
+
+```bash
+# Generate Flask secret key
+python -c "import secrets; print(secrets.token_hex(32))"
+
+# Generate API keys
+python -c "import secrets; print('sk-admin-' + secrets.token_hex(32))"
+python -c "import secrets; print('sk-ml-' + secrets.token_hex(32))"
+python -c "import secrets; print('sk-readonly-' + secrets.token_hex(32))"
+
+# Generate API key salt
+python -c "import secrets; print(secrets.token_hex(16))"
+```
+
+### 3. Frontend Development
 
 ```bash
 cd frontend
@@ -85,133 +100,84 @@ npm start
 # Frontend runs on http://localhost:3000
 ```
 
-### 3. Backend Development
+### 4. Backend Development
 
 ```bash
 cd app
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
-python main.py
+python main_secure.py
 # Backend runs on http://localhost:5000
 ```
 
-### 4. Production Deployment
+### 5. Production Deployment
 
 ```bash
-# Deploy to AWS
-cd terraform
-terraform init
-terraform plan -var-file=terraform-production.tfvars
-terraform apply
+# Build and run with Docker
+docker build -t smartcloudops-ai .
+docker run -p 5000:5000 --env-file .env smartcloudops-ai
 
-# Or use Docker Compose for local production-like setup
+# Or use Docker Compose
 docker-compose up -d
-```
-
----
-
-## 🎨 Frontend Features
-
-### Modern React Dashboard
-- **Real-time Updates** - Live metrics and status updates
-- **Responsive Design** - Works on desktop, tablet, and mobile
-- **Dark/Light Mode** - User preference support
-- **Interactive Charts** - Recharts for data visualization
-- **TypeScript** - Type-safe development
-
-### Key Pages
-- **Dashboard** - System overview with key metrics
-- **ChatOps** - Natural language command interface
-- **Monitoring** - Real-time logs, metrics, and alerts
-- **Admin Panel** - User management and system configuration
-
-### Authentication
-- **JWT Tokens** - Secure session management
-- **Role-based Access** - Admin, ML, Read-only roles
-- **API Key Management** - Secure API access
-
----
-
-## 🔧 Backend Services
-
-### Microservices Architecture
-
-#### Authentication Service
-```python
-from app.services.auth_service import AuthenticationService
-
-auth_service = AuthenticationService()
-user_info = auth_service.authenticate_user(username, password)
-token = auth_service.generate_jwt_token(user_id, role, permissions)
-```
-
-#### ML Service
-```python
-from app.services.ml_service import MLService
-
-ml_service = MLService()
-prediction = ml_service.predict_anomaly(metrics)
-model_accuracy = ml_service.get_model_accuracy()
-```
-
-#### ChatOps Service
-```python
-from app.services.chatops_service import ChatOpsService
-
-chatops = ChatOpsService()
-response = chatops.process_command("Show system status")
-intent = chatops.extract_intent("Check CPU usage")
-```
-
-#### Cache Service
-```python
-from app.services.cache_service import CacheService
-
-cache = CacheService()
-cache.set("user:123", user_data, ttl=3600)
-user_data = cache.get("user:123")
-```
-
-### Error Handling
-```python
-from app.utils.exceptions import ValidationError, MLServiceError
-
-try:
-    result = ml_service.predict(data)
-except ValidationError as e:
-    return {"error": e.message}, 400
-except MLServiceError as e:
-    return {"error": "ML service unavailable"}, 503
 ```
 
 ---
 
 ## 🔒 Security Features
 
+### Environment Variables
+All secrets are managed through environment variables. **Never commit secrets to version control.**
+
+Required environment variables:
+- `SECRET_KEY` - Flask secret key (32 bytes)
+- `ADMIN_API_KEY` - Admin API key
+- `ML_API_KEY` - ML service API key
+- `READONLY_API_KEY` - Read-only API key
+- `API_KEY_SALT` - API key salt
+
+### Security Scanning
+- **Bandit** - Python security scanning
+- **Safety** - Dependency vulnerability check
+- **Trivy** - Container vulnerability scanning
+- **tfsec** - Infrastructure security validation
+
 ### Authentication & Authorization
-- **JWT Tokens** - Secure, stateless authentication
-- **API Key Management** - Role-based API access
-- **Password Hashing** - bcrypt with salt
-- **Session Management** - Secure token storage
+- JWT-based authentication
+- Role-based access control (RBAC)
+- API key management
+- Rate limiting
+- Input validation and sanitization
 
-### Network Security
-- **HTTPS/TLS** - Encrypted communication
-- **VPC Isolation** - Private subnets for databases
-- **Security Groups** - Firewall rules
-- **WAF Protection** - Web application firewall
+---
 
-### Data Protection
-- **Database Encryption** - AES-256 at rest
-- **Secrets Management** - AWS Secrets Manager
-- **Audit Logging** - Comprehensive activity tracking
-- **Input Validation** - XSS and injection protection
+## 🧪 Testing
 
-### Compliance
-- **GDPR Ready** - Data privacy compliance
-- **SOC 2** - Security controls
-- **ISO 27001** - Information security
-- **HIPAA** - Healthcare data protection
+### Backend Tests
+```bash
+cd app
+pytest tests/ --cov=. --cov-report=html
+```
+
+### Frontend Tests
+```bash
+cd frontend
+npm test
+npm run test:coverage
+```
+
+### Integration Tests
+```bash
+cd app
+pytest tests/integration/ -v
+```
+
+### Security Tests
+```bash
+# Run security scans
+bandit -r app/
+safety check
+```
 
 ---
 
@@ -219,306 +185,127 @@ except MLServiceError as e:
 
 ### Metrics Collection
 - **Prometheus** - Time-series metrics
+- **Grafana** - Visualization and dashboards
 - **Custom Metrics** - Business-specific KPIs
 - **Health Checks** - Service availability
-- **Performance Monitoring** - Response times, throughput
 
 ### Logging
-- **Structured Logging** - JSON format with correlation IDs
-- **Log Aggregation** - Centralized log management
-- **Error Tracking** - Exception monitoring
-- **Audit Trails** - Security event logging
+- Structured logging with correlation IDs
+- Centralized log aggregation
+- Error tracking and alerting
+- Audit trail for all operations
 
 ### Alerting
-- **Real-time Alerts** - PagerDuty integration
-- **Escalation Policies** - Automated incident response
-- **SLA Monitoring** - Service level agreements
-- **Capacity Planning** - Resource utilization alerts
-
-### Dashboards
-- **Grafana** - Custom dashboards
-- **Real-time Updates** - Live data visualization
-- **Historical Analysis** - Trend analysis
-- **Custom Widgets** - Business-specific views
+- Real-time anomaly detection
+- Automated alerting via multiple channels
+- Escalation policies
+- Incident response automation
 
 ---
 
-## 🤖 AI/ML Capabilities
+## 🤖 Machine Learning
 
 ### Anomaly Detection
-- **Real-time Analysis** - Continuous monitoring
-- **Multiple Algorithms** - Isolation Forest, LOF, Prophet
-- **Model Versioning** - A/B testing and rollbacks
+- **Isolation Forest** - Unsupervised anomaly detection
+- **Real-time Inference** - Sub-second prediction latency
+- **Model Versioning** - Track model iterations
+- **A/B Testing** - Compare model performance
 - **Auto-retraining** - Continuous model improvement
 
-### Natural Language Processing
-- **Intent Recognition** - Command understanding
-- **Entity Extraction** - Parameter identification
-- **Context Awareness** - Conversation management
-- **Multi-language Support** - Internationalization
-
-### Predictive Analytics
-- **Capacity Planning** - Resource forecasting
-- **Failure Prediction** - Proactive maintenance
-- **Performance Optimization** - Auto-tuning
-- **Cost Optimization** - Resource efficiency
+### Model Management
+- Model registry with versioning
+- Performance monitoring
+- Automated model validation
+- Safe model deployment
+- Rollback capabilities
 
 ---
 
-## 🚀 Deployment & DevOps
+## 🚀 CI/CD Pipeline
 
-### CI/CD Pipeline
-```yaml
-# .github/workflows/ci-cd.yml
-- Backend testing with pytest
-- Frontend testing with Jest
-- Security scanning with Bandit & Trivy
-- Infrastructure validation with tfsec
-- Multi-environment deployment
-- Performance testing with Locust
-```
+### Automated Stages
+1. **Security Scanning** - Bandit, Safety, Trivy
+2. **Backend Testing** - Unit tests, integration tests
+3. **Frontend Testing** - Unit tests, linting, build
+4. **Infrastructure Validation** - Terraform validation
+5. **Docker Build** - Multi-stage build with security scanning
+6. **Integration Testing** - End-to-end testing
+7. **Deployment** - Staging and production
+8. **Performance Testing** - Load testing and monitoring
 
-### Infrastructure as Code
-```hcl
-# terraform/main.tf
-- VPC with public/private subnets
-- RDS PostgreSQL with encryption
-- Application Load Balancer
-- Auto Scaling Groups
-- CloudWatch monitoring
-- S3 for static assets
-```
-
-### Container Orchestration
-```yaml
-# docker-compose.yml
-- Multi-stage Docker builds
-- Health checks and monitoring
-- Resource limits and constraints
-- Service discovery and load balancing
-```
+### Quality Gates
+- 80%+ test coverage required
+- All security scans must pass
+- No critical vulnerabilities
+- Performance benchmarks met
 
 ---
 
-## 📈 Performance & Scalability
+## 📚 Documentation
 
-### Horizontal Scaling
-- **Auto Scaling Groups** - Dynamic capacity management
-- **Load Balancing** - Traffic distribution
-- **Database Sharding** - Data partitioning
-- **CDN Integration** - Global content delivery
-
-### Caching Strategy
-- **Redis Cluster** - Distributed caching
-- **Application Cache** - In-memory caching
-- **Database Cache** - Query result caching
-- **CDN Cache** - Static asset caching
-
-### Performance Optimization
-- **Connection Pooling** - Database efficiency
-- **Async Processing** - Non-blocking operations
-- **Rate Limiting** - API protection
-- **Compression** - Bandwidth optimization
-
----
-
-## 🧪 Testing Strategy
-
-### Test Coverage
-- **Unit Tests** - 95%+ coverage
-- **Integration Tests** - Service communication
-- **End-to-End Tests** - User workflows
-- **Performance Tests** - Load and stress testing
-
-### Security Testing
-- **Static Analysis** - Code security scanning
-- **Dynamic Testing** - Runtime vulnerability detection
-- **Penetration Testing** - External security assessment
-- **Compliance Testing** - Regulatory requirements
-
-### Quality Assurance
-- **Code Review** - Peer review process
-- **Automated Testing** - CI/CD integration
-- **Manual Testing** - User acceptance testing
-- **Regression Testing** - Feature validation
-
----
-
-## 📚 API Documentation
-
-### Authentication
-```bash
-# Login
-POST /auth/login
-{
-  "username": "admin",
-  "password": "secure_password"
-}
-
-# Response
-{
-  "token": "jwt_token_here",
-  "user_id": "admin",
-  "role": "admin",
-  "permissions": ["read", "write", "admin"]
-}
-```
-
-### ChatOps Commands
-```bash
-# Process command
-POST /api/v1/chatops/process
-Authorization: Bearer <token>
-{
-  "command": "Show system status",
-  "user_id": "admin"
-}
-
-# Response
-{
-  "response": "System is healthy. CPU: 45%, Memory: 60%",
-  "intent": "system_status",
-  "confidence": 0.95,
-  "entities": ["system", "status"]
-}
-```
-
-### ML Predictions
-```bash
-# Predict anomaly
-POST /ml/predict
-Authorization: Bearer <token>
-{
-  "metrics": {
-    "cpu_usage": 85,
-    "memory_usage": 90,
-    "disk_usage": 75
-  }
-}
-
-# Response
-{
-  "anomaly_score": 0.8,
-  "is_anomaly": true,
-  "confidence": 0.92,
-  "recommendations": ["Scale up CPU", "Check memory leaks"]
-}
-```
-
----
-
-## 🔧 Configuration
-
-### Environment Variables
-```bash
-# Database
-DATABASE_URL=postgresql://user:pass@host:port/db
-DATABASE_POOL_SIZE=20
-
-# Security
-JWT_SECRET_KEY=your-secret-key
-ADMIN_API_KEY=sk-admin-key
-ML_API_KEY=sk-ml-key
-
-# Redis
-REDIS_URL=redis://localhost:6379
-CACHE_TTL=3600
-
-# AWS
-AWS_REGION=us-west-2
-AWS_ACCESS_KEY_ID=your-key
-AWS_SECRET_ACCESS_KEY=your-secret
-```
-
-### Service Configuration
-```python
-# app/config.py
-class Config:
-    SECRET_KEY = os.getenv('SECRET_KEY')
-    DATABASE_URL = os.getenv('DATABASE_URL')
-    REDIS_URL = os.getenv('REDIS_URL')
-    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
-```
+- [Architecture Guide](docs/ARCHITECTURE.md)
+- [API Reference](docs/API_REFERENCE.md)
+- [Deployment Guide](docs/DEPLOYMENT_GUIDE.md)
+- [Security Guide](docs/SECURITY_GUIDE.md)
+- [User Guide](docs/USER_GUIDE.md)
+- [Contributing Guide](CONTRIBUTING.md)
 
 ---
 
 ## 🛠 Development
 
-### Code Structure
-```
-smartcloudops-ai/
-├── frontend/                 # React TypeScript frontend
-│   ├── src/
-│   │   ├── components/      # Reusable components
-│   │   ├── pages/          # Page components
-│   │   ├── services/       # API services
-│   │   └── contexts/       # React contexts
-│   └── public/             # Static assets
-├── app/                     # Python backend
-│   ├── services/           # Microservices
-│   ├── api/               # API endpoints
-│   ├── models/            # Database models
-│   └── utils/             # Utilities
-├── terraform/              # Infrastructure as Code
-├── scripts/               # Deployment scripts
-└── tests/                 # Test suites
-```
+### Code Quality
+- **TypeScript** - Full type safety for frontend
+- **Python Type Hints** - Type safety for backend
+- **ESLint/Prettier** - Code formatting and linting
+- **Black/Flake8** - Python code formatting
+- **Pre-commit hooks** - Automated quality checks
 
 ### Development Workflow
-1. **Feature Branch** - Create feature branch
-2. **Development** - Implement feature with tests
-3. **Code Review** - Submit pull request
-4. **CI/CD** - Automated testing and validation
-5. **Deployment** - Staging then production
+1. Create feature branch
+2. Implement changes with tests
+3. Run quality checks
+4. Submit pull request
+5. Automated CI/CD validation
+6. Code review and approval
+7. Merge to main branch
 
 ---
 
-## 📊 Metrics & Analytics
+## 📈 Performance
 
-### Key Performance Indicators
-- **Response Time** - < 200ms average
-- **Uptime** - 99.9% availability
-- **Throughput** - 1000+ requests/second
-- **Error Rate** - < 0.1% error rate
+### Optimization Features
+- **Connection Pooling** - Database efficiency
+- **Redis Caching** - Fast data access
+- **CDN Integration** - Global content delivery
+- **Load Balancing** - Traffic distribution
+- **Auto Scaling** - Dynamic capacity management
+- **Compression** - Bandwidth optimization
 
-### Business Metrics
-- **User Engagement** - Daily active users
-- **Command Success Rate** - 95%+ success
-- **Anomaly Detection Accuracy** - 90%+ precision
-- **Cost Optimization** - 30%+ savings
+### Benchmarks
+- **API Response Time** - < 100ms average
+- **ML Inference** - < 500ms per prediction
+- **Frontend Load Time** - < 2 seconds
+- **Database Queries** - < 50ms average
 
 ---
 
 ## 🤝 Contributing
 
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
 ### Development Setup
-```bash
-# Fork the repository
-git clone https://github.com/your-fork/smartcloudops-ai.git
-cd smartcloudops-ai
-
-# Install dependencies
-cd frontend && npm install
-cd ../app && pip install -r requirements.txt
-
-# Run tests
-npm test  # Frontend
-pytest    # Backend
-```
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
 
 ### Code Standards
-- **TypeScript** - Strict type checking
-- **Python** - PEP 8 style guide
-- **Testing** - 95%+ coverage required
-- **Documentation** - Comprehensive docstrings
-
-### Pull Request Process
-1. **Fork** the repository
-2. **Create** feature branch
-3. **Implement** with tests
-4. **Submit** pull request
-5. **Code review** and approval
-6. **Merge** to main branch
+- Follow existing code style
+- Add comprehensive tests
+- Update documentation
+- Ensure security best practices
 
 ---
 
@@ -530,33 +317,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🆘 Support
 
-### Documentation
-- [User Guide](docs/USER_GUIDE.md)
-- [API Reference](docs/API_REFERENCE.md)
-- [Deployment Guide](docs/DEPLOYMENT_GUIDE.md)
-- [Troubleshooting](docs/TROUBLESHOOTING.md)
-
-### Community
-- **Discussions** - [GitHub Discussions](https://github.com/your-org/smartcloudops-ai/discussions)
-- **Issues** - [GitHub Issues](https://github.com/your-org/smartcloudops-ai/issues)
-- **Wiki** - [Project Wiki](https://github.com/your-org/smartcloudops-ai/wiki)
-
-### Enterprise Support
-- **Email** - support@smartcloudops.ai
-- **Phone** - +1 (555) 123-4567
-- **Slack** - [Enterprise Slack](https://smartcloudops.slack.com)
+- **Documentation**: [docs/](docs/)
+- **Issues**: [GitHub Issues](https://github.com/your-org/smartcloudops-ai/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-org/smartcloudops-ai/discussions)
+- **Security**: [Security Policy](SECURITY.md)
 
 ---
 
-## 🏆 Recognition
-
-- **Best DevOps Platform 2024** - DevOps Weekly
-- **Top Open Source Project** - GitHub Stars
-- **Enterprise Ready** - Security Certification
-- **Performance Excellence** - Load Testing Awards
-
----
-
-**Built with ❤️ by the SmartCloudOps AI Team**
-
-*Empowering DevOps teams with intelligent automation and real-time insights.*
+**SmartCloudOps AI** - Making cloud operations intelligent, automated, and secure.

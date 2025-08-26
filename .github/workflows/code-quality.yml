@@ -41,6 +41,10 @@ jobs:
           pip install -r app/requirements.txt
           pip install black ruff safety bandit mypy
           pip install types-boto3 types-psutil types-seaborn pandas-stubs
+          echo "🔍 Installed packages:"
+          pip list | grep -E "(mypy|types-|pandas-stubs)"
+          echo "🔍 MyPy version:"
+          mypy --version
 
       - name: Run Black formatting check
         run: |
@@ -57,7 +61,10 @@ jobs:
       - name: Run type checking with MyPy
         run: |
           echo "🔍 Running type checking with MyPy..."
-          mypy app/ scripts/ tests/ --config-file mypy.ini
+          echo "🔍 Current directory: $(pwd)"
+          echo "🔍 MyPy config file exists: $(ls -la mypy.ini)"
+          echo "🔍 Testing MyPy with config:"
+          mypy app/ scripts/ tests/ --config-file mypy.ini --show-error-codes
           echo "✅ Type checking passed"
 
       - name: Run Bandit security scan

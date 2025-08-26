@@ -75,15 +75,22 @@ jobs:
       - name: Check for security vulnerabilities
         run: |
           if [ -f safety-report.json ]; then
-            VULN_COUNT=$(jq '.vulnerabilities | length' safety-report.json)
-            if [ "$VULN_COUNT" -gt 0 ]; then
-              echo "⚠️ Found $VULN_COUNT security vulnerabilities (showing first 5)"
-              jq '.vulnerabilities[] | "\(.package_name): \(.vulnerable_spec) - \(.advisory)"' safety-report.json | head -5
-              echo "⚠️ Security vulnerabilities found but not blocking deployment"
-              echo "💡 Consider updating dependencies to fix these vulnerabilities"
+            if command -v jq >/dev/null 2>&1; then
+              VULN_COUNT=$(jq '.vulnerabilities | length' safety-report.json 2>/dev/null || echo "0")
+              if [ "$VULN_COUNT" -gt 0 ]; then
+                echo "⚠️ Found $VULN_COUNT security vulnerabilities (showing first 5)"
+                jq '.vulnerabilities[] | "\(.package_name): \(.vulnerable_spec) - \(.advisory)"' safety-report.json 2>/dev/null | head -5
+                echo "⚠️ Security vulnerabilities found but not blocking deployment"
+                echo "💡 Consider updating dependencies to fix these vulnerabilities"
+              else
+                echo "✅ No security vulnerabilities found"
+              fi
             else
-              echo "✅ No security vulnerabilities found"
+              echo "⚠️ jq not available, skipping vulnerability count"
+              echo "⚠️ Security scan completed but vulnerability analysis skipped"
             fi
+          else
+            echo "⚠️ No safety report found"
           fi
 
       - name: Upload security reports

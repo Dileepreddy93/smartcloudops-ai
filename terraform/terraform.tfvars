@@ -14,7 +14,9 @@ private_subnet_cidrs = ["10.0.10.0/24", "10.0.20.0/24"]
 # Database Configuration
 db_instance_class = "db.t3.micro" # Use db.t3.small or larger for production
 db_username       = "admin"
-db_password       = "change-this-password-123!" # Use a strong password
+# SECURITY: Password must be set via environment variable or secure method
+# db_password       = "change-this-password-123!" # REMOVED - UNSAFE
+db_password       = var.db_password # Must be set securely
 
 # ECS Configuration
 ecs_cpu           = "256" # Use "512" or higher for production

@@ -120,6 +120,108 @@ class DevFileProvider(SecretProvider):
             return secrets.token_hex(32)  # Fallback to temporary
 
 
+class SecretProvider(ABC):
+    """Abstract secret provider interface for secure secret management."""
+
+    @abstractmethod
+    def get_secret(self, key: str) -> Optional[str]:
+        """Retrieve secret by key."""
+        pass
+
+    @abstractmethod
+    def get_priority(self) -> int:
+        """Return provider priority (lower = higher priority)."""
+        pass
+
+
+class AWSSecretsProvider(SecretProvider):
+    """AWS Secrets Manager provider for production secrets."""
+
+    def __init__(self):
+        self.available = False
+        try:
+            import boto3
+
+            self.client = boto3.client("secretsmanager")
+            self.available = True
+            logging.info("✅ AWS Secrets Manager provider initialized")
+        except Exception as e:
+            logging.warning(f"⚠️ AWS Secrets Manager not available: {e}")
+
+    def get_priority(self) -> int:
+        return 1  # Highest priority for production
+
+    @lru_cache(maxsize=50)
+    def get_secret(self, key: str) -> Optional[str]:
+        """Retrieve secret from AWS Secrets Manager with caching."""
+        if not self.available:
+            return None
+
+        try:
+            response = self.client.get_secret_value(SecretId=key)
+            secret_data = json.loads(response["SecretString"])
+
+            # Handle both direct values and nested structures
+            if isinstance(secret_data, dict):
+                return secret_data.get("value") or secret_data.get(key.split("/")[-1])
+            return secret_data
+
+        except self.client.exceptions.ResourceNotFoundException:
+            logging.debug(f"Secret {key} not found in AWS Secrets Manager")
+            return None
+        except Exception as e:
+            logging.error(f"Failed to retrieve AWS secret {key}: {e}")
+            return None
+
+
+class EnvironmentProvider(SecretProvider):
+    """Environment variable provider - fallback for development."""
+
+    def get_priority(self) -> int:
+        return 2  # Lower priority than AWS
+
+    def get_secret(self, key: str) -> Optional[str]:
+        """Retrieve secret from environment variables."""
+        return os.getenv(key)
+
+
+class DevFileProvider(SecretProvider):
+    """Development file-based provider for persistent local secrets."""
+
+    def __init__(self):
+        self.dev_secret_file = ".dev-secret"
+
+    def get_priority(self) -> int:
+        return 3  # Lowest priority
+
+    def get_secret(self, key: str) -> Optional[str]:
+        """Get or create persistent development secrets."""
+        if key == "SECRET_KEY":
+            return self._get_or_create_dev_secret()
+        return None
+
+    def _get_or_create_dev_secret(self) -> str:
+        """Get or create persistent development secret key."""
+        if os.path.exists(self.dev_secret_file):
+            try:
+                with open(self.dev_secret_file, "r") as f:
+                    return f.read().strip()
+            except Exception as e:
+                logging.error(f"Failed to read dev secret: {e}")
+
+        # Create new persistent secret
+        new_secret = secrets.token_hex(32)
+        try:
+            with open(self.dev_secret_file, "w") as f:
+                f.write(new_secret)
+            os.chmod(self.dev_secret_file, 0o600)  # Restrict permissions
+            logging.info("✅ Created persistent development secret")
+            return new_secret
+        except Exception as e:
+            logging.error(f"Failed to create dev secret: {e}")
+            return secrets.token_hex(32)  # Fallback to temporary
+
+
 class SecureConfigManager:
     """Production-ready configuration manager with multiple secret providers."""
 

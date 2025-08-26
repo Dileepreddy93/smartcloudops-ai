@@ -4,339 +4,353 @@ on:
   push:
     branches: [ main, develop ]
   pull_request:
-    branches: [ main, develop ]
-
-# Explicit permissions for security
-permissions:
-  contents: read
-  actions: read
-  checks: write
-  pull-requests: write
-  security-events: write
+    branches: [ main ]
 
 env:
   PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
 
 jobs:
-  # Matrix testing across Python versions and OS
-  test:
-    name: Test Application
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-        python-version: ['3.11']
+  # Backend Testing & Security
+  backend-test:
+    name: Backend Tests & Security
+    runs-on: ubuntu-latest
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
-        cache: 'pip'
+        python-version: ${{ env.PYTHON_VERSION }}
         
     - name: Cache pip dependencies
-      uses: actions/cache@v4
+      uses: actions/cache@v3
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('app/requirements.txt') }}
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
-          ${{ runner.os }}-pip-${{ matrix.python-version }}-
-        
+          ${{ runner.os }}-pip-
+          
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r app/requirements.txt
-        pip install psutil black ruff safety bandit
+        pip install pytest pytest-cov bandit safety
         
-    - name: Run linting and formatting checks
+    - name: Run security scan with Bandit
       run: |
-        echo "🔍 Running code quality checks..."
-        black --check --diff app/ scripts/ tests/
-        ruff check app/ scripts/ tests/
-        echo "✅ Code quality checks passed"
+        bandit -r app/ -f json -o bandit-report.json || true
         
-    - name: Run security scan
+    - name: Run safety check
       run: |
-        echo "🔒 Running security scan..."
-        bandit -r app/ -f json -o bandit-report.json || echo "⚠️ Bandit scan failed but continuing..."
-        safety check --json > safety-report.json || echo "⚠️ Safety check failed but continuing..."
-        echo "✅ Security scan completed"
+        safety check --json --output safety-report.json || true
         
-    - name: Test Flask application
+    - name: Run backend tests
       run: |
-        echo "🧪 Testing Flask application..."
         cd app
-        python -c "
-        try:
-            from main import create_app
-            app = create_app()
-            with app.test_client() as client:
-                response = client.get('/')
-                assert response.status_code == 200
-                response = client.get('/status')
-                assert response.status_code == 200
-            print('✅ Flask tests passed')
-        except Exception as e:
-            print(f'⚠️ Flask test warning: {e}')
-            print('⚠️ Continuing with other tests...')
-        "
+        pytest tests/ --cov=. --cov-report=xml --cov-report=html --cov-report=term-missing
         
-    - name: Test secure Flask application
-      run: |
-        echo "🔒 Testing secure Flask application..."
-        cd app
-        python -c "
-        try:
-            from main_secure import app
-            print('✅ Secure Flask import test passed')
-        except Exception as e:
-            print(f'⚠️ Secure Flask test warning: {e}')
-        "
-        
-    - name: Test configuration management
-      run: |
-        echo "⚙️ Testing configuration management..."
-        cd app
-        python -c "
-        try:
-            from config_manager import DatabaseConfig, SecurityConfig, MLConfig
-            print('✅ Config manager import passed')
-        except Exception as e:
-            print(f'⚠️ Config manager test warning: {e}')
-        "
-        
-    - name: Run pytest suite
-      run: |
-        echo "🧪 Running pytest suite..."
-        python -m pytest tests/ --tb=short --maxfail=1 -x -v || echo "⚠️ Some pytest tests failed but continuing..."
-        echo "✅ Pytest suite completed"
-        
-    - name: Test data collection
-      run: |
-        echo "📊 Testing data collection..."
-        cd scripts
-        python simple_real_data_collector.py || echo "⚠️ Data collection test warning but continuing..."
-        echo "✅ Data collection test completed"
-        
-    - name: Test ML training
-      run: |
-        echo "🤖 Testing ML training..."
-        cd scripts
-        python simple_real_ml_trainer.py || echo "⚠️ ML training test warning but continuing..."
-        echo "✅ ML training test completed"
-        
-    - name: Upload test artifacts
-      if: always()
-      uses: actions/upload-artifact@v4
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
       with:
-        name: test-results-${{ matrix.os }}-${{ matrix.python-version }}
+        file: ./app/coverage.xml
+        flags: backend
+        name: backend-coverage
+        
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports
         path: |
           bandit-report.json
           safety-report.json
-        retention-days: 7
+        retention-days: 30
 
-  # Security and quality checks
-  security:
-    name: Security & Quality
+  # Frontend Testing & Build
+  frontend-test:
+    name: Frontend Tests & Build
     runs-on: ubuntu-latest
-    needs: test
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Set up Python
-      uses: actions/setup-python@v5
+    - name: Set up Node.js ${{ env.NODE_VERSION }}
+      uses: actions/setup-node@v4
       with:
-        python-version: '3.11'
-        cache: 'pip'
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
         
-    - name: Install security tools
+    - name: Install frontend dependencies
       run: |
-        pip install bandit safety ruff black
-        pip install -r app/requirements.txt
+        cd frontend
+        npm ci
         
-    - name: Run comprehensive security scan
+    - name: Run frontend tests
       run: |
-        echo "🔒 Running comprehensive security scan..."
-        bandit -r app/ -f json -o bandit-report.json --severity-level high || true
-        safety check --json > safety-report.json || echo "⚠️ Safety check completed with warnings"
-        echo "✅ Security scan completed"
+        cd frontend
+        npm run test -- --coverage --watchAll=false
         
-    - name: Check for security vulnerabilities
+    - name: Run frontend linting
       run: |
-        if [ -f safety-report.json ]; then
-          if command -v jq >/dev/null 2>&1; then
-            VULN_COUNT=$(jq '.vulnerabilities | length' safety-report.json 2>/dev/null || echo "0")
-            if [ "$VULN_COUNT" -gt 0 ]; then
-              echo "⚠️ Found $VULN_COUNT security vulnerabilities (showing first 5)"
-              jq '.vulnerabilities[] | "\(.package_name): \(.vulnerable_spec) - \(.advisory)"' safety-report.json 2>/dev/null | head -5
-              echo "⚠️ Security vulnerabilities found but not blocking deployment"
-              echo "💡 Consider updating dependencies to fix these vulnerabilities"
-            else
-              echo "✅ No security vulnerabilities found"
-            fi
-          else
-            echo "⚠️ jq not available, skipping vulnerability count"
-            echo "⚠️ Security scan completed but vulnerability analysis skipped"
-          fi
-        else
-          echo "⚠️ No safety report found"
-        fi
-
-  # Docker build and test
-  docker:
-    name: Docker Build & Test
-    runs-on: ubuntu-latest
-    needs: [test, security]
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-      
-    - name: Build Docker image
+        cd frontend
+        npm run lint
+        
+    - name: Build frontend
       run: |
-        echo "🔨 Building Docker image..."
-        docker build -t smartcloudops-ai:${{ github.sha }} . || echo "⚠️ Docker build failed but continuing..."
-        docker tag smartcloudops-ai:${{ github.sha }} smartcloudops-ai:latest || echo "⚠️ Docker tag failed but continuing..."
-        echo "✅ Docker build completed"
+        cd frontend
+        npm run build
         
-    - name: Test Docker container
-      run: |
-        echo "🧪 Testing Docker container..."
-        docker run -d --name test-app -p 5000:5000 smartcloudops-ai:${{ github.sha }} || echo "⚠️ Docker run failed, skipping container test"
-        
-        # Wait for container to start
-        sleep 10
-        
-        # Health check with retries
-        for i in {1..5}; do
-          if curl -f http://localhost:5000/health 2>/dev/null; then
-            echo "✅ Container health check passed"
-            break
-          elif [ $i -eq 5 ]; then
-            echo "⚠️ Container health check failed, but continuing..."
-            docker logs test-app || echo "Could not get container logs"
-          else
-            echo "Attempt $i failed, retrying in 3 seconds..."
-            sleep 3
-          fi
-        done
-        
-        # Test API endpoints (non-blocking)
-        curl -f http://localhost:5000/status 2>/dev/null || echo "Status endpoint test (expected 401 without auth)"
-        
-        docker stop test-app 2>/dev/null && docker rm test-app 2>/dev/null || echo "Container cleanup completed"
-        echo "✅ Docker test completed"
-        
-    - name: Upload Docker logs on failure
-      if: failure()
-      uses: actions/upload-artifact@v4
+    - name: Upload frontend build
+      uses: actions/upload-artifact@v3
       with:
-        name: docker-logs
-        path: docker-logs.txt
-        retention-days: 7
+        name: frontend-build
+        path: frontend/build/
+        retention-days: 30
 
-  # Infrastructure validation
-  infrastructure:
+  # Infrastructure Validation
+  infrastructure-test:
     name: Infrastructure Validation
     runs-on: ubuntu-latest
-    needs: [test, security]
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       
     - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
+      uses: hashicorp/setup-terraform@v2
       with:
-        terraform_version: "1.6.6"
+        terraform_version: "1.5.0"
         
     - name: Terraform Format Check
-      working-directory: terraform
       run: |
-        echo "🔍 Checking Terraform formatting..."
+        cd terraform
         terraform fmt -check -recursive
-        echo "✅ Terraform formatting check passed"
         
     - name: Terraform Init
-      working-directory: terraform
       run: |
-        echo "🚀 Initializing Terraform..."
+        cd terraform
         terraform init -backend=false
-        echo "✅ Terraform initialization completed"
         
     - name: Terraform Validate
-      working-directory: terraform
       run: |
-        echo "✅ Validating Terraform configuration..."
+        cd terraform
         terraform validate
-        echo "✅ Terraform validation passed"
         
-    - name: Terraform Security Scan
-      working-directory: terraform
-      run: |
-        echo "🔒 Running Terraform security scan..."
-        # Install tfsec if not available
-        if ! command -v tfsec &> /dev/null; then
-          curl -L -o tfsec https://github.com/aquasecurity/tfsec/releases/latest/download/tfsec-linux-amd64
-          chmod +x tfsec
-          sudo mv tfsec /usr/local/bin/
-        fi
-        tfsec . --format json --out tfsec-report.json || true
-        echo "✅ Terraform security scan completed"
+    - name: Run tfsec
+      uses: aquasecurity/tfsec-action@v1.0.0
+      with:
+        working_directory: terraform
 
-  # Deployment (only on main branch)
-  deploy:
-    name: Deploy to Production
+  # Integration Tests
+  integration-test:
+    name: Integration Tests
     runs-on: ubuntu-latest
-    needs: [test, security, docker, infrastructure]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [backend-test, frontend-test]
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+          
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r app/requirements.txt
+        pip install pytest pytest-cov
+        
+    - name: Run integration tests
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+        JWT_SECRET_KEY: test-secret-key
+        ADMIN_API_KEY: test-admin-key
+        ML_API_KEY: test-ml-key
+        READONLY_API_KEY: test-readonly-key
+      run: |
+        cd app
+        pytest tests/integration/ -v --cov=. --cov-report=xml
+
+  # Docker Build & Security Scan
+  docker-build:
+    name: Docker Build & Security
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-test, infrastructure-test]
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Deploy application
-      run: |
-        echo "🚀 Deploying SmartCloudOps AI to production..."
-        echo "✅ Deployment completed successfully"
+    - name: Download frontend build
+      uses: actions/download-artifact@v3
+      with:
+        name: frontend-build
+        path: frontend/build/
         
-    - name: Notify deployment success
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Build Docker image
       run: |
-        echo "🎉 SmartCloudOps AI successfully deployed to production!"
-        echo "📊 Deployment Summary:"
-        echo "  - Branch: ${{ github.ref_name }}"
-        echo "  - Commit: ${{ github.sha }}"
-        echo "  - Author: ${{ github.actor }}"
-        echo "  - Tests: All passed"
-        echo "  - Security: All checks passed"
-        echo "  - Docker: Build and test passed"
-        echo "  - Infrastructure: Validation passed"
+        docker build -t smartcloudops-ai:latest .
+        
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'smartcloudops-ai:latest'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
 
-  # Notification job
-  notify:
-    name: Notify Results
+  # Deploy to Staging
+  deploy-staging:
+    name: Deploy to Staging
     runs-on: ubuntu-latest
-    needs: [test, security, docker, infrastructure, deploy]
+    needs: [docker-build, integration-test]
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+        
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: "1.5.0"
+        
+    - name: Deploy to staging
+      run: |
+        cd terraform
+        terraform init
+        terraform workspace select staging || terraform workspace new staging
+        terraform plan -var-file=terraform-staging.tfvars -out=staging.plan
+        terraform apply staging.plan
+      env:
+        TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+        TF_VAR_jwt_secret_key: ${{ secrets.JWT_SECRET_KEY }}
+        TF_VAR_admin_api_key: ${{ secrets.ADMIN_API_KEY }}
+        TF_VAR_ml_api_key: ${{ secrets.ML_API_KEY }}
+        TF_VAR_readonly_api_key: ${{ secrets.READONLY_API_KEY }}
+
+  # Deploy to Production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [docker-build, integration-test]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+        
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: "1.5.0"
+        
+    - name: Deploy to production
+      run: |
+        cd terraform
+        terraform init
+        terraform workspace select production || terraform workspace new production
+        terraform plan -var-file=terraform-production.tfvars -out=production.plan
+        terraform apply production.plan
+      env:
+        TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+        TF_VAR_jwt_secret_key: ${{ secrets.JWT_SECRET_KEY }}
+        TF_VAR_admin_api_key: ${{ secrets.ADMIN_API_KEY }}
+        TF_VAR_ml_api_key: ${{ secrets.ML_API_KEY }}
+        TF_VAR_readonly_api_key: ${{ secrets.READONLY_API_KEY }}
+
+  # Performance Testing
+  performance-test:
+    name: Performance Testing
+    runs-on: ubuntu-latest
+    needs: [deploy-staging]
+    if: github.ref == 'refs/heads/develop'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install dependencies
+      run: |
+        pip install locust
+        
+    - name: Run load tests
+      run: |
+        cd scripts
+        locust -f load_tester.py --host=${{ secrets.STAGING_URL }} --users=10 --spawn-rate=2 --run-time=60s --headless
+        
+    - name: Upload performance results
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-results
+        path: scripts/locust_results/
+        retention-days: 30
+
+  # Notifications
+  notify:
+    name: Notify Team
+    runs-on: ubuntu-latest
+    needs: [deploy-production, performance-test]
     if: always()
     
     steps:
-    - name: Notify on failure
-      if: failure()
-      run: |
-        echo "❌ CI/CD Pipeline failed!"
-        echo "Please check the workflow logs for details."
-        
     - name: Notify on success
       if: success()
       run: |
-        echo "✅ CI/CD Pipeline completed successfully!"
-        echo "All tests, security checks, and validations passed."
+        echo "✅ Deployment successful!"
+        # Add your notification logic here (Slack, email, etc.)
+        
+    - name: Notify on failure
+      if: failure()
+      run: |
+        echo "❌ Deployment failed!"
+        # Add your notification logic here (Slack, email, etc.)

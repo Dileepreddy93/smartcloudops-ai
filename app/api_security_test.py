@@ -6,6 +6,7 @@ SmartCloudOps AI - API Security Testing Demo
 Demonstrate the fixed security vulnerabilities with actual API tests.
 """
 
+import os
 import time
 from datetime import datetime
 
@@ -14,10 +15,29 @@ import requests
 # Server configuration
 BASE_URL = "http://localhost:5000"
 
-# API Keys (from secure configuration)
-ADMIN_KEY = "sk-admin-demo-key-12345678901234567890"
-ML_KEY = "sk-ml-demo-key-12345678901234567890123"
-READONLY_KEY = "sk-readonly-demo-key-12345678901234567890"
+# API Keys (from environment variables - SECURE)
+ADMIN_KEY = os.getenv("ADMIN_API_KEY", "sk-admin-demo-key-12345678901234567890")
+ML_KEY = os.getenv("ML_API_KEY", "sk-ml-demo-key-12345678901234567890123")
+READONLY_KEY = os.getenv("READONLY_API_KEY", "sk-readonly-demo-key-12345678901234567890")
+
+# SECURITY: Validate API keys are not default values
+def validate_api_keys():
+    """Validate that API keys are not using default demo values."""
+    default_keys = [
+        "sk-admin-demo-key-12345678901234567890",
+        "sk-ml-demo-key-12345678901234567890123",
+        "sk-readonly-demo-key-12345678901234567890"
+    ]
+
+    current_keys = [ADMIN_KEY, ML_KEY, READONLY_KEY]
+
+    for i, key in enumerate(current_keys):
+        if key in default_keys:
+            print(f"⚠️ WARNING: Using default API key for key {i+1}")
+            print(f"   Set environment variable to override default")
+            return False
+
+    return True
 
 
 def test_authentication_security():
@@ -275,6 +295,15 @@ def main():
     print(f"🕒 Test Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"🌐 Target Server: {BASE_URL}")
     print("\nTesting all fixed security vulnerabilities...\n")
+
+    # SECURITY: Validate API keys first
+    if not validate_api_keys():
+        print("⚠️ SECURITY WARNING: Using default API keys!")
+        print("   Set environment variables to use secure keys:")
+        print("   export ADMIN_API_KEY=your-secure-admin-key")
+        print("   export ML_API_KEY=your-secure-ml-key")
+        print("   export READONLY_API_KEY=your-secure-readonly-key")
+        print()
 
     # Test if server is running
     server_running = test_authentication_security()

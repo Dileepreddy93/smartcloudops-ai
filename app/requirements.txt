@@ -21,6 +21,15 @@ pydantic==2.9.2
 # Production Server
 gunicorn==22.0.0
 
+# Authentication & Security
+PyJWT==2.10.0
+cryptography==42.0.8
+
+# Database
+SQLAlchemy==2.0.27
+psycopg2-binary==2.9.9
+alembic==1.13.1
+
 # Machine Learning (Phase 3 Complete + Production Inference)
 scikit-learn==1.5.1
 pandas==2.2.2
@@ -37,7 +46,6 @@ prometheus-client==0.20.0
 
 # Security & SSL
 certifi==2024.7.4
-cryptography==42.0.8
 
 # Development & Testing
 pytest==8.3.2

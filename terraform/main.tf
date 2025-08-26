@@ -74,6 +74,27 @@ resource "aws_subnet" "public_2" {
   }
 }
 
+# Private Subnets for Database (Production Ready)
+resource "aws_subnet" "private_1" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.10.0/24"
+  availability_zone = data.aws_availability_zones.available.names[0]
+
+  tags = {
+    Name = "${var.project_name}-private-1"
+  }
+}
+
+resource "aws_subnet" "private_2" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.20.0/24"
+  availability_zone = data.aws_availability_zones.available.names[1]
+
+  tags = {
+    Name = "${var.project_name}-private-2"
+  }
+}
+
 # Route Table for Public Subnets
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
@@ -96,6 +117,25 @@ resource "aws_route_table_association" "public_1" {
 resource "aws_route_table_association" "public_2" {
   subnet_id      = aws_subnet.public_2.id
   route_table_id = aws_route_table.public.id
+}
+
+# Route Table for Private Subnets (no internet access)
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name = "${var.project_name}-private-rt"
+  }
+}
+
+resource "aws_route_table_association" "private_1" {
+  subnet_id      = aws_subnet.private_1.id
+  route_table_id = aws_route_table.private.id
+}
+
+resource "aws_route_table_association" "private_2" {
+  subnet_id      = aws_subnet.private_2.id
+  route_table_id = aws_route_table.private.id
 }
 
 # Security Groups (Phase 1.1.3) - 🔒 SECURITY HARDENED
@@ -278,7 +318,7 @@ resource "aws_key_pair" "main" {
 # EC2 Instance for Monitoring (Phase 1.1.4 - ec2_monitoring)
 resource "aws_instance" "monitoring" {
   ami                    = data.aws_ami.amazon_linux.id
-  instance_type          = "t2.micro" # FREE TIER
+  instance_type          = var.monitoring_instance_type # Production ready
   key_name               = aws_key_pair.main.key_name
   vpc_security_group_ids = [aws_security_group.monitoring.id]
   subnet_id              = aws_subnet.public_1.id
@@ -309,7 +349,7 @@ resource "random_password" "grafana_admin" {
 # EC2 Instance for Application (Phase 1.1.4 - ec2_application)
 resource "aws_instance" "application" {
   ami                    = data.aws_ami.amazon_linux.id
-  instance_type          = "t2.micro" # FREE TIER
+  instance_type          = var.application_instance_type # Production ready
   key_name               = aws_key_pair.main.key_name
   vpc_security_group_ids = [aws_security_group.application.id]
   subnet_id              = aws_subnet.public_2.id
@@ -1104,4 +1144,67 @@ resource "aws_iam_role_policy" "flow_log_policy" {
       }
     ]
   })
+}
+
+# ===== PHASE 3: PRODUCTION DATABASE =====
+
+# Database Module
+module "database" {
+  source = "./modules/database"
+
+  project_name = var.project_name
+  environment  = var.environment
+  vpc_id       = aws_vpc.main.id
+  subnet_ids   = [aws_subnet.private_1.id, aws_subnet.private_2.id]
+  
+  app_security_group_id = aws_security_group.application.id
+  
+  instance_class = "db.t3.micro" # Use larger instance for production
+  allocated_storage = 20
+  max_allocated_storage = 100
+  
+  db_username = "smartcloudops_admin"
+  db_password = var.db_password
+  
+  backup_retention_period = var.environment == "production" ? 30 : 7
+  
+  alarm_actions = [] # Add SNS topic ARNs for production
+}
+
+# Outputs
+output "database_endpoint" {
+  description = "Database connection endpoint"
+  value       = module.database.db_endpoint
+  sensitive   = false
+}
+
+output "database_port" {
+  description = "Database port"
+  value       = module.database.db_port
+}
+
+output "database_connection_string" {
+  description = "Database connection string (without password)"
+  value       = module.database.db_connection_string
+  sensitive   = false
+}
+
+output "application_public_ip" {
+  description = "Public IP of the application instance"
+  value       = aws_instance.application.public_ip
+}
+
+output "monitoring_public_ip" {
+  description = "Public IP of the monitoring instance"
+  value       = aws_instance.monitoring.public_ip
+}
+
+output "s3_ml_models_bucket" {
+  description = "S3 bucket for ML models"
+  value       = aws_s3_bucket.ml_models.bucket
+}
+
+output "s3_logs_bucket" {
+  description = "S3 bucket for application logs"
+  value       = aws_s3_bucket.logs.bucket
 }

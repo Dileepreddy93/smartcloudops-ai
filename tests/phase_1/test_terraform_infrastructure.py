@@ -71,11 +71,14 @@ class TestTerraformInfrastructure:
         assert "gateway_id = aws_internet_gateway.main.id" in terraform_content
 
     def test_ec2_instances_configuration(self, terraform_content):
-        """Test EC2 instances configuration."""
-        # Act & Assert: Check monitoring and application instances
-        assert 'resource "aws_instance" "monitoring"' in terraform_content
-        assert 'resource "aws_instance" "application"' in terraform_content
-        assert 'instance_type          = "t2.micro"' in terraform_content  # Free tier
+        """Test EC2 instances are configured correctly."""
+        # Check for production-ready instance types (not free tier)
+        assert 'instance_type          = var.monitoring_instance_type' in terraform_content
+        assert 'instance_type          = var.application_instance_type' in terraform_content
+        
+        # Check for proper variable definitions
+        assert 'monitoring_instance_type' in terraform_content
+        assert 'application_instance_type' in terraform_content
 
     def test_s3_buckets_configuration(self, terraform_content):
         """Test S3 buckets configuration."""

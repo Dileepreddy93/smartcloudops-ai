@@ -21,7 +21,7 @@ variable "ssh_public_key" {
     condition     = length(var.ssh_public_key) > 0
     error_message = "SSH public key must be provided for security."
   }
-  
+
   validation {
     condition     = length(var.ssh_public_key) > 0
     error_message = "SSH public key must be provided for security."

@@ -36,9 +36,9 @@ services:
     image: postgres:15-alpine
     container_name: smartcloudops-postgres
     environment:
-      - POSTGRES_DB=smartcloudops
-      - POSTGRES_USER=smartcloudops_user
-      - POSTGRES_PASSWORD=smartcloudops_password
+      - POSTGRES_DB=${DB_NAME:-smartcloudops}
+      - POSTGRES_USER=${DB_USER:-smartcloudops_user}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-smartcloudops_password}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
@@ -102,7 +102,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana_data:/var/lib/grafana

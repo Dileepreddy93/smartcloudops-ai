@@ -26,7 +26,7 @@ class LoadTester:
     def __init__(self, base_url: str = "http://localhost:5000"):
         self.base_url = base_url
         self.api_key = os.getenv(
-            "TEST_API_KEY", "sk-readonly-demo-key-12345678901234567890"
+            "TEST_API_KEY", "${READONLY_API_KEY}"
         )
         self.results = []
         self.setup_logging()

@@ -1,19 +1,11 @@
 #!/bin/bash
-
 # SmartCloudOps AI - Production Deployment Script
-# This script deploys the complete application to production
+# ==============================================
+#
+# This script deploys the complete SmartCloudOps AI platform to production
+# with comprehensive monitoring, metrics, and validation.
 
-set -e  # Exit on any error
-
-echo "🚀 SmartCloudOps AI - Production Deployment Starting..."
-echo "=================================================="
-
-# Configuration
-APP_INSTANCE_IP="44.200.14.5"
-MONITORING_INSTANCE_IP="23.20.101.112"
-SSH_KEY="~/.ssh/smartcloudops-ai.pem"
-APP_DIR="/opt/smartcloudops-ai"
-SERVICE_NAME="smartcloudops-ai"
+set -euo pipefail
 
 # Colors for output
 RED='\033[0;31m'
@@ -22,230 +14,524 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Function to print colored output
-print_status() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-}
+# Configuration
+PROJECT_NAME="smartcloudops-ai"
+ENVIRONMENT="production"
+AWS_REGION="${AWS_DEFAULT_REGION:-us-east-1}"
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
+# Logging
+LOG_FILE="deployment_$(date +%Y%m%d_%H%M%S).log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+
+echo -e "${BLUE}🚀 SmartCloudOps AI - Production Deployment${NC}"
+echo "=================================================="
+echo "Timestamp: $(date)"
+echo "Environment: $ENVIRONMENT"
+echo "AWS Region: $AWS_REGION"
+echo "AWS Account: $AWS_ACCOUNT_ID"
+echo "Log File: $LOG_FILE"
+echo ""
+
+# Function to print status
+print_status() {
+    echo -e "${GREEN}✅ $1${NC}"
 }
 
 print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
+    echo -e "${YELLOW}⚠️ $1${NC}"
 }
 
 print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
+    echo -e "${RED}❌ $1${NC}"
 }
 
-# Function to check if command exists
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
+print_info() {
+    echo -e "${BLUE}ℹ️ $1${NC}"
 }
 
-# Function to test SSH connection
-test_ssh_connection() {
-    print_status "Testing SSH connection to application instance..."
-    if ssh -i $SSH_KEY -o ConnectTimeout=10 -o BatchMode=yes ec2-user@$APP_INSTANCE_IP "echo 'SSH connection successful'" 2>/dev/null; then
-        print_success "SSH connection to application instance established"
-        return 0
-    else
-        print_error "Failed to connect to application instance via SSH"
-        return 1
+# Function to check prerequisites
+check_prerequisites() {
+    print_info "Checking prerequisites..."
+    
+    # Check AWS CLI
+    if ! command -v aws &> /dev/null; then
+        print_error "AWS CLI is not installed"
+        exit 1
     fi
+    
+    # Check AWS credentials
+    if ! aws sts get-caller-identity &> /dev/null; then
+        print_error "AWS credentials not configured"
+        exit 1
+    fi
+    
+    # Check Docker
+    if ! command -v docker &> /dev/null; then
+        print_error "Docker is not installed"
+        exit 1
+    fi
+    
+    # Check Docker Compose
+    if ! command -v docker-compose &> /dev/null; then
+        print_error "Docker Compose is not installed"
+        exit 1
+    fi
+    
+    # Check Terraform
+    if ! command -v terraform &> /dev/null; then
+        print_error "Terraform is not installed"
+        exit 1
+    fi
+    
+    # Check required environment variables
+    required_vars=(
+        "SECRET_KEY"
+        "ADMIN_API_KEY"
+        "ML_API_KEY"
+        "READONLY_API_KEY"
+        "DB_PASSWORD"
+        "REDIS_PASSWORD"
+    )
+    
+    missing_vars=()
+    for var in "${required_vars[@]}"; do
+        if [[ -z "${!var:-}" ]]; then
+            missing_vars+=("$var")
+        fi
+    done
+    
+    if [[ ${#missing_vars[@]} -gt 0 ]]; then
+        print_error "Missing required environment variables: ${missing_vars[*]}"
+        print_info "Please run: ./scripts/setup_secure_environment.sh"
+        exit 1
+    fi
+    
+    print_status "All prerequisites satisfied"
+}
+
+# Function to validate infrastructure
+validate_infrastructure() {
+    print_info "Validating infrastructure configuration..."
+    
+    cd terraform/production
+    
+    # Initialize Terraform
+    print_info "Initializing Terraform..."
+    terraform init
+    
+    # Validate configuration
+    print_info "Validating Terraform configuration..."
+    if ! terraform validate; then
+        print_error "Terraform configuration validation failed"
+        exit 1
+    fi
+    
+    # Plan deployment
+    print_info "Planning Terraform deployment..."
+    terraform plan -out=tfplan
+    
+    print_status "Infrastructure validation completed"
+    cd ../..
+}
+
+# Function to deploy infrastructure
+deploy_infrastructure() {
+    print_info "Deploying infrastructure..."
+    
+    cd terraform/production
+    
+    # Apply Terraform plan
+    print_info "Applying Terraform configuration..."
+    terraform apply tfplan
+    
+    # Get outputs
+    print_info "Getting infrastructure outputs..."
+    DB_HOST=$(terraform output -raw database_host)
+    DB_PORT=$(terraform output -raw database_port)
+    DB_NAME=$(terraform output -raw database_name)
+    DB_USERNAME=$(terraform output -raw database_username)
+    REDIS_HOST=$(terraform output -raw redis_host)
+    REDIS_PORT=$(terraform output -raw redis_port)
+    ALB_DNS=$(terraform output -raw alb_dns_name)
+    ECR_REPO=$(terraform output -raw ecr_repository_url)
+    
+    print_status "Infrastructure deployed successfully"
+    print_info "Database: $DB_HOST:$DB_PORT/$DB_NAME"
+    print_info "Redis: $REDIS_HOST:$REDIS_PORT"
+    print_info "Load Balancer: $ALB_DNS"
+    print_info "ECR Repository: $ECR_REPO"
+    
+    cd ../..
+}
+
+# Function to build and push Docker images
+build_and_push_images() {
+    print_info "Building and pushing Docker images..."
+    
+    # Login to ECR
+    print_info "Logging into ECR..."
+    aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+    
+    # Build and push main application
+    print_info "Building main application image..."
+    docker build -f Dockerfile.production -t "$ECR_REPO:latest" .
+    docker push "$ECR_REPO:latest"
+    
+    # Build and push auth service
+    print_info "Building authentication service image..."
+    docker build -f services/auth_service/Dockerfile -t "$ECR_REPO:auth-service" services/auth_service/
+    docker push "$ECR_REPO:auth-service"
+    
+    # Build and push ML service
+    print_info "Building ML service image..."
+    docker build -f services/ml_service/Dockerfile -t "$ECR_REPO:ml-service" services/ml_service/
+    docker push "$ECR_REPO:ml-service"
+    
+    print_status "All Docker images built and pushed successfully"
 }
 
 # Function to deploy application
 deploy_application() {
-    print_status "Deploying SmartCloudOps AI application..."
+    print_info "Deploying application..."
     
-    # Create deployment directory
-    ssh -i $SSH_KEY ec2-user@$APP_INSTANCE_IP "sudo mkdir -p $APP_DIR"
+    # Update ECS services
+    print_info "Updating ECS services..."
     
-    # Copy application files
-    print_status "Copying application files..."
-    scp -i $SSH_KEY -r app/* ec2-user@$APP_INSTANCE_IP:$APP_DIR/
-    scp -i $SSH_KEY requirements.txt ec2-user@$APP_INSTANCE_IP:$APP_DIR/
+    # Update main application service
+    aws ecs update-service \
+        --cluster "$PROJECT_NAME-cluster" \
+        --service "$PROJECT_NAME-app" \
+        --force-new-deployment \
+        --region "$AWS_REGION"
     
-    # Install Python dependencies
-    print_status "Installing Python dependencies..."
-    ssh -i $SSH_KEY ec2-user@$APP_INSTANCE_IP "cd $APP_DIR && python3 -m pip install --user -r requirements.txt"
+    # Update auth service
+    aws ecs update-service \
+        --cluster "$PROJECT_NAME-cluster" \
+        --service "$PROJECT_NAME-auth" \
+        --force-new-deployment \
+        --region "$AWS_REGION"
     
-    # Create systemd service file
-    print_status "Creating systemd service..."
-    cat > /tmp/smartcloudops-ai.service << EOF
-[Unit]
-Description=SmartCloudOps AI Application
-After=network.target
+    # Update ML service
+    aws ecs update-service \
+        --cluster "$PROJECT_NAME-cluster" \
+        --service "$PROJECT_NAME-ml" \
+        --force-new-deployment \
+        --region "$AWS_REGION"
+    
+    print_status "Application deployment initiated"
+}
 
-[Service]
-Type=simple
-User=ec2-user
-WorkingDirectory=$APP_DIR
-Environment=PATH=/home/ec2-user/.local/bin:/usr/local/bin:/usr/bin:/bin
-ExecStart=/home/ec2-user/.local/bin/gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 main:app
-Restart=always
-RestartSec=10
+# Function to wait for deployment
+wait_for_deployment() {
+    print_info "Waiting for deployment to complete..."
+    
+    # Wait for ECS services to be stable
+    services=("$PROJECT_NAME-app" "$PROJECT_NAME-auth" "$PROJECT_NAME-ml")
+    
+    for service in "${services[@]}"; do
+        print_info "Waiting for $service to be stable..."
+        aws ecs wait services-stable \
+            --cluster "$PROJECT_NAME-cluster" \
+            --services "$service" \
+            --region "$AWS_REGION"
+        print_status "$service is stable"
+    done
+    
+    print_status "All services are stable"
+}
 
-[Install]
-WantedBy=multi-user.target
+# Function to run health checks
+run_health_checks() {
+    print_info "Running health checks..."
+    
+    # Wait for load balancer to be ready
+    print_info "Waiting for load balancer to be ready..."
+    sleep 30
+    
+    # Health check endpoints
+    endpoints=(
+        "http://$ALB_DNS/health"
+        "http://$ALB_DNS/metrics"
+        "http://$ALB_DNS/status"
+    )
+    
+    for endpoint in "${endpoints[@]}"; do
+        print_info "Checking $endpoint..."
+        
+        for i in {1..10}; do
+            if curl -f -s "$endpoint" > /dev/null; then
+                print_status "$endpoint is healthy"
+                break
+            else
+                if [[ $i -eq 10 ]]; then
+                    print_error "$endpoint health check failed"
+                    return 1
+                fi
+                print_warning "Attempt $i/10 failed, retrying in 10 seconds..."
+                sleep 10
+            fi
+        done
+    done
+    
+    print_status "All health checks passed"
+}
+
+# Function to run comprehensive tests
+run_comprehensive_tests() {
+    print_info "Running comprehensive tests..."
+    
+    # Set test environment variables
+    export BASE_URL="http://$ALB_DNS"
+    export AUTH_SERVICE_URL="http://$ALB_DNS/auth"
+    export ML_SERVICE_URL="http://$ALB_DNS/ml"
+    
+    # Run test suite
+    print_info "Running test suite..."
+    if python3 tests/comprehensive_test_suite.py; then
+        print_status "All tests passed"
+    else
+        print_error "Some tests failed"
+        return 1
+    fi
+}
+
+# Function to setup monitoring
+setup_monitoring() {
+    print_info "Setting up monitoring..."
+    
+    # Create CloudWatch dashboards
+    print_info "Creating CloudWatch dashboards..."
+    
+    # Application metrics dashboard
+    cat > cloudwatch-dashboard.json << EOF
+{
+    "widgets": [
+        {
+            "type": "metric",
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 6,
+            "properties": {
+                "metrics": [
+                    ["AWS/ApplicationELB", "RequestCount", "LoadBalancer", "$ALB_DNS"],
+                    [".", "TargetResponseTime", ".", "."],
+                    [".", "HTTPCode_Target_5XX_Count", ".", "."]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "$AWS_REGION",
+                "title": "Application Load Balancer Metrics"
+            }
+        },
+        {
+            "type": "metric",
+            "x": 12,
+            "y": 0,
+            "width": 12,
+            "height": 6,
+            "properties": {
+                "metrics": [
+                    ["AWS/ECS", "CPUUtilization", "ServiceName", "$PROJECT_NAME-app", "ClusterName", "$PROJECT_NAME-cluster"],
+                    [".", "MemoryUtilization", ".", ".", ".", "."]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "$AWS_REGION",
+                "title": "ECS Service Metrics"
+            }
+        }
+    ]
+}
 EOF
     
-    # Copy service file to instance
-    scp -i $SSH_KEY /tmp/smartcloudops-ai.service ec2-user@$APP_INSTANCE_IP:/tmp/
+    # Create dashboard
+    aws cloudwatch put-dashboard \
+        --dashboard-name "$PROJECT_NAME-dashboard" \
+        --dashboard-body file://cloudwatch-dashboard.json \
+        --region "$AWS_REGION"
     
-    # Install and start service
-    ssh -i $SSH_KEY ec2-user@$APP_INSTANCE_IP "sudo mv /tmp/smartcloudops-ai.service /etc/systemd/system/ && sudo systemctl daemon-reload && sudo systemctl enable $SERVICE_NAME && sudo systemctl start $SERVICE_NAME"
+    # Setup CloudWatch alarms
+    print_info "Setting up CloudWatch alarms..."
     
-    print_success "Application deployed successfully"
+    # High CPU alarm
+    aws cloudwatch put-metric-alarm \
+        --alarm-name "$PROJECT_NAME-high-cpu" \
+        --alarm-description "High CPU utilization" \
+        --metric-name CPUUtilization \
+        --namespace AWS/ECS \
+        --statistic Average \
+        --period 300 \
+        --threshold 80 \
+        --comparison-operator GreaterThanThreshold \
+        --evaluation-periods 2 \
+        --dimensions Name=ServiceName,Value=$PROJECT_NAME-app Name=ClusterName,Value=$PROJECT_NAME-cluster \
+        --region "$AWS_REGION"
+    
+    # High memory alarm
+    aws cloudwatch put-metric-alarm \
+        --alarm-name "$PROJECT_NAME-high-memory" \
+        --alarm-description "High memory utilization" \
+        --metric-name MemoryUtilization \
+        --namespace AWS/ECS \
+        --statistic Average \
+        --period 300 \
+        --threshold 80 \
+        --comparison-operator GreaterThanThreshold \
+        --evaluation-periods 2 \
+        --dimensions Name=ServiceName,Value=$PROJECT_NAME-app Name=ClusterName,Value=$PROJECT_NAME-cluster \
+        --region "$AWS_REGION"
+    
+    # High error rate alarm
+    aws cloudwatch put-metric-alarm \
+        --alarm-name "$PROJECT_NAME-high-errors" \
+        --alarm-description "High error rate" \
+        --metric-name HTTPCode_Target_5XX_Count \
+        --namespace AWS/ApplicationELB \
+        --statistic Sum \
+        --period 300 \
+        --threshold 10 \
+        --comparison-operator GreaterThanThreshold \
+        --evaluation-periods 2 \
+        --dimensions Name=LoadBalancer,Value=$ALB_DNS \
+        --region "$AWS_REGION"
+    
+    print_status "Monitoring setup completed"
 }
 
-# Function to verify deployment
-verify_deployment() {
-    print_status "Verifying deployment..."
+# Function to generate deployment report
+generate_deployment_report() {
+    print_info "Generating deployment report..."
     
-    # Wait for service to start
-    sleep 10
+    report_file="deployment_report_$(date +%Y%m%d_%H%M%S).json"
     
-    # Check service status
-    if ssh -i $SSH_KEY ec2-user@$APP_INSTANCE_IP "sudo systemctl is-active --quiet $SERVICE_NAME"; then
-        print_success "Service is running"
-    else
-        print_error "Service is not running"
-        ssh -i $SSH_KEY ec2-user@$APP_INSTANCE_IP "sudo systemctl status $SERVICE_NAME"
-        return 1
-    fi
+    cat > "$report_file" << EOF
+{
+    "deployment": {
+        "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+        "environment": "$ENVIRONMENT",
+        "project": "$PROJECT_NAME",
+        "aws_region": "$AWS_REGION",
+        "aws_account": "$AWS_ACCOUNT_ID"
+    },
+    "infrastructure": {
+        "database": {
+            "host": "$DB_HOST",
+            "port": "$DB_PORT",
+            "name": "$DB_NAME",
+            "username": "$DB_USERNAME"
+        },
+        "redis": {
+            "host": "$REDIS_HOST",
+            "port": "$REDIS_PORT"
+        },
+        "load_balancer": "$ALB_DNS",
+        "ecr_repository": "$ECR_REPO"
+    },
+    "services": {
+        "main_app": {
+            "status": "deployed",
+            "url": "http://$ALB_DNS"
+        },
+        "auth_service": {
+            "status": "deployed",
+            "url": "http://$ALB_DNS/auth"
+        },
+        "ml_service": {
+            "status": "deployed",
+            "url": "http://$ALB_DNS/ml"
+        }
+    },
+    "monitoring": {
+        "cloudwatch_dashboard": "$PROJECT_NAME-dashboard",
+        "alarms": [
+            "$PROJECT_NAME-high-cpu",
+            "$PROJECT_NAME-high-memory",
+            "$PROJECT_NAME-high-errors"
+        ]
+    },
+    "next_steps": [
+        "Monitor application performance",
+        "Set up additional alerting",
+        "Configure backup and disaster recovery",
+        "Implement CI/CD pipeline",
+        "Set up user access and permissions"
+    ]
+}
+EOF
     
-    # Test application endpoints
-    print_status "Testing application endpoints..."
-    
-    # Test health endpoint
-    if curl -s -f "http://$APP_INSTANCE_IP:5000/status" > /dev/null; then
-        print_success "Health endpoint is responding"
-    else
-        print_error "Health endpoint is not responding"
-        return 1
-    fi
-    
-    # Test main endpoint
-    if curl -s -f "http://$APP_INSTANCE_IP:5000/" > /dev/null; then
-        print_success "Main endpoint is responding"
-    else
-        print_error "Main endpoint is not responding"
-        return 1
-    fi
-    
-    # Test ML endpoint
-    if curl -s -f "http://$APP_INSTANCE_IP:5000/ml/health" > /dev/null; then
-        print_success "ML endpoint is responding"
-    else
-        print_warning "ML endpoint is not responding (may be expected)"
-    fi
-    
-    # Test auto-remediation endpoints
-    if curl -s -f "http://$APP_INSTANCE_IP:5000/api/v1/remediation/status" > /dev/null; then
-        print_success "Auto-remediation endpoint is responding"
-    else
-        print_warning "Auto-remediation endpoint is not responding (may be expected)"
-    fi
-    
-    print_success "Deployment verification completed"
+    print_status "Deployment report generated: $report_file"
 }
 
-# Function to check monitoring stack
-check_monitoring() {
-    print_status "Checking monitoring stack..."
-    
-    # Check Prometheus
-    if curl -s -f "http://$MONITORING_INSTANCE_IP:9090" > /dev/null; then
-        print_success "Prometheus is running"
-    else
-        print_warning "Prometheus is not responding"
-    fi
-    
-    # Check Grafana
-    if curl -s -f "http://$MONITORING_INSTANCE_IP:3000" > /dev/null; then
-        print_success "Grafana is running"
-    else
-        print_warning "Grafana is not responding"
-    fi
-}
-
-# Function to display deployment summary
-display_summary() {
+# Function to display final status
+display_final_status() {
     echo ""
-    echo "🎉 SmartCloudOps AI - Production Deployment Complete!"
+    echo -e "${GREEN}🎉 PRODUCTION DEPLOYMENT COMPLETED SUCCESSFULLY!${NC}"
     echo "=================================================="
     echo ""
-    echo "📊 Deployment Summary:"
-    echo "  • Application URL: http://$APP_INSTANCE_IP:5000"
-    echo "  • Health Check: http://$APP_INSTANCE_IP:5000/status"
-    echo "  • Prometheus: http://$MONITORING_INSTANCE_IP:9090"
-    echo "  • Grafana: http://$MONITORING_INSTANCE_IP:3000"
+    echo -e "${BLUE}📊 Application URLs:${NC}"
+    echo "  Main Application: http://$ALB_DNS"
+    echo "  Authentication: http://$ALB_DNS/auth"
+    echo "  ML Service: http://$ALB_DNS/ml"
+    echo "  Health Check: http://$ALB_DNS/health"
+    echo "  Metrics: http://$ALB_DNS/metrics"
     echo ""
-    echo "🔧 Service Management:"
-    echo "  • SSH to instance: ssh -i $SSH_KEY ec2-user@$APP_INSTANCE_IP"
-    echo "  • Check service: sudo systemctl status $SERVICE_NAME"
-    echo "  • Restart service: sudo systemctl restart $SERVICE_NAME"
-    echo "  • View logs: sudo journalctl -u $SERVICE_NAME -f"
+    echo -e "${BLUE}📈 Monitoring:${NC}"
+    echo "  CloudWatch Dashboard: $PROJECT_NAME-dashboard"
+    echo "  CloudWatch Alarms: $PROJECT_NAME-high-cpu, $PROJECT_NAME-high-memory, $PROJECT_NAME-high-errors"
     echo ""
-    echo "📋 API Endpoints:"
-    echo "  • GET / - Application status"
-    echo "  • GET /status - Health check"
-    echo "  • POST /query - ChatOps with GPT"
-    echo "  • GET /logs - Application logs"
-    echo "  • GET /ml/health - ML engine health"
-    echo "  • POST /ml/predict - Anomaly detection"
-    echo "  • GET /api/v1/remediation/status - Auto-remediation status"
-    echo "  • GET /api/v1/integration/status - Integration status"
+    echo -e "${BLUE}🔧 Management:${NC}"
+    echo "  AWS Console: https://console.aws.amazon.com"
+    echo "  ECS Cluster: $PROJECT_NAME-cluster"
+    echo "  ECR Repository: $ECR_REPO"
     echo ""
-    echo "✅ All systems operational!"
+    echo -e "${YELLOW}⚠️ Important Notes:${NC}"
+    echo "  • Monitor application performance closely"
+    echo "  • Set up additional alerting as needed"
+    echo "  • Configure backup and disaster recovery"
+    echo "  • Implement proper CI/CD pipeline"
+    echo "  • Set up user access and permissions"
+    echo ""
+    echo -e "${GREEN}✅ Deployment completed at $(date)${NC}"
 }
 
-# Main deployment process
+# Main deployment function
 main() {
-    print_status "Starting SmartCloudOps AI production deployment..."
+    echo "Starting production deployment..."
     
     # Check prerequisites
-    if ! command_exists ssh; then
-        print_error "SSH client is not installed"
-        exit 1
-    fi
+    check_prerequisites
     
-    if ! command_exists scp; then
-        print_error "SCP client is not installed"
-        exit 1
-    fi
+    # Validate infrastructure
+    validate_infrastructure
     
-    if ! command_exists curl; then
-        print_error "curl is not installed"
-        exit 1
-    fi
+    # Deploy infrastructure
+    deploy_infrastructure
     
-    # Test SSH connection
-    if ! test_ssh_connection; then
-        print_error "Cannot establish SSH connection. Please check:"
-        print_error "  • SSH key exists at $SSH_KEY"
-        print_error "  • Security group allows SSH access"
-        print_error "  • Instance is running"
-        exit 1
-    fi
+    # Build and push images
+    build_and_push_images
     
     # Deploy application
     deploy_application
     
-    # Verify deployment
-    if ! verify_deployment; then
-        print_error "Deployment verification failed"
-        exit 1
-    fi
+    # Wait for deployment
+    wait_for_deployment
     
-    # Check monitoring
-    check_monitoring
+    # Run health checks
+    run_health_checks
     
-    # Display summary
-    display_summary
+    # Run comprehensive tests
+    run_comprehensive_tests
+    
+    # Setup monitoring
+    setup_monitoring
+    
+    # Generate deployment report
+    generate_deployment_report
+    
+    # Display final status
+    display_final_status
 }
 
 # Run main function

@@ -16,27 +16,46 @@ import requests
 BASE_URL = "http://localhost:5000"
 
 # API Keys (from environment variables - SECURE)
-ADMIN_KEY = os.getenv("ADMIN_API_KEY", "sk-admin-demo-key-12345678901234567890")
-ML_KEY = os.getenv("ML_API_KEY", "sk-ml-demo-key-12345678901234567890123")
-READONLY_KEY = os.getenv("READONLY_API_KEY", "sk-readonly-demo-key-12345678901234567890")
+ADMIN_KEY = os.getenv("ADMIN_API_KEY")
+ML_KEY = os.getenv("ML_API_KEY")
+READONLY_KEY = os.getenv("READONLY_API_KEY")
 
-# SECURITY: Validate API keys are not default values
+# SECURITY: Validate API keys are properly set
 def validate_api_keys():
-    """Validate that API keys are not using default demo values."""
-    default_keys = [
-        "sk-admin-demo-key-12345678901234567890",
-        "sk-ml-demo-key-12345678901234567890123",
-        "sk-readonly-demo-key-12345678901234567890"
-    ]
+    """Validate that API keys are properly configured."""
+    required_keys = {
+        "ADMIN_API_KEY": ADMIN_KEY,
+        "ML_API_KEY": ML_KEY,
+        "READONLY_API_KEY": READONLY_KEY
+    }
+    
+    missing_keys = []
+    for key_name, key_value in required_keys.items():
+        if not key_value:
+            missing_keys.append(key_name)
+        elif len(key_value) < 32:
+            print(f"⚠️ WARNING: {key_name} is too short (minimum 32 characters)")
+    
+    if missing_keys:
+        print(f"❌ ERROR: Missing required API keys: {', '.join(missing_keys)}")
+        print("   Set these environment variables before running the application")
+        return False
+    
+    return True
 
-    current_keys = [ADMIN_KEY, ML_KEY, READONLY_KEY]
-
-    for i, key in enumerate(current_keys):
-        if key in default_keys:
-            print(f"⚠️ WARNING: Using default API key for key {i+1}")
-            print(f"   Set environment variable to override default")
-            return False
-
+    # Validate all keys are present and secure
+    if not validate_api_keys():
+        return False
+    
+    # Check for common insecure patterns
+    insecure_patterns = ['demo', 'test', 'default', 'password', '123']
+    for key_name, key_value in required_keys.items():
+        if key_value:
+            key_lower = key_value.lower()
+            for pattern in insecure_patterns:
+                if pattern in key_lower:
+                    print(f"⚠️ WARNING: {key_name} contains potentially insecure pattern: {pattern}")
+    
     return True
 
 

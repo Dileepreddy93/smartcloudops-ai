@@ -6,9 +6,9 @@
 [![Security Scan](https://github.com/your-org/smartcloudops-ai/workflows/Security%20Scan/badge.svg)](https://github.com/your-org/smartcloudops-ai/security)
 [![Coverage](https://codecov.io/gh/your-org/smartcloudops-ai/branch/main/graph/badge.svg)](https://codecov.io/gh/your-org/smartcloudops-ai)
 
-## 🎯 Project Status
+## �� Project Status
 
-**✅ PRODUCTION READY** - Enterprise-grade platform with comprehensive security, monitoring, and scalability
+**🔄 IN DEVELOPMENT** - Enterprise-grade platform with comprehensive security, monitoring, and scalability
 
 ### 🏆 Key Features
 
@@ -104,197 +104,253 @@ npm start
 
 ```bash
 cd app
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
-python main_secure.py
+python main.py
 # Backend runs on http://localhost:5000
 ```
 
-### 5. Production Deployment
+### 5. Microservices Development
 
 ```bash
-# Build and run with Docker
-docker build -t smartcloudops-ai .
-docker run -p 5000:5000 --env-file .env smartcloudops-ai
+# Authentication Service
+cd services/auth_service
+pip install -r requirements.txt
+python app.py
+# Auth service runs on http://localhost:5001
 
-# Or use Docker Compose
-docker-compose up -d
+# ML Service
+cd services/ml_service
+pip install -r requirements.txt
+python app.py
+# ML service runs on http://localhost:5002
 ```
 
----
+### 6. Docker Development
 
-## 🔒 Security Features
+```bash
+# Start all services
+docker-compose up -d
 
-### Environment Variables
-All secrets are managed through environment variables. **Never commit secrets to version control.**
+# View logs
+docker-compose logs -f
 
-Required environment variables:
-- `SECRET_KEY` - Flask secret key (32 bytes)
-- `ADMIN_API_KEY` - Admin API key
-- `ML_API_KEY` - ML service API key
-- `READONLY_API_KEY` - Read-only API key
-- `API_KEY_SALT` - API key salt
-
-### Security Scanning
-- **Bandit** - Python security scanning
-- **Safety** - Dependency vulnerability check
-- **Trivy** - Container vulnerability scanning
-- **tfsec** - Infrastructure security validation
-
-### Authentication & Authorization
-- JWT-based authentication
-- Role-based access control (RBAC)
-- API key management
-- Rate limiting
-- Input validation and sanitization
+# Stop services
+docker-compose down
+```
 
 ---
 
 ## 🧪 Testing
 
-### Backend Tests
+### Run All Tests
+
 ```bash
-cd app
-pytest tests/ --cov=. --cov-report=html
+# Comprehensive test suite
+python tests/comprehensive_test_suite.py
+
+# Security audit
+python scripts/security_audit.py
+
+# Load testing
+python scripts/load_tester.py
 ```
 
-### Frontend Tests
+### Test Coverage
+
 ```bash
-cd frontend
-npm test
-npm run test:coverage
+# Run with coverage
+pytest --cov=app --cov-report=html
+
+# View coverage report
+open reports/coverage/index.html
 ```
 
-### Integration Tests
+---
+
+## 🚀 Production Deployment
+
+### 1. AWS Infrastructure
+
 ```bash
-cd app
-pytest tests/integration/ -v
+# Deploy infrastructure
+cd terraform/production
+terraform init
+terraform plan
+terraform apply
 ```
 
-### Security Tests
+### 2. Application Deployment
+
 ```bash
-# Run security scans
-bandit -r app/
-safety check
+# Deploy application
+./scripts/deploy_production.sh
+```
+
+### 3. Monitoring Setup
+
+```bash
+# Setup monitoring
+./scripts/setup_monitoring.sh
 ```
 
 ---
 
 ## 📊 Monitoring & Observability
 
-### Metrics Collection
-- **Prometheus** - Time-series metrics
-- **Grafana** - Visualization and dashboards
-- **Custom Metrics** - Business-specific KPIs
-- **Health Checks** - Service availability
+### Prometheus Metrics
 
-### Logging
-- Structured logging with correlation IDs
-- Centralized log aggregation
-- Error tracking and alerting
-- Audit trail for all operations
+- **Application Metrics**: Request rate, response time, error rate
+- **ML Metrics**: Prediction accuracy, model performance, A/B test results
+- **System Metrics**: CPU, memory, disk usage
+- **Business Metrics**: Active users, API usage, revenue
+
+### Grafana Dashboards
+
+- **System Overview**: Real-time system health
+- **Application Performance**: API performance and errors
+- **ML Pipeline**: Model performance and predictions
+- **Business Intelligence**: User activity and trends
 
 ### Alerting
-- Real-time anomaly detection
-- Automated alerting via multiple channels
-- Escalation policies
-- Incident response automation
+
+- **Critical Alerts**: System down, high error rate
+- **Performance Alerts**: Slow response time, high resource usage
+- **ML Alerts**: Model drift, low accuracy
+- **Business Alerts**: Unusual user activity
+
+---
+
+## 🔒 Security
+
+### Authentication & Authorization
+
+- **JWT Tokens**: Secure token-based authentication
+- **API Keys**: Role-based API key management
+- **RBAC**: Role-based access control
+- **Rate Limiting**: Protection against abuse
+
+### Data Protection
+
+- **Encryption**: Data encrypted at rest and in transit
+- **Secrets Management**: Secure secrets storage
+- **Input Validation**: Comprehensive input sanitization
+- **SQL Injection Protection**: Parameterized queries
+
+### Compliance
+
+- **GDPR**: Data privacy compliance
+- **SOC 2**: Security controls
+- **ISO 27001**: Information security management
 
 ---
 
 ## 🤖 Machine Learning
 
 ### Anomaly Detection
-- **Isolation Forest** - Unsupervised anomaly detection
-- **Real-time Inference** - Sub-second prediction latency
-- **Model Versioning** - Track model iterations
-- **A/B Testing** - Compare model performance
-- **Auto-retraining** - Continuous model improvement
+
+- **Isolation Forest**: Unsupervised anomaly detection
+- **Real-time Processing**: Sub-second prediction latency
+- **Model Versioning**: Track model performance over time
+- **A/B Testing**: Compare model versions
 
 ### Model Management
-- Model registry with versioning
-- Performance monitoring
-- Automated model validation
-- Safe model deployment
-- Rollback capabilities
 
----
-
-## 🚀 CI/CD Pipeline
-
-### Automated Stages
-1. **Security Scanning** - Bandit, Safety, Trivy
-2. **Backend Testing** - Unit tests, integration tests
-3. **Frontend Testing** - Unit tests, linting, build
-4. **Infrastructure Validation** - Terraform validation
-5. **Docker Build** - Multi-stage build with security scanning
-6. **Integration Testing** - End-to-end testing
-7. **Deployment** - Staging and production
-8. **Performance Testing** - Load testing and monitoring
-
-### Quality Gates
-- 80%+ test coverage required
-- All security scans must pass
-- No critical vulnerabilities
-- Performance benchmarks met
-
----
-
-## 📚 Documentation
-
-- [Architecture Guide](docs/ARCHITECTURE.md)
-- [API Reference](docs/API_REFERENCE.md)
-- [Deployment Guide](docs/DEPLOYMENT_GUIDE.md)
-- [Security Guide](docs/SECURITY_GUIDE.md)
-- [User Guide](docs/USER_GUIDE.md)
-- [Contributing Guide](CONTRIBUTING.md)
-
----
-
-## 🛠 Development
-
-### Code Quality
-- **TypeScript** - Full type safety for frontend
-- **Python Type Hints** - Type safety for backend
-- **ESLint/Prettier** - Code formatting and linting
-- **Black/Flake8** - Python code formatting
-- **Pre-commit hooks** - Automated quality checks
-
-### Development Workflow
-1. Create feature branch
-2. Implement changes with tests
-3. Run quality checks
-4. Submit pull request
-5. Automated CI/CD validation
-6. Code review and approval
-7. Merge to main branch
+- **Model Registry**: Centralized model storage
+- **Version Control**: Track model changes
+- **Performance Monitoring**: Monitor model drift
+- **Auto-retraining**: Automatic model updates
 
 ---
 
 ## 📈 Performance
 
-### Optimization Features
-- **Connection Pooling** - Database efficiency
-- **Redis Caching** - Fast data access
-- **CDN Integration** - Global content delivery
-- **Load Balancing** - Traffic distribution
-- **Auto Scaling** - Dynamic capacity management
-- **Compression** - Bandwidth optimization
+### Optimization
+
+- **Caching**: Redis-based caching layer
+- **Connection Pooling**: Database connection optimization
+- **Load Balancing**: Distribute traffic across instances
+- **Auto-scaling**: Automatic resource scaling
 
 ### Benchmarks
-- **API Response Time** - < 100ms average
-- **ML Inference** - < 500ms per prediction
-- **Frontend Load Time** - < 2 seconds
-- **Database Queries** - < 50ms average
+
+- **Response Time**: < 100ms for 95% of requests
+- **Throughput**: 10,000+ requests per second
+- **Availability**: 99.9% uptime
+- **Scalability**: Linear scaling with resources
+
+---
+
+## 🔧 Development
+
+### Code Quality
+
+- **Linting**: ESLint, Pylint, Black
+- **Type Checking**: TypeScript, MyPy
+- **Security Scanning**: Bandit, Safety, Trivy
+- **Code Coverage**: > 90% test coverage
+
+### CI/CD Pipeline
+
+- **Automated Testing**: Unit, integration, security tests
+- **Code Quality**: Linting, type checking, coverage
+- **Security Scanning**: Vulnerability scanning
+- **Deployment**: Automated deployment to staging/production
+
+---
+
+## 📚 API Documentation
+
+### Authentication
+
+```bash
+# Login
+POST /auth/login
+{
+  "username": "admin",
+  "password": "password"
+}
+
+# Verify Token
+POST /auth/verify
+{
+  "token": "jwt_token_here"
+}
+```
+
+### ML Predictions
+
+```bash
+# Make Prediction
+POST /ml/predict
+{
+  "features": {
+    "cpu_usage": 0.75,
+    "memory_usage": 0.60,
+    "disk_usage": 0.45,
+    "network_io": 0.30
+  }
+}
+```
+
+### Monitoring
+
+```bash
+# Health Check
+GET /health
+
+# Metrics
+GET /metrics
+
+# Status
+GET /status
+```
 
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
 ### Development Setup
+
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
@@ -302,10 +358,11 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 5. Submit a pull request
 
 ### Code Standards
-- Follow existing code style
-- Add comprehensive tests
+
+- Follow PEP 8 for Python
+- Use TypeScript for frontend
+- Write comprehensive tests
 - Update documentation
-- Ensure security best practices
 
 ---
 
@@ -317,11 +374,46 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🆘 Support
 
-- **Documentation**: [docs/](docs/)
-- **Issues**: [GitHub Issues](https://github.com/your-org/smartcloudops-ai/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/smartcloudops-ai/discussions)
-- **Security**: [Security Policy](SECURITY.md)
+### Documentation
+
+- [API Reference](docs/api.md)
+- [Deployment Guide](docs/deployment.md)
+- [Troubleshooting](docs/troubleshooting.md)
+
+### Community
+
+- [Discussions](https://github.com/your-org/smartcloudops-ai/discussions)
+- [Issues](https://github.com/your-org/smartcloudops-ai/issues)
+- [Wiki](https://github.com/your-org/smartcloudops-ai/wiki)
+
+### Contact
+
+- **Email**: support@smartcloudops.ai
+- **Slack**: [Join our workspace](https://smartcloudops.slack.com)
+- **Discord**: [Join our server](https://discord.gg/smartcloudops)
 
 ---
 
-**SmartCloudOps AI** - Making cloud operations intelligent, automated, and secure.
+## 🗺 Roadmap
+
+### Q1 2024
+- [ ] Multi-cloud support
+- [ ] Advanced ML models
+- [ ] Real-time collaboration
+- [ ] Mobile app
+
+### Q2 2024
+- [ ] AI-powered recommendations
+- [ ] Advanced analytics
+- [ ] Enterprise features
+- [ ] API marketplace
+
+### Q3 2024
+- [ ] Global deployment
+- [ ] Advanced security
+- [ ] Performance optimization
+- [ ] Developer tools
+
+---
+
+**Built with ❤️ by the SmartCloudOps AI Team**

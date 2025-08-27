@@ -3,212 +3,216 @@
 SmartCloudOps AI - Security Fixes Verification
 =============================================
 
-Verify that all critical API security vulnerabilities have been fixed.
+This script verifies that all security fixes have been properly implemented.
 """
 
+import os
+import sys
+import re
+from pathlib import Path
+from typing import Dict, List, Any
 
-print("🔒 SMARTCLOUDOPS AI - API SECURITY FIXES VERIFICATION")
-print("=" * 60)
-
-# Test 1: Import secure modules
-print("\n1. SECURE MODULE IMPORTS:")
-try:
-
-    print("   ✅ auth_secure.py: Available")
-
-    from secure_api import ErrorCode, ValidationError
-
-    print("   ✅ secure_api.py: Available")
-
-    # Check that main.py has been replaced
-    with open("main.py", "r") as f:
-        content = f.read()
-        if "SecureAPIKeyAuth" in content:
-            print("   ✅ main.py: Updated with secure version")
-        else:
-            print("   ❌ main.py: Not updated")
-
-except Exception as e:
-    print(f"   ❌ Import Error: {e}")
-
-# Test 2: Verify authentication system
-print("\n2. AUTHENTICATION SYSTEM:")
-try:
-    from auth_secure import auth
-
-    # Test fail-secure behavior
-    is_valid, user_info, msg = auth.validate_api_key("invalid_key", "read")
-    if not is_valid and "Invalid API key" in msg:
-        print("   ✅ Fail-secure: Invalid keys rejected")
-    else:
-        print("   ❌ Fail-secure: Failed")
-
-    # Test valid key
-    valid_key = "sk-admin-demo-key-12345678901234567890"
-    is_valid, user_info, msg = auth.validate_api_key(valid_key, "read")
-    if is_valid and user_info:
-        print("   ✅ Valid keys: Accepted with proper validation")
-    else:
-        print(f"   ❌ Valid keys: {msg}")
-
-except Exception as e:
-    print(f"   ❌ Authentication Error: {e}")
-
-# Test 3: Input validation
-print("\n3. INPUT VALIDATION SYSTEM:")
-try:
-    from secure_api import ValidationError, validate_ml_metrics
-
-    # Test invalid metrics
-    try:
-        validate_ml_metrics({"cpu_usage": "invalid"})
-        print("   ❌ Validation: Invalid input not rejected")
-    except ValidationError:
-        print("   ✅ Validation: Invalid input properly rejected")
-
-    # Test valid metrics
-    valid_metrics = {
-        "cpu_usage": 75.5,
-        "memory_usage": 60.2,
-        "disk_usage": 45.0,
-        "load_1m": 1.5,
+def verify_environment_variables() -> Dict[str, Any]:
+    """Verify that all required environment variables are set."""
+    print("🔍 Verifying environment variables...")
+    
+    required_vars = [
+        'JWT_SECRET_KEY',
+        'ADMIN_API_KEY',
+        'ML_API_KEY',
+        'READONLY_API_KEY',
+        'API_KEY_SALT',
+        'ADMIN_PASSWORD'
+    ]
+    
+    results = {
+        'missing': [],
+        'weak': [],
+        'valid': []
     }
-    result = validate_ml_metrics(valid_metrics)
-    if result and len(result) == 4:
-        print("   ✅ Validation: Valid input properly processed")
-    else:
-        print("   ❌ Validation: Valid input failed")
+    
+    for var in required_vars:
+        value = os.getenv(var)
+        if not value:
+            results['missing'].append(var)
+        elif len(value) < 32:
+            results['weak'].append(f"{var} (length: {len(value)})")
+        elif any(pattern in value.lower() for pattern in ['demo', 'test', 'default', 'password', '123']):
+            results['weak'].append(f"{var} (contains insecure pattern)")
+        else:
+            results['valid'].append(var)
+    
+    return results
 
-except Exception as e:
-    print(f"   ❌ Validation Error: {e}")
+def verify_hardcoded_secrets() -> List[Dict[str, Any]]:
+    """Verify that no hardcoded secrets remain in the codebase."""
+    print("🔍 Verifying no hardcoded secrets...")
+    
+    project_root = Path(__file__).parent.parent
+    secret_patterns = [
+        r'demo-key',
+        r'test-key',
+        r'default-password',
+        r'admin123',
+        r'password123',
+        r'your-secret-key',
+        r'change-in-production'
+    ]
+    
+    found_secrets = []
+    
+    for file_path in project_root.rglob('*.py'):
+        if any(skip_dir in str(file_path) for skip_dir in ['.venv', 'venv', '__pycache__', '.git']):
+            continue
+            
+        try:
+            content = file_path.read_text()
+            for pattern in secret_patterns:
+                matches = re.finditer(pattern, content, re.IGNORECASE)
+                for match in matches:
+                    found_secrets.append({
+                        'file': str(file_path.relative_to(project_root)),
+                        'line': content[:match.start()].count('\n') + 1,
+                        'pattern': pattern,
+                        'match': match.group()
+                    })
+        except Exception as e:
+            print(f"Warning: Could not read {file_path}: {e}")
+    
+    return found_secrets
 
-# Test 4: Response sanitization
-print("\n4. RESPONSE SANITIZATION:")
-try:
-    from secure_api import ResponseBuilder, StatusDTO
+def verify_authentication_service() -> Dict[str, Any]:
+    """Verify that the authentication service is properly configured."""
+    print("🔍 Verifying authentication service...")
+    
+    try:
+        from app.services.auth_service import AuthenticationService
+        
+        # Test initialization
+        auth_service = AuthenticationService()
+        
+        # Test API key validation
+        admin_key = os.getenv('ADMIN_API_KEY')
+        if admin_key:
+            key_info = auth_service.get_api_key_info(admin_key)
+            if key_info and key_info['role'] == 'admin':
+                return {'status': 'PASS', 'message': 'Authentication service properly configured'}
+            else:
+                return {'status': 'FAIL', 'message': 'Admin API key validation failed'}
+        else:
+            return {'status': 'FAIL', 'message': 'ADMIN_API_KEY not set'}
+            
+    except Exception as e:
+        return {'status': 'FAIL', 'message': f'Authentication service error: {str(e)}'}
 
-    # Test DTO creation
-    status = StatusDTO(
-        status="operational",
-        version="3.2.0-security",
-        environment="test",
-        timestamp="2024-08-09T12:00:00Z",
-        features_available=3,
-        auth_enabled=True,
+def verify_file_permissions() -> List[Dict[str, Any]]:
+    """Verify file permissions for sensitive files."""
+    print("🔍 Verifying file permissions...")
+    
+    project_root = Path(__file__).parent.parent
+    sensitive_files = ['.env', '.env.local', '.env.production']
+    permission_issues = []
+    
+    for file_name in sensitive_files:
+        file_path = project_root / file_name
+        if file_path.exists():
+            stat = file_path.stat()
+            if stat.st_mode & 0o004:  # World readable
+                permission_issues.append({
+                    'file': file_name,
+                    'issue': 'World readable',
+                    'recommendation': 'Set permissions to 600'
+                })
+    
+    return permission_issues
+
+def verify_security_headers() -> Dict[str, Any]:
+    """Verify that security headers are properly configured."""
+    print("🔍 Verifying security headers...")
+    
+    try:
+        from app.main_secure import app
+        
+        # Test that security headers are configured
+        if hasattr(app, 'config') and app.config.get('SECURITY_HEADERS_ENABLED'):
+            return {'status': 'PASS', 'message': 'Security headers enabled'}
+        else:
+            return {'status': 'WARN', 'message': 'Security headers not explicitly configured'}
+            
+    except Exception as e:
+        return {'status': 'FAIL', 'message': f'Could not verify security headers: {str(e)}'}
+
+def main():
+    """Run comprehensive security verification."""
+    print("🔒 SmartCloudOps AI - Security Fixes Verification")
+    print("=" * 60)
+    
+    # Run all verifications
+    env_results = verify_environment_variables()
+    hardcoded_secrets = verify_hardcoded_secrets()
+    auth_results = verify_authentication_service()
+    permission_issues = verify_file_permissions()
+    header_results = verify_security_headers()
+    
+    # Print results
+    print("\n📊 Verification Results:")
+    print("-" * 30)
+    
+    # Environment variables
+    print(f"Environment Variables:")
+    print(f"  ✅ Valid: {len(env_results['valid'])}")
+    print(f"  ⚠️ Weak: {len(env_results['weak'])}")
+    print(f"  ❌ Missing: {len(env_results['missing'])}")
+    
+    if env_results['missing']:
+        print(f"    Missing: {', '.join(env_results['missing'])}")
+    if env_results['weak']:
+        print(f"    Weak: {', '.join(env_results['weak'])}")
+    
+    # Hardcoded secrets
+    print(f"\nHardcoded Secrets:")
+    print(f"  ❌ Found: {len(hardcoded_secrets)}")
+    if hardcoded_secrets:
+        for secret in hardcoded_secrets:
+            print(f"    {secret['file']}:{secret['line']} - {secret['pattern']}")
+    
+    # Authentication service
+    print(f"\nAuthentication Service:")
+    print(f"  {auth_results['status']}: {auth_results['message']}")
+    
+    # File permissions
+    print(f"\nFile Permissions:")
+    print(f"  ❌ Issues: {len(permission_issues)}")
+    if permission_issues:
+        for issue in permission_issues:
+            print(f"    {issue['file']}: {issue['issue']}")
+    
+    # Security headers
+    print(f"\nSecurity Headers:")
+    print(f"  {header_results['status']}: {header_results['message']}")
+    
+    # Overall assessment
+    total_issues = (
+        len(env_results['missing']) + 
+        len(env_results['weak']) + 
+        len(hardcoded_secrets) + 
+        len(permission_issues) +
+        (1 if auth_results['status'] == 'FAIL' else 0) +
+        (1 if header_results['status'] == 'FAIL' else 0)
     )
-
-    response = ResponseBuilder.success_response(status.to_dict())
-    if response["success"] and "data" in response:
-        print("   ✅ DTOs: Structured responses working")
+    
+    print("\n" + "=" * 60)
+    print("OVERALL ASSESSMENT")
+    print("=" * 60)
+    
+    if total_issues == 0:
+        print("✅ ALL SECURITY FIXES VERIFIED SUCCESSFULLY!")
+        print("🔒 The application is ready for production deployment.")
     else:
-        print("   ❌ DTOs: Failed to create structured response")
+        print(f"⚠️ {total_issues} SECURITY ISSUES REMAIN")
+        print("🔧 Please address the issues above before production deployment.")
+    
+    print("=" * 60)
 
-    # Test error response
-    error_response = ResponseBuilder.error_response(
-        ErrorCode.VALIDATION_ERROR, "Test error message"
-    )
-    if not error_response["success"] and error_response["error"]:
-        print("   ✅ Error Responses: Standardized error handling")
-    else:
-        print("   ❌ Error Responses: Failed")
-
-except Exception as e:
-    print(f"   ❌ Response Error: {e}")
-
-# Test 5: Rate limiting system
-print("\n5. RATE LIMITING SYSTEM:")
-try:
-    from main import SimpleRateLimiter
-
-    limiter = SimpleRateLimiter()
-
-    # Test normal request
-    if limiter.is_allowed("192.168.1.1", 10, 100):
-        print("   ✅ Rate Limiting: Normal requests allowed")
-    else:
-        print("   ❌ Rate Limiting: Normal requests blocked")
-
-    # Test rate limit enforcement
-    # Make many requests rapidly
-    for i in range(15):
-        limiter.is_allowed("192.168.1.2", 10, 100)
-
-    if not limiter.is_allowed("192.168.1.2", 10, 100):
-        print("   ✅ Rate Limiting: Excessive requests blocked")
-    else:
-        print("   ❌ Rate Limiting: Failed to block excessive requests")
-
-except Exception as e:
-    print(f"   ❌ Rate Limiting Error: {e}")
-
-# Test 6: Security headers and CORS
-print("\n6. SECURITY FEATURES:")
-try:
-    # Check Flask app configuration
-    from main import app
-
-    if app.config.get("SECRET_KEY"):
-        print("   ✅ App Security: Secret key configured")
-    else:
-        print("   ❌ App Security: No secret key")
-
-    if app.config.get("MAX_CONTENT_LENGTH"):
-        print("   ✅ App Security: Request size limits configured")
-    else:
-        print("   ❌ App Security: No request size limits")
-
-    # Check if error handlers are configured
-    error_handlers = getattr(app, "error_handler_spec", {})
-    if error_handlers:
-        print("   ✅ Error Handling: Secure error handlers configured")
-    else:
-        print("   ⚠️ Error Handling: May need verification")
-
-except Exception as e:
-    print(f"   ❌ Security Features Error: {e}")
-
-# Test 7: Check for removed vulnerabilities
-print("\n7. VULNERABILITY REMOVAL VERIFICATION:")
-try:
-    # Check that old vulnerable patterns are removed
-    with open("main.py", "r") as f:
-        content = f.read()
-
-    # Check for removed fallback authentication
-    if "allow_fallback" not in content:
-        print("   ✅ Auth Bypass: Fallback authentication removed")
-    else:
-        print("   ❌ Auth Bypass: Fallback authentication still present")
-
-    # Check for input validation
-    if "validate_ml_metrics" in content:
-        print("   ✅ Input Validation: ML metrics validation implemented")
-    else:
-        print("   ❌ Input Validation: ML metrics validation missing")
-
-    # Check for DTOs
-    if "DTO" in content:
-        print("   ✅ Data Exposure: DTOs implemented")
-    else:
-        print("   ❌ Data Exposure: DTOs missing")
-
-    # Check for rate limiting
-    if "rate_limit" in content:
-        print("   ✅ Rate Limiting: Rate limiting implemented")
-    else:
-        print("   ❌ Rate Limiting: Rate limiting missing")
-
-except Exception as e:
-    print(f"   ❌ Vulnerability Check Error: {e}")
-
-print("\n" + "=" * 60)
-print("🎉 API SECURITY FIXES VERIFICATION COMPLETE!")
-print("\n🎯 SUMMARY:")
-print("   ✅ Authentication bypass vulnerability FIXED")
-print("   ✅ Unvalidated input vulnerability FIXED")
-print("   ✅ Sensitive data exposure FIXED")
-print("   ✅ Missing rate limiting FIXED")
-print("   ✅ Improper error handling FIXED")
-print("   ✅ No CORS configuration FIXED")
-print("\n🚀 STATUS: ALL CRITICAL API VULNERABILITIES RESOLVED!")
-print("🔒 SECURITY LEVEL: ENTERPRISE GRADE")
+if __name__ == "__main__":
+    main()

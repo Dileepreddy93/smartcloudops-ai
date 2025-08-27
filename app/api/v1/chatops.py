@@ -1,8 +1,8 @@
 from flask import Blueprint, request
 
-from app.main import get_chat_response
-from app.utils.response import make_response
-from app.utils.validation import require_json_keys, sanitize_string
+from app.services.chatops_service import chat
+from app.utils.response import error_response, success_response
+from app.utils.validation import validate_user_input, sanitize_string
 
 
 bp = Blueprint("chatops", __name__)
@@ -11,18 +11,19 @@ bp = Blueprint("chatops", __name__)
 @bp.post("/query")
 def query():
     json = request.get_json(silent=True) or {}
-    ok, err = require_json_keys(json, ["query"])
-    if not ok:
+    try:
+        validated_data = validate_user_input(json, ["query"])
+        user_query = validated_data["query"]
+    except ValueError:
         # Preserve legacy error body expected by tests
         from flask import Response
-
         return Response("Invalid request", status=400)
 
-    user_query = sanitize_string(json.get("query"))
+    user_query = sanitize_string(user_query)
     try:
-        answer = get_chat_response(user_query)
+        answer = chat(user_query)
     except Exception:
-        return make_response(error="Failed to process query", http_status=400)
+        return error_response(message="Failed to process query", status_code=400)
 
     # Preserve legacy shape: top-level 'response'
     from flask import jsonify

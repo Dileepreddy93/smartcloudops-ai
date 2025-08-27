@@ -9,6 +9,7 @@ import ChatOps from './pages/ChatOps/ChatOps';
 import Monitoring from './pages/Monitoring/Monitoring';
 import Admin from './pages/Admin/Admin';
 import Login from './pages/Auth/Login';
+import ErrorBoundary from './components/Common/ErrorBoundary';
 import { AuthProvider } from './contexts/AuthContext';
 
 const queryClient = new QueryClient({
@@ -22,33 +23,35 @@ const queryClient = new QueryClient({
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router>
-          <div className="min-h-screen bg-gray-50">
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/" element={<Layout />}>
-                <Route index element={<Dashboard />} />
-                <Route path="chatops" element={<ChatOps />} />
-                <Route path="monitoring" element={<Monitoring />} />
-                <Route path="admin" element={<Admin />} />
-              </Route>
-            </Routes>
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                duration: 4000,
-                style: {
-                  background: '#363636',
-                  color: '#fff',
-                },
-              }}
-            />
-          </div>
-        </Router>
-      </AuthProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <Router>
+            <div className="min-h-screen bg-gray-50">
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/" element={<Layout />}>
+                  <Route index element={<Dashboard />} />
+                  <Route path="chatops" element={<ChatOps />} />
+                  <Route path="monitoring" element={<Monitoring />} />
+                  <Route path="admin" element={<Admin />} />
+                </Route>
+              </Routes>
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  duration: 4000,
+                  style: {
+                    background: '#363636',
+                    color: '#fff',
+                  },
+                }}
+              />
+            </div>
+          </Router>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

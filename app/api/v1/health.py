@@ -1,7 +1,8 @@
 from flask import Blueprint
 
-from app.utils.response import make_response, now_iso
-from app.core.ml_engine.secure_inference import get_secure_inference_engine
+from app.utils.response import success_response, build_success_response
+from datetime import datetime, timezone
+from app.core.ml_engine.secure_inference import SecureMLInferenceEngine
 
 
 bp = Blueprint("health", __name__)
@@ -10,19 +11,27 @@ bp = Blueprint("health", __name__)
 @bp.get("/status")
 def status():
     # DTO data
-    engine = get_secure_inference_engine()
+    engine = SecureMLInferenceEngine()
     ml_health = engine.health_check()
     data = {
         "message": "OK",
-        "timestamp": now_iso(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "ml": {
             "status": ml_health.get("status"),
             "metrics": ml_health.get("metrics", {}),
         },
     }
-    # Compatibility fields for existing consumers
-    compat = {"status": "healthy"}
-    return make_response(data=data, compatibility=compat)
+    # Merge compatibility fields into the response
+    response_data = {
+        "status": "healthy",  # Compatibility field
+        "message": "OK",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "ml": {
+            "status": ml_health.get("status"),
+            "metrics": ml_health.get("metrics", {}),
+        },
+    }
+    return success_response(data=response_data)
 
 
 @bp.get("/")

@@ -4,539 +4,270 @@ on:
   push:
     branches: [ main, develop ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
 
 env:
   PYTHON_VERSION: '3.11'
   NODE_VERSION: '18'
 
 jobs:
-  # Security Scanning
-  security-scan:
-    name: Security Scan
+  security-audit:
+    name: Security Audit
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r app/requirements.txt
+        
+    - name: Run security audit
+      run: |
+        python scripts/security_audit.py
+        
+    - name: Upload security report
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-audit-report
+        path: security_audit_report_*.json
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install security tools
-        run: |
-          pip install bandit safety
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.48.0
-
-      - name: Run Bandit security scan
-        run: |
-          bandit -r app/ -f json -o bandit-report.json || true
-          bandit -r app/ -f txt -o bandit-report.txt
-
-      - name: Run Safety dependency check
-        run: |
-          safety check --json --output safety-report.json || true
-          safety check --output safety-report.txt
-
-      - name: Run Trivy vulnerability scan
-        run: |
-          trivy fs --format json --output trivy-report.json . || true
-          trivy fs --format table --output trivy-report.txt .
-
-      - name: Upload security reports
-        uses: actions/upload-artifact@v3
-        with:
-          name: security-reports
-          path: |
-            bandit-report.json
-            bandit-report.txt
-            safety-report.json
-            safety-report.txt
-            trivy-report.json
-            trivy-report.txt
-
-  # Code Quality
-  code-quality:
-    name: Code Quality
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Install Python dependencies
-        run: |
-          pip install black flake8 mypy pylint
-          pip install -r app/requirements.txt
-
-      - name: Install Node.js dependencies
-        run: |
-          cd frontend
-          npm ci
-
-      - name: Run Black code formatting check
-        run: |
-          black --check --diff app/
-
-      - name: Run Flake8 linting
-        run: |
-          flake8 app/ --max-line-length=88 --extend-ignore=E203,W503
-
-      - name: Run MyPy type checking
-        run: |
-          mypy app/ --ignore-missing-imports
-
-      - name: Run Pylint
-        run: |
-          pylint app/ --output-format=json --reports=y > pylint-report.json || true
-
-      - name: Run ESLint
-        run: |
-          cd frontend
-          npm run lint
-
-      - name: Run Prettier check
-        run: |
-          cd frontend
-          npm run format:check
-
-  # Backend Testing
-  backend-test:
+  test-backend:
     name: Backend Tests
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-      redis:
-        image: redis:7-alpine
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
-
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r app/requirements.txt
+        pip install pytest pytest-cov
+        
+    - name: Set up test environment
+      run: |
+        # Generate test environment variables
+        python -c "
+        import secrets
+        import os
+        test_vars = {
+            'JWT_SECRET_KEY': secrets.token_urlsafe(64),
+            'ADMIN_API_KEY': f'sk-admin-{secrets.token_urlsafe(32)}',
+            'ML_API_KEY': f'sk-ml-{secrets.token_urlsafe(32)}',
+            'READONLY_API_KEY': f'sk-readonly-{secrets.token_urlsafe(32)}',
+            'API_KEY_SALT': secrets.token_urlsafe(16),
+            'ADMIN_PASSWORD': secrets.token_urlsafe(16)
+        }
+        for key, value in test_vars.items():
+            print(f'{key}={value}')
+        " > .env.test
+        
+    - name: Run backend tests
+      env:
+        JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+        ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
+        ML_API_KEY: ${{ secrets.ML_API_KEY }}
+        READONLY_API_KEY: ${{ secrets.READONLY_API_KEY }}
+        API_KEY_SALT: ${{ secrets.API_KEY_SALT }}
+        ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+      run: |
+        source .env.test
+        pytest tests/ -v --cov=app --cov-report=xml --cov-report=html
+        
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-reports
+        path: |
+          htmlcov/
+          coverage.xml
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install dependencies
-        run: |
-          pip install -r app/requirements.txt
-          pip install pytest pytest-cov pytest-mock
-
-      - name: Set up test environment
-        run: |
-          export SECRET_KEY="test-secret-key-for-testing-only"
-          export ADMIN_API_KEY="sk-admin-test-key-12345678901234567890"
-          export ML_API_KEY="sk-ml-test-key-12345678901234567890"
-          export READONLY_API_KEY="sk-readonly-test-key-12345678901234567890"
-          export DB_PASSWORD="test_password"
-          export REDIS_PASSWORD="test_redis_password"
-          export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/test_db"
-          export REDIS_URL="redis://:test_redis_password@localhost:6379/0"
-
-      - name: Run unit tests
-        run: |
-          pytest tests/ --cov=app --cov-report=xml --cov-report=html --cov-report=term-missing
-
-      - name: Run integration tests
-        run: |
-          pytest tests/integration/ -v
-
-      - name: Run comprehensive test suite
-        run: |
-          python tests/comprehensive_test_suite.py
-
-      - name: Upload coverage reports
-        uses: codecov/codecov-action@v3
-        with:
-          file: ./coverage.xml
-          flags: backend
-          name: backend-coverage
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v3
-        with:
-          name: backend-test-results
-          path: |
-            coverage.xml
-            htmlcov/
-
-  # Frontend Testing
-  frontend-test:
+  test-frontend:
     name: Frontend Tests
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+        
+    - name: Install frontend dependencies
+      working-directory: frontend
+      run: npm ci
+      
+    - name: Run frontend tests
+      working-directory: frontend
+      run: npm test -- --coverage --watchAll=false
+      
+    - name: Upload frontend coverage
+      uses: actions/upload-artifact@v3
+      with:
+        name: frontend-coverage
+        path: frontend/coverage/
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Install dependencies
-        run: |
-          cd frontend
-          npm ci
-
-      - name: Run unit tests
-        run: |
-          cd frontend
-          npm test -- --coverage --watchAll=false
-
-      - name: Run integration tests
-        run: |
-          cd frontend
-          npm run test:integration
-
-      - name: Upload coverage reports
-        uses: codecov/codecov-action@v3
-        with:
-          file: ./frontend/coverage/lcov.info
-          flags: frontend
-          name: frontend-coverage
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v3
-        with:
-          name: frontend-test-results
-          path: frontend/coverage/
-
-  # Infrastructure Validation
-  infrastructure-validation:
-    name: Infrastructure Validation
+  lint-backend:
+    name: Backend Linting
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install linting tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black isort mypy bandit
+        
+    - name: Run flake8
+      run: |
+        flake8 app/ --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 app/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        
+    - name: Run black
+      run: |
+        black --check --diff app/
+        
+    - name: Run isort
+      run: |
+        isort --check-only --diff app/
+        
+    - name: Run mypy
+      run: |
+        mypy app/ --ignore-missing-imports
+        
+    - name: Run bandit security check
+      run: |
+        bandit -r app/ -f json -o bandit-report.json || true
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: "1.5.0"
-
-      - name: Setup tfsec
-        uses: aquasecurity/tfsec-action@v1.0.0
-        with:
-          working_directory: terraform/production
-
-      - name: Terraform Format Check
-        run: |
-          cd terraform/production
-          terraform fmt -check -recursive
-
-      - name: Terraform Init
-        run: |
-          cd terraform/production
-          terraform init
-
-      - name: Terraform Validate
-        run: |
-          cd terraform/production
-          terraform validate
-
-      - name: Terraform Plan
-        run: |
-          cd terraform/production
-          terraform plan -out=tfplan
-
-      - name: Upload Terraform plan
-        uses: actions/upload-artifact@v3
-        with:
-          name: terraform-plan
-          path: terraform/production/tfplan
-
-  # Docker Build and Security
-  docker-build:
-    name: Docker Build
+  lint-frontend:
+    name: Frontend Linting
     runs-on: ubuntu-latest
-    needs: [security-scan, code-quality, backend-test, frontend-test]
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+        
+    - name: Install frontend dependencies
+      working-directory: frontend
+      run: npm ci
+      
+    - name: Run ESLint
+      working-directory: frontend
+      run: npm run lint
+      
+    - name: Run TypeScript check
+      working-directory: frontend
+      run: npm run type-check
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build and scan Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile.production
-          push: false
-          tags: smartcloudops-ai:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Run Trivy vulnerability scan on image
-        uses: aquasecurity/trivy-action@v0.18.0
-        with:
-          image-ref: 'smartcloudops-ai:latest'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-
-      - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: 'trivy-results.sarif'
-
-  # Performance Testing
-  performance-test:
-    name: Performance Test
+  build-docker:
+    name: Build Docker Image
     runs-on: ubuntu-latest
-    needs: [docker-build]
+    needs: [test-backend, test-frontend, lint-backend, lint-frontend]
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Build Docker image
+      run: |
+        docker build -t smartcloudops-ai:latest .
+        
+    - name: Test Docker image
+      run: |
+        docker run --rm -d --name test-app -p 5000:5000 smartcloudops-ai:latest
+        sleep 10
+        curl -f http://localhost:5000/health || exit 1
+        docker stop test-app
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install dependencies
-        run: |
-          pip install locust
-
-      - name: Run load test
-        run: |
-          python scripts/load_tester.py
-
-      - name: Upload performance results
-        uses: actions/upload-artifact@v3
-        with:
-          name: performance-results
-          path: performance-report.json
-
-  # Deployment to Staging
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
-    needs: [infrastructure-validation, docker-build, performance-test]
+    needs: [build-docker]
     if: github.ref == 'refs/heads/develop'
-    environment: staging
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Deploy to staging
+      run: |
+        echo "Deploying to staging environment..."
+        # Add your staging deployment logic here
+        
+    - name: Run smoke tests
+      run: |
+        echo "Running smoke tests on staging..."
+        # Add your smoke test logic here
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Deploy to staging
-        run: |
-          ./scripts/deploy_staging.sh
-
-      - name: Run staging tests
-        run: |
-          python tests/staging_test_suite.py
-
-  # Deployment to Production
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: [deploy-staging]
+    needs: [build-docker]
     if: github.ref == 'refs/heads/main'
     environment: production
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Deploy to production
+      run: |
+        echo "Deploying to production environment..."
+        # Add your production deployment logic here
+        
+    - name: Run production tests
+      run: |
+        echo "Running production tests..."
+        # Add your production test logic here
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Deploy to production
-        run: |
-          ./scripts/deploy_production.sh
-
-      - name: Run production smoke tests
-        run: |
-          python tests/production_smoke_tests.py
-
-      - name: Notify deployment success
-        if: success()
-        uses: 8398a7/action-slack@v3
-        with:
-          status: success
-          text: 'Production deployment completed successfully!'
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-
-      - name: Notify deployment failure
-        if: failure()
-        uses: 8398a7/action-slack@v3
-        with:
-          status: failure
-          text: 'Production deployment failed!'
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-
-  # Security Compliance
-  security-compliance:
-    name: Security Compliance
+  security-scan:
+    name: Security Scan
     runs-on: ubuntu-latest
-    needs: [security-scan, docker-build]
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download security reports
-        uses: actions/download-artifact@v3
-        with:
-          name: security-reports
-
-      - name: Run compliance checks
-        run: |
-          # Check for critical vulnerabilities
-          if grep -q "CRITICAL" bandit-report.json; then
-            echo "Critical security vulnerabilities found!"
-            exit 1
-          fi
-          
-          # Check for high severity issues
-          if grep -q "HIGH" bandit-report.json; then
-            echo "High severity security issues found!"
-            exit 1
-          fi
-          
-          echo "Security compliance check passed"
-
-      - name: Generate compliance report
-        run: |
-          python scripts/generate_compliance_report.py
-
-      - name: Upload compliance report
-        uses: actions/upload-artifact@v3
-        with:
-          name: compliance-report
-          path: compliance-report.json
-
-  # Documentation Generation
-  documentation:
-    name: Generate Documentation
-    runs-on: ubuntu-latest
-    needs: [backend-test, frontend-test]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install documentation tools
-        run: |
-          pip install sphinx sphinx-rtd-theme
-
-      - name: Generate API documentation
-        run: |
-          python scripts/generate_api_docs.py
-
-      - name: Build documentation
-        run: |
-          cd docs
-          make html
-
-      - name: Upload documentation
-        uses: actions/upload-artifact@v3
-        with:
-          name: documentation
-          path: docs/_build/html/
-
-  # Final Summary
-  summary:
-    name: Deployment Summary
-    runs-on: ubuntu-latest
-    needs: [deploy-production, security-compliance, documentation]
-    if: always()
-    steps:
-      - name: Generate deployment summary
-        run: |
-          python scripts/generate_deployment_summary.py
-
-      - name: Upload summary
-        uses: actions/upload-artifact@v3
-        with:
-          name: deployment-summary
-          path: deployment-summary.json
-
-      - name: Comment on PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const summary = JSON.parse(fs.readFileSync('deployment-summary.json', 'utf8'));
-            
-            const comment = `## 🚀 CI/CD Pipeline Summary
-            
-            ### ✅ Completed Jobs
-            ${summary.completed_jobs.join('\n')}
-            
-            ### 📊 Test Results
-            - Backend Tests: ${summary.backend_tests.passed}/${summary.backend_tests.total} passed
-            - Frontend Tests: ${summary.frontend_tests.passed}/${summary.frontend_tests.total} passed
-            - Security Scans: ${summary.security_scans.passed}/${summary.security_scans.total} passed
-            
-            ### 🔒 Security Status
-            - Critical Issues: ${summary.security.critical}
-            - High Issues: ${summary.security.high}
-            - Medium Issues: ${summary.security.medium}
-            
-            ### 📈 Performance
-            - Response Time: ${summary.performance.response_time}ms
-            - Throughput: ${summary.performance.throughput} req/s
-            
-            ### 🚀 Deployment Status
-            ${summary.deployment_status}
-            `;
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'

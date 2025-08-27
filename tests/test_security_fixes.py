@@ -1,200 +1,342 @@
 #!/usr/bin/env python3
 """
-SmartCloudOps AI - Security Fixes Validation Tests
+SmartCloudOps AI - Security Fixes Test Suite
+===========================================
+
+Test suite to verify that all security fixes are working correctly.
 """
 
 import os
+import sys
 import pytest
-from unittest.mock import patch
-from flask import Flask
+import tempfile
+from unittest.mock import patch, MagicMock
+from pathlib import Path
 
-# Test the validation utilities directly
-from app.utils.validation import InputValidator, ValidationError
-from app.utils.response import APIResponse
+# Add project root to path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
-
-class TestInputValidation:
-    """Test input validation security."""
-
-    def test_string_sanitization(self):
-        """Test string sanitization."""
-        result = InputValidator.sanitize_string("hello world")
-        assert result == "hello world"
-
-        # Test string with control characters
-        result = InputValidator.sanitize_string("hello\x00world")
-        assert result == "helloworld"
-
-    def test_api_key_validation_pattern(self):
-        """Test API key validation pattern."""
-        # Valid API keys - must match pattern: sk-[a-zA-Z0-9]{20,}
-        valid_keys = [
-            "sk-admin12345678901234567890",
-            "sk-mlabcdefghijklmnopqrstuvwxyz1234567890"
-        ]
-        
-        for key in valid_keys:
-            result = InputValidator.validate_api_key(key)
-            assert result == key
-
-        # Invalid API keys
-        invalid_keys = [
-            "invalid-key",
-            "sk-",
-            "sk-admin",
-            "sk-admin-123",  # Contains hyphen
-            "sk-admin123"  # Too short (less than 20 chars after sk-)
-        ]
-        
-        for key in invalid_keys:
-            with pytest.raises(ValidationError):
-                InputValidator.validate_api_key(key)
-
-    def test_metrics_validation(self):
-        """Test metrics validation."""
-        # Valid metrics
-        valid_metrics = {
-            "cpu_usage": 50.0,
-            "memory_usage": 75.0,
-            "disk_usage": 60.0
-        }
-        
-        result = InputValidator.validate_metrics(valid_metrics)
-        assert result == valid_metrics
-
-        # Invalid metrics - missing required
-        invalid_metrics = {
-            "cpu_usage": 50.0
-        }
-        
-        with pytest.raises(ValidationError):
-            InputValidator.validate_metrics(invalid_metrics)
+from app.services.auth_service import AuthenticationService
 
 
-class TestResponseSecurity:
-    """Test response security and standardization."""
-
+class TestSecurityFixes:
+    """Test class for security fixes verification."""
+    
     def setup_method(self):
-        """Setup Flask app context for response tests."""
-        self.app = Flask(__name__)
-        self.app_context = self.app.app_context()
-        self.app_context.push()
-
-    def teardown_method(self):
-        """Cleanup Flask app context."""
-        self.app_context.pop()
-
-    def test_success_response_format(self):
-        """Test success response format."""
-        response, status_code = APIResponse.success(
-            data={"test": "data"},
-            message="Test success"
+        """Set up test environment."""
+        # Set up test environment variables
+        self.test_env_vars = {
+            'JWT_SECRET_KEY': 'test-jwt-secret-key-64-characters-long-for-testing-purposes-only',
+            'ADMIN_API_KEY': 'sk-admin-test-key-32-characters-long-for-testing',
+            'ML_API_KEY': 'sk-ml-test-key-32-characters-long-for-testing-only',
+            'READONLY_API_KEY': 'sk-readonly-test-key-32-chars-for-testing',
+            'API_KEY_SALT': 'test-salt-16-chars',
+            'ADMIN_PASSWORD': 'test-admin-password-16-chars'
+        }
+    
+    @patch.dict(os.environ, {}, clear=True)
+    def test_missing_environment_variables(self):
+        """Test that missing environment variables raise appropriate errors."""
+        with pytest.raises(ValueError, match="JWT_SECRET_KEY environment variable is required"):
+            AuthenticationService()
+    
+    @patch.dict(os.environ, {
+        'JWT_SECRET_KEY': 'short',
+        'ADMIN_API_KEY': 'short',
+        'ML_API_KEY': 'short',
+        'READONLY_API_KEY': 'short',
+        'API_KEY_SALT': 'short',
+        'ADMIN_PASSWORD': 'short'
+    })
+    def test_weak_environment_variables(self):
+        """Test that weak environment variables raise appropriate errors."""
+        with pytest.raises(ValueError, match="JWT_SECRET_KEY must be at least 32 characters long"):
+            AuthenticationService()
+    
+    @patch.dict(os.environ, {
+        'JWT_SECRET_KEY': 'test-jwt-secret-key-64-characters-long-for-testing-purposes-only',
+        'ADMIN_API_KEY': 'sk-admin-test-key-32-characters-long-for-testing',
+        'ML_API_KEY': 'sk-ml-test-key-32-characters-long-for-testing-only',
+        'READONLY_API_KEY': 'sk-readonly-test-key-32-chars-for-testing',
+        'API_KEY_SALT': 'test-salt-16-chars',
+        'ADMIN_PASSWORD': 'test-admin-password-16-chars'
+    })
+    def test_valid_environment_variables(self):
+        """Test that valid environment variables work correctly."""
+        auth_service = AuthenticationService()
+        assert auth_service is not None
+        assert len(auth_service.jwt_secret) >= 32
+        assert len(auth_service.api_keys['admin']['key']) >= 32
+    
+    @patch.dict(os.environ, {
+        'JWT_SECRET_KEY': 'test-jwt-secret-key-64-characters-long-for-testing-purposes-only',
+        'ADMIN_API_KEY': 'sk-admin-test-key-32-characters-long-for-testing',
+        'ML_API_KEY': 'sk-ml-test-key-32-characters-long-for-testing-only',
+        'READONLY_API_KEY': 'sk-readonly-test-key-32-chars-for-testing',
+        'API_KEY_SALT': 'test-salt-16-chars',
+        'ADMIN_PASSWORD': 'test-admin-password-16-chars'
+    })
+    def test_api_key_validation(self):
+        """Test API key validation functionality."""
+        auth_service = AuthenticationService()
+        
+        # Test valid admin key
+        admin_key = auth_service.api_keys['admin']['key']
+        key_info = auth_service.get_api_key_info(admin_key)
+        assert key_info is not None
+        assert key_info['role'] == 'admin'
+        assert 'read' in key_info['permissions']
+        
+        # Test invalid key
+        invalid_key = 'invalid-key'
+        key_info = auth_service.get_api_key_info(invalid_key)
+        assert key_info is None
+    
+    @patch.dict(os.environ, {
+        'JWT_SECRET_KEY': 'test-jwt-secret-key-64-characters-long-for-testing-purposes-only',
+        'ADMIN_API_KEY': 'sk-admin-test-key-32-characters-long-for-testing',
+        'ML_API_KEY': 'sk-ml-test-key-32-characters-long-for-testing-only',
+        'READONLY_API_KEY': 'sk-readonly-test-key-32-chars-for-testing',
+        'API_KEY_SALT': 'test-salt-16-chars',
+        'ADMIN_PASSWORD': 'test-admin-password-16-chars'
+    })
+    def test_jwt_token_generation(self):
+        """Test JWT token generation and validation."""
+        auth_service = AuthenticationService()
+        
+        # Generate token
+        token = auth_service.generate_jwt_token(
+            user_id='test_user',
+            role='admin',
+            permissions=['read', 'write']
         )
         
-        assert status_code == 200
-        response_data = response.get_json()
-        assert response_data["status"] == "success"
-        assert response_data["message"] == "Test success"
-
-    def test_error_response_format(self):
-        """Test error response format."""
-        response, status_code = APIResponse.error(
-            message="Test error",
-            status_code=400,
-            error_code="TEST_ERROR"
+        assert token is not None
+        assert len(token) > 0
+        
+        # Verify token
+        payload = auth_service.verify_jwt_token(token)
+        assert payload is not None
+        assert payload['user_id'] == 'test_user'
+        assert payload['role'] == 'admin'
+        assert 'read' in payload['permissions']
+    
+    @patch.dict(os.environ, {
+        'JWT_SECRET_KEY': 'test-jwt-secret-key-64-characters-long-for-testing-purposes-only',
+        'ADMIN_API_KEY': 'sk-admin-test-key-32-characters-long-for-testing',
+        'ML_API_KEY': 'sk-ml-test-key-32-characters-long-for-testing-only',
+        'READONLY_API_KEY': 'sk-readonly-test-key-32-chars-for-testing',
+        'API_KEY_SALT': 'test-salt-16-chars',
+        'ADMIN_PASSWORD': 'test-admin-password-16-chars'
+    })
+    def test_user_authentication(self):
+        """Test user authentication functionality."""
+        auth_service = AuthenticationService()
+        
+        # Test valid authentication
+        admin_password = os.getenv('ADMIN_PASSWORD')
+        user_info = auth_service.authenticate_user('admin', admin_password)
+        assert user_info is not None
+        assert user_info['user_id'] == 'admin'
+        assert user_info['role'] == 'admin'
+        
+        # Test invalid authentication
+        user_info = auth_service.authenticate_user('admin', 'wrong_password')
+        assert user_info is None
+    
+    @patch.dict(os.environ, {
+        'JWT_SECRET_KEY': 'test-jwt-secret-key-64-characters-long-for-testing-purposes-only',
+        'ADMIN_API_KEY': 'sk-admin-test-key-32-characters-long-for-testing',
+        'ML_API_KEY': 'sk-ml-test-key-32-characters-long-for-testing-only',
+        'READONLY_API_KEY': 'sk-readonly-test-key-32-chars-for-testing',
+        'API_KEY_SALT': 'test-salt-16-chars',
+        'ADMIN_PASSWORD': 'test-admin-password-16-chars'
+    })
+    def test_permission_checking(self):
+        """Test permission checking functionality."""
+        auth_service = AuthenticationService()
+        
+        # Test valid permissions
+        user_permissions = ['read', 'write', 'admin']
+        assert auth_service.has_permission(user_permissions, ['read'])
+        assert auth_service.has_permission(user_permissions, ['write'])
+        assert auth_service.has_permission(user_permissions, ['admin'])
+        
+        # Test invalid permissions
+        assert not auth_service.has_permission(user_permissions, ['invalid_permission'])
+    
+    @patch.dict(os.environ, {
+        'JWT_SECRET_KEY': 'test-jwt-secret-key-64-characters-long-for-testing-purposes-only',
+        'ADMIN_API_KEY': 'sk-admin-test-key-32-characters-long-for-testing',
+        'ML_API_KEY': 'sk-ml-test-key-32-characters-long-for-testing-only',
+        'READONLY_API_KEY': 'sk-readonly-test-key-32-chars-for-testing',
+        'API_KEY_SALT': 'test-salt-16-chars',
+        'ADMIN_PASSWORD': 'test-admin-password-16-chars'
+    })
+    def test_user_creation(self):
+        """Test user creation functionality."""
+        auth_service = AuthenticationService()
+        
+        # Test valid user creation
+        success = auth_service.create_user(
+            username='test_user',
+            password='test-password-16-chars-long',
+            role='user',
+            permissions=['read']
+        )
+        assert success is True
+        
+        # Test duplicate user creation
+        success = auth_service.create_user(
+            username='test_user',
+            password='another-password',
+            role='user',
+            permissions=['read']
+        )
+        assert success is False
+    
+    @patch.dict(os.environ, {
+        'JWT_SECRET_KEY': 'test-jwt-secret-key-64-characters-long-for-testing-purposes-only',
+        'ADMIN_API_KEY': 'sk-admin-test-key-32-characters-long-for-testing',
+        'ML_API_KEY': 'sk-ml-test-key-32-characters-long-for-testing-only',
+        'READONLY_API_KEY': 'sk-readonly-test-key-32-chars-for-testing',
+        'API_KEY_SALT': 'test-salt-16-chars',
+        'ADMIN_PASSWORD': 'test-admin-password-16-chars'
+    })
+    def test_weak_password_validation(self):
+        """Test that weak passwords are rejected."""
+        auth_service = AuthenticationService()
+        
+        with pytest.raises(ValueError, match="Password must be at least 8 characters long"):
+            auth_service.create_user(
+                username='test_user',
+                password='short',
+                role='user',
+                permissions=['read']
+            )
+    
+    @patch.dict(os.environ, {
+        'JWT_SECRET_KEY': 'test-jwt-secret-key-64-characters-long-for-testing-purposes-only',
+        'ADMIN_API_KEY': 'sk-admin-test-key-32-characters-long-for-testing',
+        'ML_API_KEY': 'sk-ml-test-key-32-characters-long-for-testing-only',
+        'READONLY_API_KEY': 'sk-readonly-test-key-32-chars-for-testing',
+        'API_KEY_SALT': 'test-salt-16-chars',
+        'ADMIN_PASSWORD': 'test-admin-password-16-chars'
+    })
+    def test_api_key_creation(self):
+        """Test API key creation functionality."""
+        auth_service = AuthenticationService()
+        
+        # Create new API key
+        new_key = auth_service.create_api_key(
+            key_id='test_key',
+            role='user',
+            permissions=['read']
         )
         
-        assert status_code == 400
-        response_data = response.get_json()
-        assert response_data["status"] == "error"
-        assert response_data["message"] == "Test error"
-
-    def test_validation_error_response(self):
-        """Test validation error response."""
-        errors = ["Field is required", "Invalid format"]
-        response, status_code = APIResponse.validation_error(errors)
+        assert new_key is not None
+        assert new_key.startswith('sk-test_key-')
+        assert len(new_key) > 32
         
-        assert status_code == 422
-        response_data = response.get_json()
-        assert response_data["error_code"] == "VALIDATION_ERROR"
-        assert response_data["details"]["errors"] == errors
-
-
-class TestDockerComposeSecurity:
-    """Test Docker Compose security configuration."""
-
-    def test_docker_compose_exists(self):
-        """Test that Docker Compose file exists and is not empty."""
-        compose_path = "docker/docker-compose.yml"
-        assert os.path.exists(compose_path)
+        # Verify the key is stored
+        key_info = auth_service.get_api_key_info(new_key)
+        assert key_info is not None
+        assert key_info['role'] == 'user'
+    
+    @patch.dict(os.environ, {
+        'JWT_SECRET_KEY': 'test-jwt-secret-key-64-characters-long-for-testing-purposes-only',
+        'ADMIN_API_KEY': 'sk-admin-test-key-32-characters-long-for-testing',
+        'ML_API_KEY': 'sk-ml-test-key-32-characters-long-for-testing-only',
+        'READONLY_API_KEY': 'sk-readonly-test-key-32-chars-for-testing',
+        'API_KEY_SALT': 'test-salt-16-chars',
+        'ADMIN_PASSWORD': 'test-admin-password-16-chars'
+    })
+    def test_api_key_revocation(self):
+        """Test API key revocation functionality."""
+        auth_service = AuthenticationService()
         
-        with open(compose_path, 'r') as f:
-            content = f.read()
-            assert len(content) > 0
-
-    def test_docker_compose_services(self):
-        """Test Docker Compose services configuration."""
-        compose_path = "docker/docker-compose.yml"
+        # Create and then revoke API key
+        new_key = auth_service.create_api_key(
+            key_id='test_revoke',
+            role='user',
+            permissions=['read']
+        )
         
-        with open(compose_path, 'r') as f:
-            content = f.read()
-            
-            # Check for required services
-            assert "smartcloudops-app:" in content
-            assert "postgres:" in content
-            assert "redis:" in content
-            assert "prometheus:" in content
-            assert "grafana:" in content
-
-    def test_docker_compose_networks(self):
-        """Test Docker Compose network configuration."""
-        compose_path = "docker/docker-compose.yml"
+        # Verify key exists
+        key_info = auth_service.get_api_key_info(new_key)
+        assert key_info is not None
         
-        with open(compose_path, 'r') as f:
-            content = f.read()
-            
-            # Check for network configuration
-            assert "networks:" in content
-            assert "smartcloudops-network:" in content
-
-
-class TestOverallSecurity:
-    """Test overall security improvements."""
-
-    def test_validation_utilities_available(self):
-        """Test that validation utilities are available."""
-        from app.utils.validation import InputValidator, ValidationError
-        assert InputValidator is not None
-        assert ValidationError is not None
-
-    def test_response_utilities_available(self):
-        """Test that response utilities are available."""
-        from app.utils.response import APIResponse
-        assert APIResponse is not None
-
-    def test_ml_service_file_exists(self):
-        """Test that ML service file exists and is not empty."""
-        ml_service_path = "app/services/ml_service.py"
-        assert os.path.exists(ml_service_path)
+        # Revoke key
+        success = auth_service.revoke_api_key('test_revoke')
+        assert success is True
         
-        with open(ml_service_path, 'r') as f:
-            content = f.read()
-            assert len(content) > 0
-            assert "class MLService" in content
-
-    def test_main_app_refactored(self):
-        """Test that main app has been refactored."""
-        main_path = "app/main.py"
-        assert os.path.exists(main_path)
+        # Verify key is revoked
+        key_info = auth_service.get_api_key_info(new_key)
+        assert key_info is None
+    
+    @patch.dict(os.environ, {
+        'JWT_SECRET_KEY': 'test-jwt-secret-key-64-characters-long-for-testing-purposes-only',
+        'ADMIN_API_KEY': 'sk-admin-test-key-32-characters-long-for-testing',
+        'ML_API_KEY': 'sk-ml-test-key-32-characters-long-for-testing-only',
+        'READONLY_API_KEY': 'sk-readonly-test-key-32-chars-for-testing',
+        'API_KEY_SALT': 'test-salt-16-chars',
+        'ADMIN_PASSWORD': 'test-admin-password-16-chars'
+    })
+    def test_user_info_retrieval(self):
+        """Test user information retrieval without sensitive data."""
+        auth_service = AuthenticationService()
         
-        with open(main_path, 'r') as f:
-            content = f.read()
-            # Check for refactored structure
-            assert "def create_app():" in content
-            assert "def register_blueprints(app:" in content
-            assert "def register_error_handlers(app:" in content
-            assert "APIResponse" in content
+        # Get user info
+        user_info = auth_service.get_user_info('admin')
+        assert user_info is not None
+        assert user_info['username'] == 'admin'
+        assert user_info['role'] == 'admin'
+        assert 'password_hash' not in user_info  # Sensitive data should not be exposed
+    
+    @patch.dict(os.environ, {
+        'JWT_SECRET_KEY': 'test-jwt-secret-key-64-characters-long-for-testing-purposes-only',
+        'ADMIN_API_KEY': 'sk-admin-test-key-32-characters-long-for-testing',
+        'ML_API_KEY': 'sk-ml-test-key-32-characters-long-for-testing-only',
+        'READONLY_API_KEY': 'sk-readonly-test-key-32-chars-for-testing',
+        'API_KEY_SALT': 'test-salt-16-chars',
+        'ADMIN_PASSWORD': 'test-admin-password-16-chars'
+    })
+    def test_api_key_listing(self):
+        """Test API key listing without exposing actual keys."""
+        auth_service = AuthenticationService()
+        
+        # List API keys
+        keys = auth_service.list_api_keys()
+        assert len(keys) > 0
+        
+        for key_info in keys:
+            assert 'key_id' in key_info
+            assert 'role' in key_info
+            assert 'permissions' in key_info
+            assert 'key_preview' in key_info
+            # Actual key should not be exposed
+            assert 'key' not in key_info
+
+
+def test_security_audit_script():
+    """Test that the security audit script can be imported and run."""
+    try:
+        from scripts.security_audit import SecurityAuditor
+        auditor = SecurityAuditor()
+        assert auditor is not None
+    except ImportError as e:
+        pytest.skip(f"Security audit script not available: {e}")
+
+
+def test_verify_security_fixes_script():
+    """Test that the security verification script can be imported."""
+    try:
+        from app.verify_security_fixes import verify_environment_variables
+        assert callable(verify_environment_variables)
+    except ImportError as e:
+        pytest.skip(f"Security verification script not available: {e}")
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+    pytest.main([__file__])

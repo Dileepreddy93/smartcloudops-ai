@@ -8,6 +8,7 @@ Dedicated service for handling authentication and authorization.
 
 import os
 import time
+import secrets
 from datetime import datetime, timedelta
 from typing import Dict, Optional, Union, List
 import jwt
@@ -21,51 +22,107 @@ class AuthenticationService(BaseService):
     
     def __init__(self, config: Optional[Dict] = None):
         super().__init__(config)
-        self.jwt_secret = self.get_config("jwt_secret", os.getenv("JWT_SECRET_KEY", "your-secret-key-change-in-production"))
+        
+        # Validate and get JWT secret
+        self.jwt_secret = self._get_secure_jwt_secret()
         self.jwt_algorithm = "HS256"
         self.jwt_expiration_hours = self.get_config("jwt_expiration_hours", 24)
         
-        # API Key management
-        self.api_keys = {
-            "admin": {
-                "key": os.getenv("ADMIN_API_KEY", "sk-admin-demo-key-12345678901234567890"),
-                "role": "admin",
-                "permissions": ["read", "write", "admin", "ml", "remediation"]
-            },
-            "ml": {
-                "key": os.getenv("ML_API_KEY", "sk-ml-demo-key-12345678901234567890123"),
-                "role": "ml",
-                "permissions": ["read", "ml"]
-            },
-            "readonly": {
-                "key": os.getenv("READONLY_API_KEY", "sk-readonly-demo-key-12345678901234567890"),
-                "role": "readonly",
-                "permissions": ["read"]
-            }
-        }
+        # Initialize API keys with proper validation
+        self.api_keys = self._initialize_api_keys()
         
         # User management (in production, use a database)
-        self.users = {
-            "admin": {
-                "username": "admin",
-                "password_hash": generate_password_hash(os.getenv("ADMIN_PASSWORD", "admin123")),
-                "role": "admin",
-                "permissions": ["read", "write", "admin", "ml", "remediation"]
-            }
+        self.users = self._initialize_users()
+        
+        # Initialize the service
+        self._initialize_service()
+    
+    def _get_secure_jwt_secret(self) -> str:
+        """Get JWT secret with proper validation."""
+        jwt_secret = os.getenv("JWT_SECRET_KEY")
+        if not jwt_secret:
+            raise ValueError("JWT_SECRET_KEY environment variable is required")
+        if len(jwt_secret) < 32:
+            raise ValueError("JWT_SECRET_KEY must be at least 32 characters long")
+        return jwt_secret
+    
+    def _initialize_api_keys(self) -> Dict:
+        """Initialize API keys with proper validation."""
+        api_keys = {}
+        
+        # Admin API key
+        admin_key = os.getenv("ADMIN_API_KEY")
+        if not admin_key:
+            raise ValueError("ADMIN_API_KEY environment variable is required")
+        if len(admin_key) < 32:
+            raise ValueError("ADMIN_API_KEY must be at least 32 characters long")
+        
+        api_keys["admin"] = {
+            "key": admin_key,
+            "role": "admin",
+            "permissions": ["read", "write", "admin", "ml", "remediation"]
         }
+        
+        # ML API key
+        ml_key = os.getenv("ML_API_KEY")
+        if not ml_key:
+            raise ValueError("ML_API_KEY environment variable is required")
+        if len(ml_key) < 32:
+            raise ValueError("ML_API_KEY must be at least 32 characters long")
+        
+        api_keys["ml"] = {
+            "key": ml_key,
+            "role": "ml",
+            "permissions": ["read", "ml"]
+        }
+        
+        # Readonly API key
+        readonly_key = os.getenv("READONLY_API_KEY")
+        if not readonly_key:
+            raise ValueError("READONLY_API_KEY environment variable is required")
+        if len(readonly_key) < 32:
+            raise ValueError("READONLY_API_KEY must be at least 32 characters long")
+        
+        api_keys["readonly"] = {
+            "key": readonly_key,
+            "role": "readonly",
+            "permissions": ["read"]
+        }
+        
+        return api_keys
+    
+    def _initialize_users(self) -> Dict:
+        """Initialize users with proper validation."""
+        users = {}
+        
+        # Admin user
+        admin_password = os.getenv("ADMIN_PASSWORD")
+        if not admin_password:
+            raise ValueError("ADMIN_PASSWORD environment variable is required")
+        if len(admin_password) < 8:
+            raise ValueError("ADMIN_PASSWORD must be at least 8 characters long")
+        
+        users["admin"] = {
+            "username": "admin",
+            "password_hash": generate_password_hash(admin_password),
+            "role": "admin",
+            "permissions": ["read", "write", "admin", "ml", "remediation"]
+        }
+        
+        return users
     
     def _initialize_service(self) -> None:
         """Initialize the authentication service."""
         # Validate JWT secret
-        if self.jwt_secret == "your-secret-key-change-in-production":
-            self.logger.warning("Using default JWT secret. Change in production!")
+        if len(self.jwt_secret) < 32:
+            raise ValueError("JWT secret is too short")
         
         # Validate API keys
         for key_id, key_info in self.api_keys.items():
-            if "demo-key" in key_info["key"]:
-                self.logger.warning(f"Using demo API key for {key_id}. Change in production!")
+            if len(key_info["key"]) < 32:
+                raise ValueError(f"API key for {key_id} is too short")
         
-        self.logger.info("Authentication service initialized")
+        self.logger.info("Authentication service initialized with secure configuration")
     
     def generate_jwt_token(self, user_id: str, role: str, permissions: List[str]) -> str:
         """Generate a JWT token for authenticated user."""
@@ -74,7 +131,8 @@ class AuthenticationService(BaseService):
             "role": role,
             "permissions": permissions,
             "exp": datetime.utcnow() + timedelta(hours=self.jwt_expiration_hours),
-            "iat": datetime.utcnow()
+            "iat": datetime.utcnow(),
+            "jti": secrets.token_urlsafe(16)  # JWT ID for uniqueness
         }
         return jwt.encode(payload, self.jwt_secret, algorithm=self.jwt_algorithm)
     
@@ -125,6 +183,10 @@ class AuthenticationService(BaseService):
         if username in self.users:
             return False
         
+        # Validate password strength
+        if len(password) < 8:
+            raise ValueError("Password must be at least 8 characters long")
+        
         self.users[username] = {
             "username": username,
             "password_hash": generate_password_hash(password),
@@ -146,7 +208,6 @@ class AuthenticationService(BaseService):
     
     def create_api_key(self, key_id: str, role: str, permissions: List[str]) -> str:
         """Create a new API key."""
-        import secrets
         api_key = f"sk-{key_id}-{secrets.token_urlsafe(32)}"
         
         self.api_keys[key_id] = {

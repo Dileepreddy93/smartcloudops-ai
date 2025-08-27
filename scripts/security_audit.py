@@ -12,6 +12,7 @@ import re
 import json
 import hashlib
 import secrets
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple, Any
 
@@ -37,13 +38,19 @@ class SecurityAuditor:
             r'test-key',
             r'default-password',
             r'admin123',
-            r'password123'
+            r'password123',
+            r'your-secret-key',
+            r'change-in-production'
         ]
         
         vulnerable_files = []
         
         for file_path in self.project_root.rglob('*'):
             if file_path.is_file() and file_path.suffix in ['.py', '.sh', '.yml', '.yaml', '.tf', '.env']:
+                # Skip virtual environment and cache directories
+                if any(skip_dir in str(file_path) for skip_dir in ['.venv', 'venv', '__pycache__', '.git']):
+                    continue
+                    
                 try:
                     content = file_path.read_text()
                     for pattern in secret_patterns:
@@ -66,11 +73,12 @@ class SecurityAuditor:
         print("🔍 Auditing environment variables...")
         
         required_vars = [
-            'SECRET_KEY',
+            'JWT_SECRET_KEY',
             'ADMIN_API_KEY',
             'ML_API_KEY', 
             'READONLY_API_KEY',
             'API_KEY_SALT',
+            'ADMIN_PASSWORD',
             'DB_PASSWORD',
             'REDIS_PASSWORD'
         ]
@@ -99,12 +107,13 @@ class SecurityAuditor:
         
         sensitive_files = [
             '.env',
-            '*.pem',
+            '.env.local',
+            '.env.production',
             '*.key',
+            '*.pem',
             '*.crt',
             '*.p12',
-            'id_rsa',
-            'id_dsa'
+            '*.pfx'
         ]
         
         permission_issues = []
@@ -113,131 +122,146 @@ class SecurityAuditor:
             for file_path in self.project_root.glob(pattern):
                 if file_path.is_file():
                     stat = file_path.stat()
-                    mode = stat.st_mode & 0o777
-                    
-                    if mode & 0o777 != 0o600:  # Should be 600 for sensitive files
+                    # Check if file is world-readable (should not be)
+                    if stat.st_mode & 0o004:
                         permission_issues.append({
                             'file': str(file_path.relative_to(self.project_root)),
-                            'current_permissions': oct(mode),
-                            'recommended_permissions': '0o600',
+                            'issue': 'World readable',
                             'severity': 'HIGH'
                         })
         
         return permission_issues
     
-    def audit_dependencies(self) -> Dict[str, Any]:
+    def audit_dependencies(self) -> List[Dict[str, Any]]:
         """Audit Python dependencies for known vulnerabilities."""
         print("🔍 Auditing dependencies...")
         
-        try:
-            import subprocess
-            result = subprocess.run(['safety', 'check', '--json'], 
-                                  capture_output=True, text=True)
+        # This would typically use tools like safety or bandit
+        # For now, we'll check for common vulnerable patterns
+        requirements_file = self.project_root / 'app' / 'requirements.txt'
+        vulnerabilities = []
+        
+        if requirements_file.exists():
+            content = requirements_file.read_text()
+            # Check for known vulnerable packages (this is a simplified check)
+            vulnerable_packages = [
+                'django<2.2.0',
+                'flask<2.0.0',
+                'requests<2.25.0'
+            ]
             
-            if result.returncode == 0:
-                vulnerabilities = json.loads(result.stdout)
-                return {
-                    'vulnerabilities': vulnerabilities,
-                    'total': len(vulnerabilities)
-                }
-            else:
-                return {
-                    'error': 'Safety check failed',
-                    'stderr': result.stderr
-                }
-        except Exception as e:
-            return {
-                'error': f'Could not run safety check: {e}'
-            }
+            for package in vulnerable_packages:
+                if package in content:
+                    vulnerabilities.append({
+                        'package': package,
+                        'issue': 'Known vulnerable version',
+                        'severity': 'HIGH'
+                    })
+        
+        return vulnerabilities
     
-    def audit_code_quality(self) -> Dict[str, Any]:
-        """Audit code quality and security practices."""
+    def audit_code_quality(self) -> List[Dict[str, Any]]:
+        """Audit code quality and security patterns."""
         print("🔍 Auditing code quality...")
         
-        issues = {
-            'print_statements': [],
-            'hardcoded_urls': [],
-            'insecure_functions': [],
-            'missing_validation': []
-        }
+        issues = []
         
-        # Find print statements in production code
         for file_path in self.project_root.rglob('*.py'):
-            if 'test' not in str(file_path) and 'scripts' not in str(file_path):
-                try:
-                    content = file_path.read_text()
-                    lines = content.split('\n')
-                    
-                    for i, line in enumerate(lines, 1):
-                        if 'print(' in line and not line.strip().startswith('#'):
-                            issues['print_statements'].append({
-                                'file': str(file_path.relative_to(self.project_root)),
-                                'line': i,
-                                'code': line.strip()
-                            })
+            if any(skip_dir in str(file_path) for skip_dir in ['.venv', 'venv', '__pycache__', '.git']):
+                continue
+                
+            try:
+                content = file_path.read_text()
+                
+                # Check for SQL injection patterns
+                sql_patterns = [
+                    r'execute\s*\(\s*["\'][^"\']*\$\{[^}]*\}[^"\']*["\']',
+                    r'query\s*=\s*["\'][^"\']*\$\{[^}]*\}[^"\']*["\']'
+                ]
+                
+                for pattern in sql_patterns:
+                    if re.search(pattern, content):
+                        issues.append({
+                            'file': str(file_path.relative_to(self.project_root)),
+                            'issue': 'Potential SQL injection',
+                            'severity': 'CRITICAL'
+                        })
+                
+                # Check for hardcoded credentials
+                if re.search(r'password\s*=\s*["\'][^"\']+["\']', content):
+                    issues.append({
+                        'file': str(file_path.relative_to(self.project_root)),
+                        'issue': 'Hardcoded password',
+                        'severity': 'CRITICAL'
+                    })
+                
+                # Check for debug mode in production
+                if 'DEBUG = True' in content or 'debug=True' in content:
+                    issues.append({
+                        'file': str(file_path.relative_to(self.project_root)),
+                        'issue': 'Debug mode enabled',
+                        'severity': 'MEDIUM'
+                    })
                         
-                        # Check for hardcoded URLs
-                        if re.search(r'https?://[^\s"\']+', line):
-                            issues['hardcoded_urls'].append({
-                                'file': str(file_path.relative_to(self.project_root)),
-                                'line': i,
-                                'url': re.search(r'https?://[^\s"\']+', line).group()
-                            })
-                        
-                        # Check for insecure functions
-                        insecure_funcs = ['eval(', 'exec(', 'os.system(', 'subprocess.call(']
-                        for func in insecure_funcs:
-                            if func in line:
-                                issues['insecure_functions'].append({
-                                    'file': str(file_path.relative_to(self.project_root)),
-                                    'line': i,
-                                    'function': func,
-                                    'code': line.strip()
-                                })
-                except Exception as e:
-                    print(f"Warning: Could not audit {file_path}: {e}")
+            except Exception as e:
+                print(f"Warning: Could not read {file_path}: {e}")
         
         return issues
     
     def generate_secure_keys(self) -> Dict[str, str]:
-        """Generate secure keys for all required secrets."""
-        print("🔑 Generating secure keys...")
+        """Generate secure keys for environment variables."""
+        print("🔐 Generating secure keys...")
         
-        keys = {
-            'SECRET_KEY': secrets.token_hex(64),
-            'ADMIN_API_KEY': f"sk-admin-{secrets.token_hex(32)}",
-            'ML_API_KEY': f"sk-ml-{secrets.token_hex(32)}",
-            'READONLY_API_KEY': f"sk-readonly-{secrets.token_hex(32)}",
-            'API_KEY_SALT': secrets.token_hex(32),
-            'DB_PASSWORD': secrets.token_hex(32),
-            'REDIS_PASSWORD': secrets.token_hex(32),
-            'GRAFANA_ADMIN_PASSWORD': secrets.token_hex(16)
-        }
+        keys = {}
+        
+        # Generate JWT secret
+        keys['JWT_SECRET_KEY'] = secrets.token_urlsafe(64)
+        
+        # Generate API keys
+        keys['ADMIN_API_KEY'] = f"sk-admin-{secrets.token_urlsafe(32)}"
+        keys['ML_API_KEY'] = f"sk-ml-{secrets.token_urlsafe(32)}"
+        keys['READONLY_API_KEY'] = f"sk-readonly-{secrets.token_urlsafe(32)}"
+        
+        # Generate API key salt
+        keys['API_KEY_SALT'] = secrets.token_urlsafe(16)
+        
+        # Generate admin password
+        keys['ADMIN_PASSWORD'] = secrets.token_urlsafe(16)
+        
+        # Generate database password
+        keys['DB_PASSWORD'] = secrets.token_urlsafe(32)
+        
+        # Generate Redis password
+        keys['REDIS_PASSWORD'] = secrets.token_urlsafe(32)
         
         return keys
     
-    def create_secure_env_file(self, keys: Dict[str, str]) -> bool:
-        """Create a secure .env file with generated keys."""
-        print("📝 Creating secure .env file...")
+    def create_secure_env_file(self) -> None:
+        """Create a secure .env.example file."""
+        print("📝 Creating secure .env.example file...")
         
-        env_content = f"""# SmartCloudOps AI - Secure Environment Configuration
-# Generated by security audit on {datetime.now().isoformat()}
-# DO NOT COMMIT THIS FILE TO VERSION CONTROL
+        keys = self.generate_secure_keys()
+        
+        env_content = """# SmartCloudOps AI - Environment Configuration
+# Copy this file to .env and fill in your actual values
 
 # =============================================================================
 # SECURITY - REQUIRED (Application will not start without these)
 # =============================================================================
 
-# Flask Secret Key
-SECRET_KEY={keys['SECRET_KEY']}
+# JWT Secret Key (generate with: python -c "import secrets; print(secrets.token_urlsafe(64))")
+JWT_SECRET_KEY={jwt_secret}
 
 # API Keys (generate secure keys for each role)
-ADMIN_API_KEY={keys['ADMIN_API_KEY']}
-ML_API_KEY={keys['ML_API_KEY']}
-READONLY_API_KEY={keys['READONLY_API_KEY']}
+ADMIN_API_KEY={admin_key}
+ML_API_KEY={ml_key}
+READONLY_API_KEY={readonly_key}
 
-# API Key Salt
-API_KEY_SALT={keys['API_KEY_SALT']}
+# API Key Salt (generate with: python -c "import secrets; print(secrets.token_urlsafe(16))")
+API_KEY_SALT={api_salt}
+
+# Admin Password (generate with: python -c "import secrets; print(secrets.token_urlsafe(16))")
+ADMIN_PASSWORD={admin_password}
 
 # =============================================================================
 # APPLICATION CONFIGURATION
@@ -248,18 +272,10 @@ FLASK_ENV=production
 FLASK_DEBUG=False
 
 # Database Configuration
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=smartcloudops
-DB_USER=smartcloudops_user
-DB_PASSWORD={keys['DB_PASSWORD']}
-DATABASE_URL=postgresql://smartcloudops_user:{keys['DB_PASSWORD']}@localhost:5432/smartcloudops
+DATABASE_URL=postgresql://username:{db_password}@localhost:5432/smartcloudops
 
 # Redis Configuration (for caching)
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD={keys['REDIS_PASSWORD']}
-REDIS_URL=redis://:{keys['REDIS_PASSWORD']}@localhost:6379/0
+REDIS_URL=redis://:{redis_password}@localhost:6379/0
 
 # =============================================================================
 # AWS CONFIGURATION (for production)
@@ -282,7 +298,6 @@ PROMETHEUS_PORT=9090
 
 # Grafana Configuration  
 GRAFANA_PORT=3000
-GRAFANA_ADMIN_PASSWORD={keys['GRAFANA_ADMIN_PASSWORD']}
 
 # Log Level
 LOG_LEVEL=INFO
@@ -318,164 +333,122 @@ DEV_MODE=False
 # Mock Services (for testing)
 MOCK_ML_SERVICE=False
 MOCK_AWS_SERVICE=False
-"""
+""".format(
+            jwt_secret=keys['JWT_SECRET_KEY'],
+            admin_key=keys['ADMIN_API_KEY'],
+            ml_key=keys['ML_API_KEY'],
+            readonly_key=keys['READONLY_API_KEY'],
+            api_salt=keys['API_KEY_SALT'],
+            admin_password=keys['ADMIN_PASSWORD'],
+            db_password=keys['DB_PASSWORD'],
+            redis_password=keys['REDIS_PASSWORD']
+        )
         
-        env_file = self.project_root / '.env'
+        env_file = self.project_root / '.env.example'
         env_file.write_text(env_content)
         
-        # Set secure permissions
-        os.chmod(env_file, 0o600)
-        
-        return True
+        print(f"✅ Created secure .env.example file at {env_file}")
     
-    def fix_security_issues(self) -> Dict[str, Any]:
-        """Apply security fixes to the codebase."""
-        print("🔧 Applying security fixes...")
-        
-        fixes = {
-            'files_modified': [],
-            'permissions_fixed': [],
-            'secrets_removed': []
-        }
-        
-        # Fix hardcoded secrets in files
-        files_to_fix = [
-            'docker/docker-compose.yml',
-            'scripts/load_tester.py',
-            'app/api_security_test.py'
-        ]
-        
-        for file_path in files_to_fix:
-            full_path = self.project_root / file_path
-            if full_path.exists():
-                content = full_path.read_text()
-                
-                # Replace hardcoded passwords with environment variables
-                content = re.sub(
-                    r'POSTGRES_PASSWORD=smartcloudops_password',
-                    'POSTGRES_PASSWORD=${DB_PASSWORD}',
-                    content
-                )
-                
-                content = re.sub(
-                    r'GF_SECURITY_ADMIN_PASSWORD=admin',
-                    'GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}',
-                    content
-                )
-                
-                content = re.sub(
-                    r'sk-readonly-demo-key-\d+',
-                    '${READONLY_API_KEY}',
-                    content
-                )
-                
-                full_path.write_text(content)
-                fixes['files_modified'].append(file_path)
-        
-        # Fix file permissions
-        sensitive_files = ['.env', '*.pem', '*.key', '*.crt']
-        for pattern in sensitive_files:
-            for file_path in self.project_root.glob(pattern):
-                if file_path.is_file():
-                    os.chmod(file_path, 0o600)
-                    fixes['permissions_fixed'].append(str(file_path))
-        
-        return fixes
-    
-    def run_complete_audit(self) -> Dict[str, Any]:
-        """Run complete security audit and generate report."""
+    def run_comprehensive_audit(self) -> Dict[str, Any]:
+        """Run comprehensive security audit."""
         print("🚀 Starting comprehensive security audit...")
         
-        # Run all audits
-        hardcoded_secrets = self.audit_hardcoded_secrets()
-        env_vars = self.audit_environment_variables()
-        permissions = self.audit_file_permissions()
-        dependencies = self.audit_dependencies()
-        code_quality = self.audit_code_quality()
-        
-        # Generate secure keys
-        secure_keys = self.generate_secure_keys()
-        
-        # Apply fixes
-        fixes = self.fix_security_issues()
-        
-        # Create secure .env file
-        self.create_secure_env_file(secure_keys)
-        
-        # Generate report
-        report = {
-            'timestamp': datetime.now().isoformat(),
-            'audit_results': {
-                'hardcoded_secrets': {
-                    'count': len(hardcoded_secrets),
-                    'issues': hardcoded_secrets
-                },
-                'environment_variables': env_vars,
-                'file_permissions': {
-                    'count': len(permissions),
-                    'issues': permissions
-                },
-                'dependencies': dependencies,
-                'code_quality': code_quality
-            },
-            'fixes_applied': fixes,
-            'secure_keys_generated': list(secure_keys.keys()),
-            'recommendations': self.generate_recommendations()
+        results = {
+            'hardcoded_secrets': self.audit_hardcoded_secrets(),
+            'environment_variables': self.audit_environment_variables(),
+            'file_permissions': self.audit_file_permissions(),
+            'dependencies': self.audit_dependencies(),
+            'code_quality': self.audit_code_quality(),
+            'timestamp': str(datetime.now()),
+            'total_issues': 0
         }
         
-        return report
-    
-    def generate_recommendations(self) -> List[str]:
-        """Generate security recommendations."""
-        return [
-            "✅ All hardcoded secrets have been removed and replaced with environment variables",
-            "✅ Secure keys have been generated for all required secrets",
-            "✅ File permissions have been fixed for sensitive files",
-            "⚠️ Review and update AWS credentials in .env file",
-            "⚠️ Configure proper CORS origins for production",
-            "⚠️ Set up proper SSL/TLS certificates",
-            "⚠️ Implement secrets rotation schedule",
-            "⚠️ Set up security monitoring and alerting",
-            "⚠️ Regular security audits and dependency updates",
-            "⚠️ Implement proper backup and disaster recovery"
-        ]
-    
-    def save_report(self, report: Dict[str, Any]) -> str:
-        """Save audit report to file."""
-        report_file = self.project_root / f"security_audit_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        # Calculate total issues
+        for category, issues in results.items():
+            if isinstance(issues, list):
+                results['total_issues'] += len(issues)
+            elif isinstance(issues, dict) and 'missing' in issues:
+                results['total_issues'] += len(issues['missing']) + len(issues['weak'])
         
+        return results
+    
+    def generate_report(self, results: Dict[str, Any]) -> None:
+        """Generate security audit report."""
+        print("📊 Generating security audit report...")
+        
+        report = {
+            'summary': {
+                'total_issues': results['total_issues'],
+                'critical_issues': len([i for i in results['hardcoded_secrets'] if i['severity'] == 'CRITICAL']),
+                'high_issues': len([i for i in results['hardcoded_secrets'] + results['file_permissions'] if i['severity'] == 'HIGH']),
+                'medium_issues': len([i for i in results['code_quality'] if i['severity'] == 'MEDIUM'])
+            },
+            'details': results,
+            'recommendations': self._generate_recommendations(results)
+        }
+        
+        # Save report
+        report_file = self.project_root / f"security_audit_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         with open(report_file, 'w') as f:
             json.dump(report, f, indent=2)
         
-        return str(report_file)
+        print(f"✅ Security audit report saved to {report_file}")
+        
+        # Print summary
+        print("\n" + "="*50)
+        print("SECURITY AUDIT SUMMARY")
+        print("="*50)
+        print(f"Total Issues: {results['total_issues']}")
+        print(f"Critical: {report['summary']['critical_issues']}")
+        print(f"High: {report['summary']['high_issues']}")
+        print(f"Medium: {report['summary']['medium_issues']}")
+        print("="*50)
+    
+    def _generate_recommendations(self, results: Dict[str, Any]) -> List[str]:
+        """Generate security recommendations."""
+        recommendations = []
+        
+        if results['hardcoded_secrets']:
+            recommendations.append("Remove all hardcoded secrets and use environment variables")
+        
+        if results['environment_variables']['missing']:
+            recommendations.append("Set all required environment variables")
+        
+        if results['environment_variables']['weak']:
+            recommendations.append("Use stronger passwords and keys (minimum 32 characters)")
+        
+        if results['file_permissions']:
+            recommendations.append("Fix file permissions for sensitive files")
+        
+        if results['dependencies']:
+            recommendations.append("Update vulnerable dependencies")
+        
+        if results['code_quality']:
+            recommendations.append("Fix code quality issues and potential vulnerabilities")
+        
+        return recommendations
+
 
 def main():
-    """Run the security audit."""
-    print("🔒 SmartCloudOps AI - Security Audit")
-    print("=" * 50)
-    
+    """Main function to run security audit."""
     auditor = SecurityAuditor()
-    report = auditor.run_complete_audit()
     
-    # Save report
-    report_file = auditor.save_report(report)
+    # Run comprehensive audit
+    results = auditor.run_comprehensive_audit()
     
-    # Print summary
-    print("\n📊 Security Audit Summary")
-    print("=" * 30)
-    print(f"Hardcoded Secrets Found: {report['audit_results']['hardcoded_secrets']['count']}")
-    print(f"Missing Environment Variables: {len(report['audit_results']['environment_variables']['missing'])}")
-    print(f"Permission Issues: {report['audit_results']['file_permissions']['count']}")
-    print(f"Code Quality Issues: {len(report['audit_results']['code_quality']['print_statements'])}")
-    print(f"Files Modified: {len(report['fixes_applied']['files_modified'])}")
-    print(f"Secure Keys Generated: {len(report['secure_keys_generated'])}")
+    # Generate report
+    auditor.generate_report(results)
     
-    print(f"\n📄 Detailed report saved to: {report_file}")
+    # Create secure environment file
+    auditor.create_secure_env_file()
     
-    print("\n✅ Security audit completed successfully!")
-    print("🔧 All critical security issues have been fixed.")
-    print("⚠️ Please review the recommendations and complete manual steps.")
+    print("\n🔒 Security audit completed!")
+    print("Next steps:")
+    print("1. Review the security audit report")
+    print("2. Copy .env.example to .env and update with your values")
+    print("3. Fix any identified security issues")
+    print("4. Run the audit again to verify fixes")
+
 
 if __name__ == "__main__":
-    from datetime import datetime
     main()

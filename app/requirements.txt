@@ -1,90 +1,105 @@
-# SmartCloudOps AI - Production Dependencies
-# Multi-AI ChatOps Application + ML Inference Requirements
-# All versions pinned for reproducible builds and compatibility
+# SmartCloudOps AI - Production Requirements
+# ========================================
 
-# Core Web Framework
-Flask==3.0.3
-Werkzeug==3.0.3
+# Core Flask Framework
+Flask==3.0.0
+Flask-CORS==4.0.0
+Flask-Swagger-UI==4.11.1
+Werkzeug==3.0.1
 
-# HTTP Client Libraries  
-requests==2.32.3
-urllib3==2.2.2
+# Security & Authentication
+PyJWT==2.8.0
+bcrypt==4.1.2
+cryptography==41.0.7
 
-# AI/ML Providers
-openai==1.54.4
-google-generativeai==0.8.3
-
-# Data Processing & Utilities
-python-dotenv==1.0.1
-pydantic==2.9.2
-
-# Production Server
-gunicorn==22.0.0
-
-# Authentication & Security
-PyJWT==2.10.0
-cryptography==42.0.8
-
-# Database
-SQLAlchemy==2.0.27
+# Database & ORM
+SQLAlchemy==2.0.23
 psycopg2-binary==2.9.9
+mysql-connector-python==8.2.0
 alembic==1.13.1
 
-# Machine Learning (Phase 3 Complete + Production Inference)
-scikit-learn==1.5.1
-pandas==2.2.2
-numpy==1.26.4
-prophet==1.1.5
-joblib==1.4.2
+# Caching & Background Tasks
+redis==5.0.1
+celery==5.3.4
+flower==2.0.1
 
-# AWS SDK
-boto3==1.34.0
-botocore==1.34.162
+# Machine Learning
+scikit-learn==1.3.2
+pandas==2.1.4
+numpy==1.25.2
+joblib==1.3.2
+prophet==1.1.4
 
 # Monitoring & Metrics
-prometheus-client==0.20.0
+prometheus-client==0.19.0
+psutil==5.9.6
 
-# Security & SSL
-certifi==2024.7.4
+# API & HTTP
+requests==2.31.0
+urllib3==2.1.0
 
-# Development & Testing
-pytest==8.3.2
-pytest-flask==1.3.0
+# Data Processing
+python-dateutil==2.8.2
+pytz==2023.3
 
-# Additional ML Production Dependencies
-matplotlib==3.8.4
-seaborn==0.13.2
-
-# Configuration Management
+# Configuration & Environment
+python-dotenv==1.0.0
 PyYAML==6.0.1
 
-# Logging and Monitoring
-structlog==24.2.0
+# Logging & Debugging
+structlog==23.2.0
+colorama==0.4.6
 
-# System Monitoring
-psutil==5.9.8
+# Testing
+pytest==7.4.3
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+pytest-flask==1.3.0
 
-# Additional Dependencies for Compatibility
-typing-extensions==4.12.2
-annotated-types==0.7.0
+# Code Quality & Linting
+black==23.11.0
+flake8==6.1.0
+mypy==1.7.1
+pylint==3.0.3
+bandit==1.7.5
+safety==2.3.5
 
-# Phase 5: NLP & ChatOps Dependencies
-spacy==3.7.2
-transformers==4.41.2
-nltk==3.8
+# Security Scanning
+trivy==0.48.1
 
-# Pinned transitive dependencies for security tools compatibility
-safety
-packaging==24.1
+# Development Tools
+pre-commit==3.6.0
+tox==4.11.4
+
+# Documentation
+Sphinx==7.2.6
+sphinx-rtd-theme==1.3.0
+
+# Production & Deployment
+gunicorn==21.2.0
+uwsgi==2.0.24
+
+# AWS Integration
+boto3==1.34.0
+botocore==1.34.0
+
+# Container & Orchestration
+docker==6.1.3
+kubernetes==28.1.0
+
+# Monitoring & Observability
+opentelemetry-api==1.21.0
+opentelemetry-sdk==1.21.0
+opentelemetry-instrumentation-flask==0.42b0
+opentelemetry-instrumentation-requests==0.42b0
+
+# Performance & Optimization
+uvloop==0.19.0
+orjson==3.9.10
+
+# Additional Utilities
 click==8.1.7
-rich==13.8.1
-typer==0.9.4
-filelock==3.15.4
-ruamel.yaml==0.18.6
-ruamel.yaml.clib==0.2.8
-marshmallow==3.22.0
-authlib==1.3.1
-dparse==0.6.4
-Jinja2==3.1.4
-MarkupSafe==2.1.5
-itsdangerous==2.2.0
+jinja2==3.1.2
+markupsafe==2.1.3
+itsdangerous==2.1.2
+blinker==1.7.0

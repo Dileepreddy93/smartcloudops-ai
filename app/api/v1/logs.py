@@ -1,6 +1,5 @@
 from flask import Blueprint, Response
 
-
 bp = Blueprint("logs", __name__)
 
 
@@ -10,13 +9,14 @@ def logs():
     try:
         # Try to read from log file if it exists
         import os
+
         log_file = "/tmp/smartcloudops_api.log"
         if os.path.exists(log_file):
-            with open(log_file, 'r') as f:
+            with open(log_file, "r") as f:
                 content = f.read()
         else:
             content = "No logs available"
-        
+
         # Basic sanitization: limit to recent content
         if content and len(content) > 20000:
             content = content[-20000:]

@@ -20,42 +20,45 @@ ADMIN_KEY = os.getenv("ADMIN_API_KEY")
 ML_KEY = os.getenv("ML_API_KEY")
 READONLY_KEY = os.getenv("READONLY_API_KEY")
 
+
 # SECURITY: Validate API keys are properly set
 def validate_api_keys():
     """Validate that API keys are properly configured."""
     required_keys = {
         "ADMIN_API_KEY": ADMIN_KEY,
         "ML_API_KEY": ML_KEY,
-        "READONLY_API_KEY": READONLY_KEY
+        "READONLY_API_KEY": READONLY_KEY,
     }
-    
+
     missing_keys = []
     for key_name, key_value in required_keys.items():
         if not key_value:
             missing_keys.append(key_name)
         elif len(key_value) < 32:
             print(f"⚠️ WARNING: {key_name} is too short (minimum 32 characters)")
-    
+
     if missing_keys:
         print(f"❌ ERROR: Missing required API keys: {', '.join(missing_keys)}")
         print("   Set these environment variables before running the application")
         return False
-    
+
     return True
 
     # Validate all keys are present and secure
     if not validate_api_keys():
         return False
-    
+
     # Check for common insecure patterns
-    insecure_patterns = ['demo', 'test', 'default', 'password', '123']
+    insecure_patterns = ["demo", "test", "default", "password", "123"]
     for key_name, key_value in required_keys.items():
         if key_value:
             key_lower = key_value.lower()
             for pattern in insecure_patterns:
                 if pattern in key_lower:
-                    print(f"⚠️ WARNING: {key_name} contains potentially insecure pattern: {pattern}")
-    
+                    print(
+                        f"⚠️ WARNING: {key_name} contains potentially insecure pattern: {pattern}"
+                    )
+
     return True
 
 

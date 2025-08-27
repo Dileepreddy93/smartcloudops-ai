@@ -10,25 +10,22 @@ from flask import Blueprint, jsonify
 from flask_swagger_ui import get_swaggerui_blueprint
 
 # Swagger configuration
-SWAGGER_URL = '/api/docs'
-API_URL = '/api/swagger.json'
+SWAGGER_URL = "/api/docs"
+API_URL = "/api/swagger.json"
 
 # Create swagger blueprint
 swagger_blueprint = get_swaggerui_blueprint(
-    SWAGGER_URL,
-    API_URL,
-    config={
-        'app_name': "SmartCloudOps AI API"
-    }
+    SWAGGER_URL, API_URL, config={"app_name": "SmartCloudOps AI API"}
 )
 
 # API documentation blueprint
-docs_blueprint = Blueprint('docs', __name__)
+docs_blueprint = Blueprint("docs", __name__)
 
-@docs_blueprint.route('/api/swagger.json')
+
+@docs_blueprint.route("/api/swagger.json")
 def create_swagger_spec():
     """Generate OpenAPI/Swagger specification."""
-    
+
     swagger_spec = {
         "openapi": "3.0.3",
         "info": {
@@ -37,31 +34,15 @@ def create_swagger_spec():
             "version": "3.2.0",
             "contact": {
                 "name": "SmartCloudOps AI Support",
-                "email": "support@smartcloudops.ai"
+                "email": "support@smartcloudops.ai",
             },
-            "license": {
-                "name": "MIT",
-                "url": "https://opensource.org/licenses/MIT"
-            }
+            "license": {"name": "MIT", "url": "https://opensource.org/licenses/MIT"},
         },
         "servers": [
-            {
-                "url": "https://api.smartcloudops.ai",
-                "description": "Production server"
-            },
-            {
-                "url": "http://localhost:5000",
-                "description": "Development server"
-            }
+            {"url": "https://api.smartcloudops.ai", "description": "Production server"},
+            {"url": "http://localhost:5000", "description": "Development server"},
         ],
-        "security": [
-            {
-                "ApiKeyAuth": []
-            },
-            {
-                "BearerAuth": []
-            }
-        ],
+        "security": [{"ApiKeyAuth": []}, {"BearerAuth": []}],
         "paths": {
             "/health": {
                 "get": {
@@ -77,7 +58,7 @@ def create_swagger_spec():
                                         "$ref": "#/components/schemas/HealthResponse"
                                     }
                                 }
-                            }
+                            },
                         },
                         "500": {
                             "description": "Internal server error",
@@ -87,9 +68,9 @@ def create_swagger_spec():
                                         "$ref": "#/components/schemas/ErrorResponse"
                                     }
                                 }
-                            }
-                        }
-                    }
+                            },
+                        },
+                    },
                 }
             },
             "/api/v1/ml/predict": {
@@ -97,11 +78,7 @@ def create_swagger_spec():
                     "summary": "ML Anomaly Detection",
                     "description": "Predict anomalies using ML models",
                     "tags": ["ML"],
-                    "security": [
-                        {
-                            "ApiKeyAuth": []
-                        }
-                    ],
+                    "security": [{"ApiKeyAuth": []}],
                     "requestBody": {
                         "required": True,
                         "content": {
@@ -110,7 +87,7 @@ def create_swagger_spec():
                                     "$ref": "#/components/schemas/MLPredictionRequest"
                                 }
                             }
-                        }
+                        },
                     },
                     "responses": {
                         "200": {
@@ -121,7 +98,7 @@ def create_swagger_spec():
                                         "$ref": "#/components/schemas/MLPredictionResponse"
                                     }
                                 }
-                            }
+                            },
                         },
                         "400": {
                             "description": "Invalid request",
@@ -131,7 +108,7 @@ def create_swagger_spec():
                                         "$ref": "#/components/schemas/ErrorResponse"
                                     }
                                 }
-                            }
+                            },
                         },
                         "401": {
                             "description": "Unauthorized",
@@ -141,9 +118,9 @@ def create_swagger_spec():
                                         "$ref": "#/components/schemas/ErrorResponse"
                                     }
                                 }
-                            }
-                        }
-                    }
+                            },
+                        },
+                    },
                 }
             },
             "/api/v1/ml/health": {
@@ -160,9 +137,9 @@ def create_swagger_spec():
                                         "$ref": "#/components/schemas/MLHealthResponse"
                                     }
                                 }
-                            }
+                            },
                         }
-                    }
+                    },
                 }
             },
             "/api/v1/chatops/query": {
@@ -170,11 +147,7 @@ def create_swagger_spec():
                     "summary": "ChatOps Query",
                     "description": "Process natural language queries for system operations",
                     "tags": ["ChatOps"],
-                    "security": [
-                        {
-                            "ApiKeyAuth": []
-                        }
-                    ],
+                    "security": [{"ApiKeyAuth": []}],
                     "requestBody": {
                         "required": True,
                         "content": {
@@ -183,7 +156,7 @@ def create_swagger_spec():
                                     "$ref": "#/components/schemas/ChatOpsRequest"
                                 }
                             }
-                        }
+                        },
                     },
                     "responses": {
                         "200": {
@@ -194,7 +167,7 @@ def create_swagger_spec():
                                         "$ref": "#/components/schemas/ChatOpsResponse"
                                     }
                                 }
-                            }
+                            },
                         },
                         "400": {
                             "description": "Invalid request",
@@ -204,9 +177,9 @@ def create_swagger_spec():
                                         "$ref": "#/components/schemas/ErrorResponse"
                                     }
                                 }
-                            }
-                        }
-                    }
+                            },
+                        },
+                    },
                 }
             },
             "/api/v1/metrics": {
@@ -214,11 +187,7 @@ def create_swagger_spec():
                     "summary": "Get System Metrics",
                     "description": "Retrieve current system metrics and performance data",
                     "tags": ["Monitoring"],
-                    "security": [
-                        {
-                            "ApiKeyAuth": []
-                        }
-                    ],
+                    "security": [{"ApiKeyAuth": []}],
                     "responses": {
                         "200": {
                             "description": "System metrics",
@@ -228,9 +197,9 @@ def create_swagger_spec():
                                         "$ref": "#/components/schemas/MetricsResponse"
                                     }
                                 }
-                            }
+                            },
                         }
-                    }
+                    },
                 }
             },
             "/api/v1/remediation/actions": {
@@ -238,11 +207,7 @@ def create_swagger_spec():
                     "summary": "Execute Remediation Action",
                     "description": "Execute automated remediation actions",
                     "tags": ["Remediation"],
-                    "security": [
-                        {
-                            "ApiKeyAuth": []
-                        }
-                    ],
+                    "security": [{"ApiKeyAuth": []}],
                     "requestBody": {
                         "required": True,
                         "content": {
@@ -251,7 +216,7 @@ def create_swagger_spec():
                                     "$ref": "#/components/schemas/RemediationRequest"
                                 }
                             }
-                        }
+                        },
                     },
                     "responses": {
                         "200": {
@@ -262,11 +227,11 @@ def create_swagger_spec():
                                         "$ref": "#/components/schemas/RemediationResponse"
                                     }
                                 }
-                            }
+                            },
                         }
-                    }
+                    },
                 }
-            }
+            },
         },
         "components": {
             "securitySchemes": {
@@ -274,14 +239,14 @@ def create_swagger_spec():
                     "type": "apiKey",
                     "in": "header",
                     "name": "X-API-Key",
-                    "description": "API key for authentication"
+                    "description": "API key for authentication",
                 },
                 "BearerAuth": {
                     "type": "http",
                     "scheme": "bearer",
                     "bearerFormat": "JWT",
-                    "description": "JWT token for authentication"
-                }
+                    "description": "JWT token for authentication",
+                },
             },
             "schemas": {
                 "HealthResponse": {
@@ -290,16 +255,16 @@ def create_swagger_spec():
                         "status": {
                             "type": "string",
                             "enum": ["success", "error"],
-                            "description": "Response status"
+                            "description": "Response status",
                         },
                         "message": {
                             "type": "string",
-                            "description": "Response message"
+                            "description": "Response message",
                         },
                         "timestamp": {
                             "type": "string",
                             "format": "date-time",
-                            "description": "Response timestamp"
+                            "description": "Response timestamp",
                         },
                         "data": {
                             "type": "object",
@@ -307,28 +272,28 @@ def create_swagger_spec():
                                 "overall_status": {
                                     "type": "string",
                                     "enum": ["healthy", "degraded", "unhealthy"],
-                                    "description": "Overall system health"
+                                    "description": "Overall system health",
                                 },
                                 "components": {
                                     "type": "object",
                                     "properties": {
                                         "database": {
                                             "type": "boolean",
-                                            "description": "Database connectivity"
+                                            "description": "Database connectivity",
                                         },
                                         "ml_service": {
                                             "type": "boolean",
-                                            "description": "ML service status"
+                                            "description": "ML service status",
                                         },
                                         "cache": {
                                             "type": "boolean",
-                                            "description": "Cache service status"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                                            "description": "Cache service status",
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
                 },
                 "MLPredictionRequest": {
                     "type": "object",
@@ -341,48 +306,48 @@ def create_swagger_spec():
                                     "type": "number",
                                     "minimum": 0,
                                     "maximum": 100,
-                                    "description": "CPU usage percentage"
+                                    "description": "CPU usage percentage",
                                 },
                                 "memory_usage": {
                                     "type": "number",
                                     "minimum": 0,
                                     "maximum": 100,
-                                    "description": "Memory usage percentage"
+                                    "description": "Memory usage percentage",
                                 },
                                 "disk_usage": {
                                     "type": "number",
                                     "minimum": 0,
                                     "maximum": 100,
-                                    "description": "Disk usage percentage"
+                                    "description": "Disk usage percentage",
                                 },
                                 "network_io": {
                                     "type": "number",
                                     "minimum": 0,
-                                    "description": "Network I/O in MB/s"
+                                    "description": "Network I/O in MB/s",
                                 },
                                 "load_1m": {
                                     "type": "number",
                                     "minimum": 0,
-                                    "description": "1-minute load average"
+                                    "description": "1-minute load average",
                                 },
                                 "load_5m": {
                                     "type": "number",
                                     "minimum": 0,
-                                    "description": "5-minute load average"
+                                    "description": "5-minute load average",
                                 },
                                 "load_15m": {
                                     "type": "number",
                                     "minimum": 0,
-                                    "description": "15-minute load average"
+                                    "description": "15-minute load average",
                                 },
                                 "response_time": {
                                     "type": "number",
                                     "minimum": 0,
-                                    "description": "Response time in milliseconds"
-                                }
-                            }
+                                    "description": "Response time in milliseconds",
+                                },
+                            },
                         }
-                    }
+                    },
                 },
                 "MLPredictionResponse": {
                     "type": "object",
@@ -390,16 +355,16 @@ def create_swagger_spec():
                         "status": {
                             "type": "string",
                             "enum": ["success", "error"],
-                            "description": "Response status"
+                            "description": "Response status",
                         },
                         "message": {
                             "type": "string",
-                            "description": "Response message"
+                            "description": "Response message",
                         },
                         "timestamp": {
                             "type": "string",
                             "format": "date-time",
-                            "description": "Response timestamp"
+                            "description": "Response timestamp",
                         },
                         "data": {
                             "type": "object",
@@ -409,31 +374,31 @@ def create_swagger_spec():
                                     "properties": {
                                         "is_anomaly": {
                                             "type": "boolean",
-                                            "description": "Whether anomaly was detected"
+                                            "description": "Whether anomaly was detected",
                                         },
                                         "anomaly_score": {
                                             "type": "number",
-                                            "description": "Anomaly detection score"
+                                            "description": "Anomaly detection score",
                                         },
                                         "confidence": {
                                             "type": "number",
                                             "minimum": 0,
                                             "maximum": 1,
-                                            "description": "Prediction confidence"
+                                            "description": "Prediction confidence",
                                         },
                                         "model_version": {
                                             "type": "string",
-                                            "description": "ML model version used"
-                                        }
-                                    }
+                                            "description": "ML model version used",
+                                        },
+                                    },
                                 },
                                 "input_metrics": {
                                     "type": "object",
-                                    "description": "Input metrics used for prediction"
-                                }
-                            }
-                        }
-                    }
+                                    "description": "Input metrics used for prediction",
+                                },
+                            },
+                        },
+                    },
                 },
                 "ChatOpsRequest": {
                     "type": "object",
@@ -442,9 +407,9 @@ def create_swagger_spec():
                         "query": {
                             "type": "string",
                             "description": "Natural language query",
-                            "example": "What's the current system status?"
+                            "example": "What's the current system status?",
                         }
-                    }
+                    },
                 },
                 "ChatOpsResponse": {
                     "type": "object",
@@ -452,37 +417,37 @@ def create_swagger_spec():
                         "status": {
                             "type": "string",
                             "enum": ["success", "error"],
-                            "description": "Response status"
+                            "description": "Response status",
                         },
                         "message": {
                             "type": "string",
-                            "description": "Response message"
+                            "description": "Response message",
                         },
                         "timestamp": {
                             "type": "string",
                             "format": "date-time",
-                            "description": "Response timestamp"
+                            "description": "Response timestamp",
                         },
                         "data": {
                             "type": "object",
                             "properties": {
                                 "response": {
                                     "type": "string",
-                                    "description": "ChatOps response"
+                                    "description": "ChatOps response",
                                 },
                                 "intent": {
                                     "type": "string",
-                                    "description": "Detected intent"
+                                    "description": "Detected intent",
                                 },
                                 "confidence": {
                                     "type": "number",
                                     "minimum": 0,
                                     "maximum": 1,
-                                    "description": "Intent confidence"
-                                }
-                            }
-                        }
-                    }
+                                    "description": "Intent confidence",
+                                },
+                            },
+                        },
+                    },
                 },
                 "MetricsResponse": {
                     "type": "object",
@@ -490,36 +455,36 @@ def create_swagger_spec():
                         "status": {
                             "type": "string",
                             "enum": ["success", "error"],
-                            "description": "Response status"
+                            "description": "Response status",
                         },
                         "message": {
                             "type": "string",
-                            "description": "Response message"
+                            "description": "Response message",
                         },
                         "timestamp": {
                             "type": "string",
                             "format": "date-time",
-                            "description": "Response timestamp"
+                            "description": "Response timestamp",
                         },
                         "data": {
                             "type": "object",
                             "properties": {
                                 "metrics": {
                                     "type": "object",
-                                    "description": "System metrics"
+                                    "description": "System metrics",
                                 },
                                 "source": {
                                     "type": "string",
-                                    "description": "Metrics source"
+                                    "description": "Metrics source",
                                 },
                                 "collection_time": {
                                     "type": "string",
                                     "format": "date-time",
-                                    "description": "When metrics were collected"
-                                }
-                            }
-                        }
-                    }
+                                    "description": "When metrics were collected",
+                                },
+                            },
+                        },
+                    },
                 },
                 "RemediationRequest": {
                     "type": "object",
@@ -527,18 +492,23 @@ def create_swagger_spec():
                     "properties": {
                         "action": {
                             "type": "string",
-                            "enum": ["scale_up", "scale_down", "restart_service", "clear_cache"],
-                            "description": "Remediation action to execute"
+                            "enum": [
+                                "scale_up",
+                                "scale_down",
+                                "restart_service",
+                                "clear_cache",
+                            ],
+                            "description": "Remediation action to execute",
                         },
                         "target": {
                             "type": "string",
-                            "description": "Target resource for remediation"
+                            "description": "Target resource for remediation",
                         },
                         "parameters": {
                             "type": "object",
-                            "description": "Additional parameters for the action"
-                        }
-                    }
+                            "description": "Additional parameters for the action",
+                        },
+                    },
                 },
                 "RemediationResponse": {
                     "type": "object",
@@ -546,35 +516,35 @@ def create_swagger_spec():
                         "status": {
                             "type": "string",
                             "enum": ["success", "error"],
-                            "description": "Response status"
+                            "description": "Response status",
                         },
                         "message": {
                             "type": "string",
-                            "description": "Response message"
+                            "description": "Response message",
                         },
                         "timestamp": {
                             "type": "string",
                             "format": "date-time",
-                            "description": "Response timestamp"
+                            "description": "Response timestamp",
                         },
                         "data": {
                             "type": "object",
                             "properties": {
                                 "action": {
                                     "type": "string",
-                                    "description": "Executed action"
+                                    "description": "Executed action",
                                 },
                                 "success": {
                                     "type": "boolean",
-                                    "description": "Whether action was successful"
+                                    "description": "Whether action was successful",
                                 },
                                 "execution_time_seconds": {
                                     "type": "number",
-                                    "description": "Time taken to execute action"
-                                }
-                            }
-                        }
-                    }
+                                    "description": "Time taken to execute action",
+                                },
+                            },
+                        },
+                    },
                 },
                 "ErrorResponse": {
                     "type": "object",
@@ -582,29 +552,26 @@ def create_swagger_spec():
                         "status": {
                             "type": "string",
                             "enum": ["error"],
-                            "description": "Response status"
+                            "description": "Response status",
                         },
-                        "message": {
-                            "type": "string",
-                            "description": "Error message"
-                        },
+                        "message": {"type": "string", "description": "Error message"},
                         "error_code": {
                             "type": "string",
-                            "description": "Error code for client handling"
+                            "description": "Error code for client handling",
                         },
                         "timestamp": {
                             "type": "string",
                             "format": "date-time",
-                            "description": "Response timestamp"
+                            "description": "Response timestamp",
                         },
                         "details": {
                             "type": "object",
-                            "description": "Additional error details"
-                        }
-                    }
-                }
-            }
-        }
+                            "description": "Additional error details",
+                        },
+                    },
+                },
+            },
+        },
     }
-    
+
     return jsonify(swagger_spec)

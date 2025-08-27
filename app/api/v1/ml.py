@@ -6,8 +6,7 @@ from flask import Blueprint, request
 from prometheus_client import Counter
 
 from app.core.ml_engine.secure_inference import SecureMLInferenceEngine
-from app.utils.response import success_response, error_response
-
+from app.utils.response import error_response, success_response
 
 bp = Blueprint("ml", __name__)
 

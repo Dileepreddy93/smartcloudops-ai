@@ -5,7 +5,6 @@ from typing import Optional
 
 from app.utils.validation import sanitize_string
 
-
 DEFAULT_SYSTEM_PROMPT = (
     "You are a DevOps assistant. Provide precise, actionable answers."
 )

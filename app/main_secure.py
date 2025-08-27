@@ -25,30 +25,15 @@ from datetime import datetime, timezone
 from functools import wraps
 
 # Import our secure modules
-from auth_secure import (
-    get_current_user,
-    get_request_id,
-    get_security_stats,
-    require_admin,
-    require_api_key,
-    require_ml_access,
-)
-
+from auth_secure import (get_current_user, get_request_id, get_security_stats,
+                         require_admin, require_api_key, require_ml_access)
 # Flask and security imports
 from flask import Flask, g, jsonify, request
-from secure_api import (
-    ErrorCode,
-    HealthCheckDTO,
-    MLPredictionDTO,
-    SecurityError,
-    StatusDTO,
-    ValidationError,
-    build_error_response,
-    build_success_response,
-    sanitize_input,
-    validate_ml_metrics,
-    validate_request_data,
-)
+from secure_api import (ErrorCode, HealthCheckDTO, MLPredictionDTO,
+                        SecurityError, StatusDTO, ValidationError,
+                        build_error_response, build_success_response,
+                        sanitize_input, validate_ml_metrics,
+                        validate_request_data)
 from werkzeug.exceptions import RequestEntityTooLarge
 
 # Import application modules
@@ -62,8 +47,8 @@ except ImportError:
 
 # Import secure ML inference engine
 try:
-    import sys
     import os
+    import sys
 
     # Use relative path for scripts directory
     scripts_path = os.path.join(os.path.dirname(__file__), "../scripts")
@@ -118,15 +103,17 @@ app.config.update(
 # Validate required environment variables
 required_env_vars = [
     "SECRET_KEY",
-    "ADMIN_API_KEY", 
+    "ADMIN_API_KEY",
     "ML_API_KEY",
     "READONLY_API_KEY",
-    "API_KEY_SALT"
+    "API_KEY_SALT",
 ]
 
 missing_vars = [var for var in required_env_vars if not app.config.get(var)]
 if missing_vars:
-    raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
+    raise ValueError(
+        f"Missing required environment variables: {', '.join(missing_vars)}"
+    )
 
 
 # Initialize simple rate limiting (without external dependencies)

@@ -8,6 +8,7 @@ Provides endpoints for monitoring and controlling the ML-Remediation integration
 """
 
 from datetime import datetime
+
 from flask import Blueprint, jsonify, request
 
 from app.services.integration_service import integration_service

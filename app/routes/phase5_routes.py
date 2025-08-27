@@ -5,11 +5,12 @@ SmartCloudOps AI - Phase 5: ChatOps API Routes
 API endpoints for NLP-enhanced ChatOps functionality.
 """
 
-from flask import Blueprint, request, jsonify
 from datetime import datetime
 
-from app.services.nlp_chatops_service import nlp_chatops_service
+from flask import Blueprint, jsonify, request
+
 from app.services.aws_integration_service import aws_integration_service
+from app.services.nlp_chatops_service import nlp_chatops_service
 
 # Create blueprint
 phase5_bp = Blueprint("phase5", __name__, url_prefix="/api/v1/chatops")

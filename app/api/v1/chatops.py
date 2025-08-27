@@ -2,8 +2,7 @@ from flask import Blueprint, request
 
 from app.services.chatops_service import chat
 from app.utils.response import error_response, success_response
-from app.utils.validation import validate_user_input, sanitize_string
-
+from app.utils.validation import sanitize_string, validate_user_input
 
 bp = Blueprint("chatops", __name__)
 
@@ -17,6 +16,7 @@ def query():
     except ValueError:
         # Preserve legacy error body expected by tests
         from flask import Response
+
         return Response("Invalid request", status=400)
 
     user_query = sanitize_string(user_query)

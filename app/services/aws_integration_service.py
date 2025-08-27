@@ -10,7 +10,7 @@ import json
 import logging
 import time
 from datetime import datetime, timedelta
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 import boto3
 from botocore.exceptions import NoCredentialsError

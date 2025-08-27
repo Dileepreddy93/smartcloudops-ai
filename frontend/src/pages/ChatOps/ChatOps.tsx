@@ -43,10 +43,10 @@ const ChatOps: React.FC = () => {
         const assistantMessage: ChatMessage = {
           id: Date.now().toString(),
           type: 'assistant',
-          content: data.response || 'Command processed successfully',
+          content: data.data?.response || 'Command processed successfully',
           timestamp: new Date(),
           status: 'success',
-          metadata: data,
+          metadata: data.data,
         };
         setMessages(prev => [...prev, assistantMessage]);
         setIsProcessing(false);
@@ -243,7 +243,7 @@ const ChatOps: React.FC = () => {
         <div className="mt-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Supported Commands</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {supportedIntents.intents?.map((intent: any) => (
+            {supportedIntents?.data?.intents?.map((intent: any) => (
               <div key={intent.name} className="bg-white p-4 rounded-lg shadow">
                 <h4 className="font-medium text-gray-900">{intent.name}</h4>
                 <p className="text-sm text-gray-500 mt-1">{intent.description}</p>

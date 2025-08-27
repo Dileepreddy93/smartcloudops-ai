@@ -6,7 +6,7 @@ import {
   ServerIcon,
   CpuChipIcon,
   ChartBarIcon,
-  ExclamationTriangleIcon,
+  ExclaimationTriangleIcon,
 } from '@heroicons/react/24/outline';
 
 const Dashboard: React.FC = () => {
@@ -69,7 +69,7 @@ const Dashboard: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center h-64">
         <div className="text-center">
-          <ExclamationTriangleIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                          <ExclaimationTriangleIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
             Error Loading Dashboard
           </h3>
@@ -116,7 +116,7 @@ const Dashboard: React.FC = () => {
     {
       name: 'Active Alerts',
       value: metrics?.active_alerts || 0,
-      icon: ExclamationTriangleIcon,
+              icon: ExclaimationTriangleIcon,
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-50',
     },

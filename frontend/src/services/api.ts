@@ -129,7 +129,7 @@ class ApiService {
     }
   }
 
-  private async makeRequest<T>(
+  async makeRequest<T>(
     method: 'get' | 'post' | 'put' | 'delete',
     url: string,
     data?: any,
@@ -207,6 +207,48 @@ class ApiService {
   async logout(): Promise<void> {
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
+  }
+
+  // Admin methods
+  async getSafetyLimits(): Promise<ApiResponse> {
+    return this.makeRequest<ApiResponse>('get', '/admin/safety-limits');
+  }
+
+  async updateSafetyLimits(limits: any): Promise<ApiResponse> {
+    return this.makeRequest<ApiResponse>('put', '/admin/safety-limits', limits);
+  }
+
+  async getRemediationRules(): Promise<ApiResponse> {
+    return this.makeRequest<ApiResponse>('get', '/admin/remediation-rules');
+  }
+
+  async addRemediationRule(rule: any): Promise<ApiResponse> {
+    return this.makeRequest<ApiResponse>('post', '/admin/remediation-rules', rule);
+  }
+
+  async getIntegrationHealth(): Promise<ApiResponse> {
+    return this.makeRequest<ApiResponse>('get', '/admin/integration-health');
+  }
+
+  async startIntegration(): Promise<ApiResponse> {
+    return this.makeRequest<ApiResponse>('post', '/admin/integration/start');
+  }
+
+  async getRemediationStatus(): Promise<ApiResponse> {
+    return this.makeRequest<ApiResponse>('get', '/remediation/status');
+  }
+
+  async getIntegrationStatus(): Promise<ApiResponse> {
+    return this.makeRequest<ApiResponse>('get', '/integration/status');
+  }
+
+  // ChatOps methods
+  async getSupportedIntents(): Promise<ApiResponse> {
+    return this.makeRequest<ApiResponse>('get', '/chatops/intents');
+  }
+
+  async getCommandHistory(limit: number = 20): Promise<ApiResponse> {
+    return this.makeRequest<ApiResponse>('get', `/chatops/history?limit=${limit}`);
   }
 
   // Utility methods

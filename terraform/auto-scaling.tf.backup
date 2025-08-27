@@ -526,16 +526,6 @@ resource "aws_secretsmanager_secret" "ml_api_key" {
   description = "ML API key for SmartCloudOps"
 }
 
-# S3 Bucket for ML Models
-resource "aws_s3_bucket" "ml_models" {
-  bucket = "smartcloudops-ml-models-${random_string.bucket_suffix.result}"
-
-  tags = {
-    Name = "SmartCloudOps-ML-Models"
-    Environment = var.environment
-  }
-}
-
 # S3 Bucket for Backups
 resource "aws_s3_bucket" "backups" {
   bucket = "smartcloudops-backups-${random_string.bucket_suffix.result}"
@@ -544,23 +534,6 @@ resource "aws_s3_bucket" "backups" {
     Name = "SmartCloudOps-Backups"
     Environment = var.environment
   }
-}
-
-# S3 Bucket for Logs
-resource "aws_s3_bucket" "logs" {
-  bucket = "smartcloudops-logs-${random_string.bucket_suffix.result}"
-
-  tags = {
-    Name = "SmartCloudOps-Logs"
-    Environment = var.environment
-  }
-}
-
-# Random string for bucket names
-resource "random_string" "bucket_suffix" {
-  length  = 8
-  special = false
-  upper   = false
 }
 
 # Outputs

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { api } from '../services/api';
+import { apiService } from '../services/api';
 
 interface User {
   id: string;
@@ -93,16 +93,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const loadUser = async () => {
       if (state.token) {
         try {
-          const response = await api.post('/auth/verify', { token: state.token });
-          if (response.data.valid) {
+          const response = await apiService.makeRequest<any>('post', '/auth/verify', { token: state.token });
+          if (response.valid) {
             dispatch({
               type: 'LOAD_USER',
               payload: {
-                id: response.data.user_id,
-                username: response.data.user_id,
-                email: `${response.data.user_id}@smartcloudops.ai`,
-                role: response.data.role,
-                permissions: response.data.permissions,
+                id: response.user_id,
+                username: response.user_id,
+                email: `${response.user_id}@smartcloudops.ai`,
+                role: response.role,
+                permissions: response.permissions,
               },
             });
           } else {
@@ -123,7 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'LOGIN_START' });
     
     try {
-      const response = await api.post('/auth/login', { username, password });
+      const response = await apiService.login(username, password);
       const { token, user_id, role, permissions } = response.data;
       
       dispatch({
@@ -143,7 +143,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       toast.success('Login successful!');
       navigate('/');
     } catch (error: any) {
-      const message = error.response?.data?.error || 'Login failed';
+      const message = error.response?.data?.error || error.message || 'Login failed';
       dispatch({ type: 'LOGIN_FAILURE', payload: message });
       toast.error(message);
     }

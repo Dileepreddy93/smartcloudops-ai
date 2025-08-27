@@ -134,10 +134,10 @@ const Admin: React.FC = () => {
                     type="number"
                     min="0"
                     max="100"
-                    value={safetyLimits?.max_cpu_usage || 90}
+                    value={safetyLimits?.data?.max_cpu_usage || 90}
                     onChange={(e) => {
                       const newLimits = {
-                        ...safetyLimits,
+                        ...safetyLimits?.data,
                         max_cpu_usage: parseInt(e.target.value),
                       };
                       updateSafetyLimitsMutation.mutate(newLimits);
@@ -153,10 +153,10 @@ const Admin: React.FC = () => {
                     type="number"
                     min="0"
                     max="100"
-                    value={safetyLimits?.max_memory_usage || 85}
+                    value={safetyLimits?.data?.max_memory_usage || 85}
                     onChange={(e) => {
                       const newLimits = {
-                        ...safetyLimits,
+                        ...safetyLimits?.data,
                         max_memory_usage: parseInt(e.target.value),
                       };
                       updateSafetyLimitsMutation.mutate(newLimits);
@@ -172,10 +172,10 @@ const Admin: React.FC = () => {
                     type="number"
                     min="0"
                     max="100"
-                    value={safetyLimits?.max_disk_usage || 80}
+                    value={safetyLimits?.data?.max_disk_usage || 80}
                     onChange={(e) => {
                       const newLimits = {
-                        ...safetyLimits,
+                        ...safetyLimits?.data,
                         max_disk_usage: parseInt(e.target.value),
                       };
                       updateSafetyLimitsMutation.mutate(newLimits);
@@ -191,10 +191,10 @@ const Admin: React.FC = () => {
                     type="number"
                     min="1"
                     max="10"
-                    value={safetyLimits?.max_concurrent_actions || 5}
+                    value={safetyLimits?.data?.max_concurrent_actions || 5}
                     onChange={(e) => {
                       const newLimits = {
-                        ...safetyLimits,
+                        ...safetyLimits?.data,
                         max_concurrent_actions: parseInt(e.target.value),
                       };
                       updateSafetyLimitsMutation.mutate(newLimits);
@@ -213,7 +213,7 @@ const Admin: React.FC = () => {
                   <div>
                     <h4 className="font-medium text-gray-900">System Integration</h4>
                     <p className="text-sm text-gray-500">
-                      Status: {integrationHealth?.status || 'unknown'}
+                      Status: {integrationHealth?.data?.status || 'unknown'}
                     </p>
                   </div>
                   <button

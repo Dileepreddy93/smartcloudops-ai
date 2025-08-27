@@ -5,7 +5,7 @@ import LoadingSpinner from '../../components/Common/LoadingSpinner';
 import {
   ChartBarIcon,
   DocumentTextIcon,
-  ExclamationTriangleIcon,
+  ExclaimationTriangleIcon,
   CheckCircleIcon,
   XCircleIcon,
 } from '@heroicons/react/24/outline';
@@ -40,7 +40,7 @@ const Monitoring: React.FC = () => {
   const tabs = [
     { id: 'metrics', name: 'Metrics', icon: ChartBarIcon },
     { id: 'logs', name: 'Logs', icon: DocumentTextIcon },
-    { id: 'remediation', name: 'Remediation', icon: ExclamationTriangleIcon },
+    { id: 'remediation', name: 'Remediation', icon: ExclaimationTriangleIcon },
     { id: 'integration', name: 'Integration', icon: CheckCircleIcon },
   ];
 
@@ -99,7 +99,7 @@ const Monitoring: React.FC = () => {
                   <div className="ml-3">
                     <p className="text-sm font-medium text-gray-500">CPU Usage</p>
                     <p className="text-2xl font-semibold text-gray-900">
-                      {mlHealth?.cpu_usage || 0}%
+                      {mlHealth?.data?.cpu_usage || 0}%
                     </p>
                   </div>
                 </div>
@@ -110,7 +110,7 @@ const Monitoring: React.FC = () => {
                   <div className="ml-3">
                     <p className="text-sm font-medium text-gray-500">Memory Usage</p>
                     <p className="text-2xl font-semibold text-gray-900">
-                      {mlHealth?.memory_usage || 0}%
+                      {mlHealth?.data?.memory_usage || 0}%
                     </p>
                   </div>
                 </div>
@@ -121,7 +121,7 @@ const Monitoring: React.FC = () => {
                   <div className="ml-3">
                     <p className="text-sm font-medium text-gray-500">Disk Usage</p>
                     <p className="text-2xl font-semibold text-gray-900">
-                      {mlHealth?.disk_usage || 0}%
+                      {mlHealth?.data?.disk_usage || 0}%
                     </p>
                   </div>
                 </div>
@@ -132,7 +132,7 @@ const Monitoring: React.FC = () => {
                   <div className="ml-3">
                     <p className="text-sm font-medium text-gray-500">Network I/O</p>
                     <p className="text-2xl font-semibold text-gray-900">
-                      {mlHealth?.network_io || 0} MB/s
+                      {mlHealth?.data?.network_io || 0} MB/s
                     </p>
                   </div>
                 </div>
@@ -148,17 +148,9 @@ const Monitoring: React.FC = () => {
             </div>
             <div className="overflow-hidden">
               <div className="bg-gray-900 text-green-400 p-4 font-mono text-sm h-96 overflow-y-auto">
-                {logs?.logs?.map((log: any, index: number) => (
+                {logs?.split('\n').map((log: string, index: number) => (
                   <div key={index} className="mb-1">
-                    <span className="text-gray-500">[{log.timestamp}]</span>{' '}
-                    <span className={`${
-                      log.level === 'ERROR' ? 'text-red-400' :
-                      log.level === 'WARNING' ? 'text-yellow-400' :
-                      log.level === 'INFO' ? 'text-blue-400' : 'text-green-400'
-                    }`}>
-                      [{log.level}]
-                    </span>{' '}
-                    {log.message}
+                    {log}
                   </div>
                 )) || (
                   <div className="text-gray-500">No logs available</div>
@@ -179,18 +171,18 @@ const Monitoring: React.FC = () => {
                     <div className="ml-3">
                       <p className="text-sm font-medium text-gray-500">Active Rules</p>
                       <p className="text-2xl font-semibold text-gray-900">
-                        {remediationStatus?.active_rules || 0}
+                        {remediationStatus?.data?.active_rules || 0}
                       </p>
                     </div>
                   </div>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <div className="flex items-center">
-                    <ExclamationTriangleIcon className="h-8 w-8 text-yellow-500" />
+                    <ExclaimationTriangleIcon className="h-8 w-8 text-yellow-500" />
                     <div className="ml-3">
                       <p className="text-sm font-medium text-gray-500">Triggered Actions</p>
                       <p className="text-2xl font-semibold text-gray-900">
-                        {remediationStatus?.triggered_actions || 0}
+                        {remediationStatus?.data?.triggered_actions || 0}
                       </p>
                     </div>
                   </div>
@@ -201,7 +193,7 @@ const Monitoring: React.FC = () => {
                     <div className="ml-3">
                       <p className="text-sm font-medium text-gray-500">Failed Actions</p>
                       <p className="text-2xl font-semibold text-gray-900">
-                        {remediationStatus?.failed_actions || 0}
+                        {remediationStatus?.data?.failed_actions || 0}
                       </p>
                     </div>
                   </div>
@@ -227,7 +219,7 @@ const Monitoring: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {remediationStatus?.recent_actions?.map((action: any, index: number) => (
+                    {remediationStatus?.data?.recent_actions?.map((action: any, index: number) => (
                       <tr key={index}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {action.name}
@@ -267,14 +259,14 @@ const Monitoring: React.FC = () => {
                 <h4 className="font-medium text-gray-900 mb-2">Prometheus</h4>
                 <div className="flex items-center">
                   <div className={`h-3 w-3 rounded-full mr-2 ${
-                    integrationStatus?.prometheus?.status === 'connected' ? 'bg-green-400' : 'bg-red-400'
+                    integrationStatus?.data?.prometheus?.status === 'connected' ? 'bg-green-400' : 'bg-red-400'
                   }`} />
                   <span className="text-sm text-gray-600">
-                    {integrationStatus?.prometheus?.status || 'disconnected'}
+                    {integrationStatus?.data?.prometheus?.status || 'disconnected'}
                   </span>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  {integrationStatus?.prometheus?.endpoint || 'No endpoint configured'}
+                                      {integrationStatus?.data?.prometheus?.endpoint || 'No endpoint configured'}
                 </p>
               </div>
 
@@ -282,14 +274,14 @@ const Monitoring: React.FC = () => {
                 <h4 className="font-medium text-gray-900 mb-2">Grafana</h4>
                 <div className="flex items-center">
                   <div className={`h-3 w-3 rounded-full mr-2 ${
-                    integrationStatus?.grafana?.status === 'connected' ? 'bg-green-400' : 'bg-red-400'
+                    integrationStatus?.data?.grafana?.status === 'connected' ? 'bg-green-400' : 'bg-red-400'
                   }`} />
                   <span className="text-sm text-gray-600">
-                    {integrationStatus?.grafana?.status || 'disconnected'}
+                    {integrationStatus?.data?.grafana?.status || 'disconnected'}
                   </span>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  {integrationStatus?.grafana?.endpoint || 'No endpoint configured'}
+                                      {integrationStatus?.data?.grafana?.endpoint || 'No endpoint configured'}
                 </p>
               </div>
 
@@ -297,14 +289,14 @@ const Monitoring: React.FC = () => {
                 <h4 className="font-medium text-gray-900 mb-2">AWS Services</h4>
                 <div className="flex items-center">
                   <div className={`h-3 w-3 rounded-full mr-2 ${
-                    integrationStatus?.aws?.status === 'connected' ? 'bg-green-400' : 'bg-red-400'
+                    integrationStatus?.data?.aws?.status === 'connected' ? 'bg-green-400' : 'bg-red-400'
                   }`} />
                   <span className="text-sm text-gray-600">
-                    {integrationStatus?.aws?.status || 'disconnected'}
+                    {integrationStatus?.data?.aws?.status || 'disconnected'}
                   </span>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  {integrationStatus?.aws?.region || 'No region configured'}
+                                      {integrationStatus?.data?.aws?.region || 'No region configured'}
                 </p>
               </div>
 
@@ -312,14 +304,14 @@ const Monitoring: React.FC = () => {
                 <h4 className="font-medium text-gray-900 mb-2">ML Pipeline</h4>
                 <div className="flex items-center">
                   <div className={`h-3 w-3 rounded-full mr-2 ${
-                    mlHealth?.status === 'healthy' ? 'bg-green-400' : 'bg-red-400'
+                    mlHealth?.data?.status === 'healthy' ? 'bg-green-400' : 'bg-red-400'
                   }`} />
                   <span className="text-sm text-gray-600">
-                    {mlHealth?.status || 'unhealthy'}
+                    {mlHealth?.data?.status || 'unhealthy'}
                   </span>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Model accuracy: {mlHealth?.model_accuracy || 0}%
+                                      Model accuracy: {mlHealth?.data?.model_accuracy || 0}%
                 </p>
               </div>
             </div>

@@ -59,7 +59,7 @@ variable "allowed_ssh_cidrs" {
   default     = []
   
   validation {
-    condition     = alltrue([can(cidrhost(cidr, 0)) for cidr in var.allowed_ssh_cidrs])
+    condition     = length(var.allowed_ssh_cidrs) == 0 || can(cidrhost(var.allowed_ssh_cidrs[0], 0))
     error_message = "All SSH CIDR blocks must be valid CIDR notation."
   }
 }
@@ -70,7 +70,7 @@ variable "allowed_app_cidrs" {
   default     = []
   
   validation {
-    condition     = alltrue([can(cidrhost(cidr, 0)) for cidr in var.allowed_app_cidrs])
+    condition     = length(var.allowed_app_cidrs) == 0 || can(cidrhost(var.allowed_app_cidrs[0], 0))
     error_message = "All application CIDR blocks must be valid CIDR notation."
   }
 }
@@ -81,7 +81,7 @@ variable "allowed_monitoring_cidrs" {
   default     = []
   
   validation {
-    condition     = alltrue([can(cidrhost(cidr, 0)) for cidr in var.allowed_monitoring_cidrs])
+    condition     = length(var.allowed_monitoring_cidrs) == 0 || can(cidrhost(var.allowed_monitoring_cidrs[0], 0))
     error_message = "All monitoring CIDR blocks must be valid CIDR notation."
   }
 }

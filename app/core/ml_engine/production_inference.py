@@ -144,7 +144,6 @@ class ProductionInferenceEngine:
         model_cache_ttl: int = 3600,  # 1 hour
         use_real_data: bool = True,
     ):
-
         # Allow overriding via environment variable
         env_bucket = os.getenv("S3_ML_MODELS_BUCKET")
         self.s3_bucket = env_bucket or s3_bucket or os.getenv("ML_MODELS_BUCKET")

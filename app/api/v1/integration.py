@@ -350,7 +350,9 @@ def get_integration_health():
         health_status = (
             "healthy"
             if health_score >= 80
-            else "degraded" if health_score >= 50 else "unhealthy"
+            else "degraded"
+            if health_score >= 50
+            else "unhealthy"
         )
 
         return jsonify(

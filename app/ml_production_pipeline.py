@@ -285,9 +285,11 @@ class ProductionMLPipeline:
     def _load_production_model(self):
         """Load the current production model."""
         try:
-            self.current_model, self.current_scaler, self.current_metadata = (
-                self.registry.get_production_model("anomaly_detection")
-            )
+            (
+                self.current_model,
+                self.current_scaler,
+                self.current_metadata,
+            ) = self.registry.get_production_model("anomaly_detection")
             logger.info(
                 f"✅ Production model loaded: {self.current_metadata.model_id} v{self.current_metadata.version}"
             )
@@ -379,10 +381,12 @@ class ProductionMLPipeline:
                     )
                     if test_model_version != self.current_metadata.version:
                         # Load test model
-                        test_model, test_scaler, test_metadata = (
-                            self.registry.get_model(
-                                "anomaly_detection", test_model_version
-                            )
+                        (
+                            test_model,
+                            test_scaler,
+                            test_metadata,
+                        ) = self.registry.get_model(
+                            "anomaly_detection", test_model_version
                         )
                         model_to_use = test_model
                         scaler_to_use = test_scaler

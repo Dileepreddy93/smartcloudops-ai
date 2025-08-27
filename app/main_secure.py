@@ -24,21 +24,23 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from functools import wraps
 
-# Import our secure modules
-from auth_secure import (get_current_user, get_request_id, get_security_stats,
-                         require_admin, require_api_key, require_ml_access)
 # Flask and security imports
 from flask import Flask, g, jsonify, request
-from secure_api import (ErrorCode, HealthCheckDTO, MLPredictionDTO,
-                        SecurityError, StatusDTO, ValidationError,
-                        build_error_response, build_success_response,
-                        sanitize_input, validate_ml_metrics,
-                        validate_request_data)
 from werkzeug.exceptions import RequestEntityTooLarge
+
+# Import our secure modules
+from app.auth_secure import (get_current_user, get_request_id,
+                             get_security_stats, require_admin,
+                             require_api_key, require_ml_access)
+from app.secure_api import (ErrorCode, HealthCheckDTO, MLPredictionDTO,
+                            SecurityError, StatusDTO, ValidationError,
+                            build_error_response, build_success_response,
+                            sanitize_input, validate_ml_metrics,
+                            validate_request_data)
 
 # Import application modules
 try:
-    from database_integration import DatabaseService
+    from app.database_integration import DatabaseService
 
     DATABASE_AVAILABLE = True
 except ImportError:
@@ -55,13 +57,13 @@ try:
     sys.path.append(os.path.abspath(scripts_path))
     # Try importing the existing ML inference engine
     try:
-        from secure_ml_inference_engine import SecureMLInferenceEngine
+        from app.core.ml_engine.secure_inference import SecureMLInferenceEngine
 
         ML_ENGINE_AVAILABLE = True
     except ImportError:
         # Fall back to checking for existing inference scripts
         try:
-            from production_inference import MLInferenceEngine
+            from app.ml_production_pipeline import MLInferenceEngine
 
             SecureMLInferenceEngine = MLInferenceEngine
             ML_ENGINE_AVAILABLE = True
@@ -197,9 +199,9 @@ def after_request(response):
         response.headers["Access-Control-Allow-Origin"] = origin or "*"
 
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = (
-        "Content-Type, X-API-Key, Authorization"
-    )
+    response.headers[
+        "Access-Control-Allow-Headers"
+    ] = "Content-Type, X-API-Key, Authorization"
     response.headers["Access-Control-Max-Age"] = "86400"
 
     return response
@@ -252,9 +254,9 @@ def apply_security_headers(response):
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
-    response.headers["Strict-Transport-Security"] = (
-        "max-age=31536000; includeSubDomains"
-    )
+    response.headers[
+        "Strict-Transport-Security"
+    ] = "max-age=31536000; includeSubDomains"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Content-Security-Policy"] = "default-src 'self'"
 
@@ -767,7 +769,7 @@ def security_audit():
         user = get_current_user()
 
         # Get security audit data
-        from auth_secure import get_recent_auth_attempts
+        from app.auth_secure import get_recent_auth_attempts
 
         audit_data = {
             "security_stats": get_security_stats(),
@@ -831,7 +833,7 @@ if __name__ == "__main__":
     Production startup with comprehensive security configuration.
     """
     # Initialize authentication system
-    from auth_secure import auth
+    from app.auth_secure import auth
 
     auth.init_app(app)
 

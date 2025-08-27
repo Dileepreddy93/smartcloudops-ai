@@ -9,3 +9,5 @@ test('basic string test', () => {
 test('basic boolean test', () => {
   expect(true).toBe(true);
 });
+
+export {};

@@ -46,9 +46,7 @@ API_KEYS = {
 USERS = {
     "admin": {
         "username": "admin",
-        "password_hash": generate_password_hash(
-            config_manager.get_secret("ADMIN_PASSWORD", required=True)
-        ),
+        "password_hash": generate_password_hash(config_manager.get_secret("ADMIN_PASSWORD", required=True)),
         "role": "admin",
         "permissions": ["read", "write", "admin", "ml", "remediation"],
     }
@@ -116,10 +114,7 @@ def require_auth(permissions: Optional[list] = None):
                 payload = verify_jwt_token(token)
                 if payload:
                     if permissions:
-                        if not any(
-                            perm in payload.get("permissions", [])
-                            for perm in permissions
-                        ):
+                        if not any(perm in payload.get("permissions", []) for perm in permissions):
                             return jsonify({"error": "Insufficient permissions"}), 403
                     return f(*args, **kwargs)
 
@@ -193,9 +188,7 @@ def create_auth_blueprint():
         if not user_info:
             return jsonify({"error": "Invalid credentials"}), 401
 
-        token = generate_jwt_token(
-            user_info["user_id"], user_info["role"], user_info["permissions"]
-        )
+        token = generate_jwt_token(user_info["user_id"], user_info["role"], user_info["permissions"])
 
         return jsonify(
             {

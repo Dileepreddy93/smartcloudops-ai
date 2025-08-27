@@ -260,9 +260,7 @@ class SecureConfigManager:
             else:
                 logging.info("ℹ️ No .env file found, using environment variables only")
 
-    def get_secret(
-        self, key: str, required: bool = False, secret_key: str = None
-    ) -> Optional[str]:
+    def get_secret(self, key: str, required: bool = False, secret_key: str = None) -> Optional[str]:
         """
         Get secret from configured providers with fallback chain.
 
@@ -283,9 +281,7 @@ class SecureConfigManager:
         for provider in self.providers:
             value = provider.get_secret(key)
             if value:
-                logging.debug(
-                    f"Secret '{key}' retrieved from {provider.__class__.__name__}"
-                )
+                logging.debug(f"Secret '{key}' retrieved from {provider.__class__.__name__}")
                 return value
 
         if required:
@@ -312,9 +308,7 @@ class SecureConfigManager:
                 missing_secrets.append(env_key)
 
         if missing_secrets:
-            raise ValueError(
-                f"Production deployment blocked - missing required secrets: {missing_secrets}"
-            )
+            raise ValueError(f"Production deployment blocked - missing required secrets: {missing_secrets}")
 
         logging.info("✅ All production secrets validated")
 
@@ -447,26 +441,17 @@ class SecureConfig:
 
         return debug
 
-    def _build_security_config(
-        self, config_manager: SecureConfigManager
-    ) -> SecurityConfig:
+    def _build_security_config(self, config_manager: SecureConfigManager) -> SecurityConfig:
         """Build security configuration with environment-specific rules."""
         # Get secret key
         secret_key = config_manager.get_secret(
             "SECRET_KEY",
             required=True,
-            secret_key=(
-                "smartcloudops/app/secret-key"
-                if self.environment == "production"
-                else None
-            ),
+            secret_key=("smartcloudops/app/secret-key" if self.environment == "production" else None),
         )
 
         # Get CORS origins
-        cors_origins_str = (
-            config_manager.get_secret("CORS_ORIGINS")
-            or self._get_default_cors_origins()
-        )
+        cors_origins_str = config_manager.get_secret("CORS_ORIGINS") or self._get_default_cors_origins()
         cors_origins = [origin.strip() for origin in cors_origins_str.split(",")]
 
         # SSL configuration for production
@@ -476,9 +461,7 @@ class SecureConfig:
             ssl_cert_path = config_manager.get_secret("SSL_CERT_PATH")
             ssl_key_path = config_manager.get_secret("SSL_KEY_PATH")
 
-        rate_limit = (
-            config_manager.get_secret("RATE_LIMIT") or self._get_default_rate_limit()
-        )
+        rate_limit = config_manager.get_secret("RATE_LIMIT") or self._get_default_rate_limit()
 
         return SecurityConfig(
             secret_key=secret_key,
@@ -488,38 +471,22 @@ class SecureConfig:
             rate_limit=rate_limit,
         )
 
-    def _build_prometheus_config(
-        self, config_manager: SecureConfigManager
-    ) -> PrometheusConfig:
+    def _build_prometheus_config(self, config_manager: SecureConfigManager) -> PrometheusConfig:
         """Build Prometheus configuration with environment-specific defaults."""
-        prometheus_url = (
-            config_manager.get_secret("PROMETHEUS_URL")
-            or self._get_default_prometheus_url()
-        )
+        prometheus_url = config_manager.get_secret("PROMETHEUS_URL") or self._get_default_prometheus_url()
         timeout = int(config_manager.get_secret("PROMETHEUS_TIMEOUT") or "30")
-        ssl_verify = (
-            config_manager.get_secret("PROMETHEUS_SSL_VERIFY", required=False)
-            != "false"
-        )
+        ssl_verify = config_manager.get_secret("PROMETHEUS_SSL_VERIFY", required=False) != "false"
 
-        return PrometheusConfig(
-            url=prometheus_url, timeout=timeout, ssl_verify=ssl_verify
-        )
+        return PrometheusConfig(url=prometheus_url, timeout=timeout, ssl_verify=ssl_verify)
 
     def _build_ai_config(self, config_manager: SecureConfigManager) -> AIConfig:
         """Build AI configuration with secure key retrieval."""
         # Get AI API keys from secure sources
-        openai_key = config_manager.get_secret(
-            "OPENAI_API_KEY", secret_key="smartcloudops/openai/api-key"
-        )
+        openai_key = config_manager.get_secret("OPENAI_API_KEY", secret_key="smartcloudops/openai/api-key")
 
-        gemini_key = config_manager.get_secret(
-            "GEMINI_API_KEY", secret_key="smartcloudops/google/api-key"
-        )
+        gemini_key = config_manager.get_secret("GEMINI_API_KEY", secret_key="smartcloudops/google/api-key")
 
-        anthropic_key = config_manager.get_secret(
-            "ANTHROPIC_API_KEY", secret_key="smartcloudops/anthropic/api-key"
-        )
+        anthropic_key = config_manager.get_secret("ANTHROPIC_API_KEY", secret_key="smartcloudops/anthropic/api-key")
 
         provider = config_manager.get_secret("AI_PROVIDER") or "auto"
 
@@ -532,20 +499,10 @@ class SecureConfig:
 
     def _build_ml_config(self, config_manager: SecureConfigManager) -> MLConfig:
         """Build ML configuration with validation."""
-        model_path = (
-            config_manager.get_secret("ML_MODEL_PATH")
-            or "/app/ml_models/real_data_model.json"
-        )
-        data_path = (
-            config_manager.get_secret("ML_DATA_PATH")
-            or "/app/data/real_training_data.json"
-        )
-        confidence_threshold = float(
-            config_manager.get_secret("ML_CONFIDENCE_THRESHOLD") or "0.7"
-        )
-        max_prediction_time = int(
-            config_manager.get_secret("ML_MAX_PREDICTION_TIME") or "30"
-        )
+        model_path = config_manager.get_secret("ML_MODEL_PATH") or "/app/ml_models/real_data_model.json"
+        data_path = config_manager.get_secret("ML_DATA_PATH") or "/app/data/real_training_data.json"
+        confidence_threshold = float(config_manager.get_secret("ML_CONFIDENCE_THRESHOLD") or "0.7")
+        max_prediction_time = int(config_manager.get_secret("ML_MAX_PREDICTION_TIME") or "30")
 
         return MLConfig(
             model_path=model_path,
@@ -570,9 +527,7 @@ class SecureConfig:
                 return local_url
             except Exception:
                 # NOTE: This should be replaced with your actual development Prometheus
-                logging.warning(
-                    "Using fallback Prometheus URL - configure PROMETHEUS_URL in .env"
-                )
+                logging.warning("Using fallback Prometheus URL - configure PROMETHEUS_URL in .env")
                 return "http://localhost:9090"
 
     def _get_default_cors_origins(self) -> str:
@@ -603,9 +558,7 @@ class SecureConfig:
             if not self.prometheus.url.startswith("https://"):
                 raise ValueError("Production Prometheus must use HTTPS")
 
-            if not all(
-                origin.startswith("https://") for origin in self.security.cors_origins
-            ):
+            if not all(origin.startswith("https://") for origin in self.security.cors_origins):
                 raise ValueError("Production CORS origins must use HTTPS")
 
     @property

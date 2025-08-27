@@ -5,15 +5,11 @@ from typing import Optional
 
 from app.utils.validation import sanitize_string
 
-DEFAULT_SYSTEM_PROMPT = (
-    "You are a DevOps assistant. Provide precise, actionable answers."
-)
+DEFAULT_SYSTEM_PROMPT = "You are a DevOps assistant. Provide precise, actionable answers."
 DEFAULT_MODEL = os.getenv("CHATOPS_MODEL", "gpt-4o-mini")
 
 
-def chat(
-    user_query: str, system_prompt: Optional[str] = None, model: Optional[str] = None
-) -> str:
+def chat(user_query: str, system_prompt: Optional[str] = None, model: Optional[str] = None) -> str:
     """Get a chat response from the AI provider with safe defaults.
 
     This function intentionally uses the OpenAI SDK signature that tests mock:

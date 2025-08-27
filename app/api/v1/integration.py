@@ -206,9 +206,7 @@ def update_integration_config():
                 400,
             )
 
-        if "confidence_threshold" in data and not (
-            0 <= data["confidence_threshold"] <= 1
-        ):
+        if "confidence_threshold" in data and not (0 <= data["confidence_threshold"] <= 1):
             return (
                 jsonify(
                     {
@@ -334,9 +332,7 @@ def get_integration_health():
         health_values = [
             1 if integration_status["is_running"] else 0,
             1 if remediation_status["enabled"] else 0,
-            (
-                0 if remediation_status["manual_override"] else 1
-            ),  # Manual override is good
+            (0 if remediation_status["manual_override"] else 1),  # Manual override is good
             1 if remediation_status["total_rules"] > 0 else 0,
             1 if remediation_status["enabled_rules"] > 0 else 0,
             1 if len(remediation_status["recent_actions"]) >= 0 else 0,  # Always true
@@ -347,13 +343,7 @@ def get_integration_health():
         # Determine overall health
         health_score = sum(health_values) / len(health_values) * 100
 
-        health_status = (
-            "healthy"
-            if health_score >= 80
-            else "degraded"
-            if health_score >= 50
-            else "unhealthy"
-        )
+        health_status = "healthy" if health_score >= 80 else "degraded" if health_score >= 50 else "unhealthy"
 
         return jsonify(
             {

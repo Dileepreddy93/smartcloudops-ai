@@ -66,10 +66,7 @@ class ModelRegistry:
             try:
                 with open(self.metadata_file, "r") as f:
                     data = json.load(f)
-                    return {
-                        model_id: ModelMetadata(**metadata_data)
-                        for model_id, metadata_data in data.items()
-                    }
+                    return {model_id: ModelMetadata(**metadata_data) for model_id, metadata_data in data.items()}
             except Exception as e:
                 logger.error(f"Failed to load model metadata: {e}")
         return {}
@@ -103,14 +100,8 @@ class ModelRegistry:
         """Register a new model version."""
         try:
             # Save model and scaler
-            model_path = (
-                self.registry_path
-                / f"{metadata.model_id}_v{metadata.version}_model.pkl"
-            )
-            scaler_path = (
-                self.registry_path
-                / f"{metadata.model_id}_v{metadata.version}_scaler.pkl"
-            )
+            model_path = self.registry_path / f"{metadata.model_id}_v{metadata.version}_model.pkl"
+            scaler_path = self.registry_path / f"{metadata.model_id}_v{metadata.version}_scaler.pkl"
 
             joblib.dump(model, model_path)
             joblib.dump(scaler, scaler_path)
@@ -119,18 +110,14 @@ class ModelRegistry:
             self.metadata[metadata.model_id] = metadata
             self._save_metadata()
 
-            logger.info(
-                f"✅ Model {metadata.model_id} v{metadata.version} registered successfully"
-            )
+            logger.info(f"✅ Model {metadata.model_id} v{metadata.version} registered successfully")
             return True
 
         except Exception as e:
             logger.error(f"❌ Failed to register model: {e}")
             return False
 
-    def get_model(
-        self, model_id: str, version: Optional[str] = None
-    ) -> Tuple[Any, Any, ModelMetadata]:
+    def get_model(self, model_id: str, version: Optional[str] = None) -> Tuple[Any, Any, ModelMetadata]:
         """Get model, scaler, and metadata."""
         if model_id not in self.metadata:
             raise ValueError(f"Model {model_id} not found in registry")
@@ -143,9 +130,7 @@ class ModelRegistry:
         scaler_path = self.registry_path / f"{model_id}_v{metadata.version}_scaler.pkl"
 
         if not model_path.exists() or not scaler_path.exists():
-            raise FileNotFoundError(
-                f"Model files not found for {model_id} v{metadata.version}"
-            )
+            raise FileNotFoundError(f"Model files not found for {model_id} v{metadata.version}")
 
         model = joblib.load(model_path)
         scaler = joblib.load(scaler_path)
@@ -159,9 +144,7 @@ class ModelRegistry:
 
         metadata = self.metadata[model_id]
         if metadata.deployment_status != "production":
-            raise ValueError(
-                f"Model {model_id} is not in production (status: {metadata.deployment_status})"
-            )
+            raise ValueError(f"Model {model_id} is not in production (status: {metadata.deployment_status})")
 
         return self.get_model(model_id)
 
@@ -218,9 +201,7 @@ class ABTestManager:
         else:
             return test["model_b"]
 
-    def record_prediction(
-        self, test_id: str, model_version: str, prediction: int, latency_ms: float
-    ):
+    def record_prediction(self, test_id: str, model_version: str, prediction: int, latency_ms: float):
         """Record prediction results for A/B test."""
         if test_id not in self.active_tests:
             return
@@ -248,9 +229,7 @@ class ABTestManager:
 
             return {
                 "anomaly_rate": metrics["anomalies"] / metrics["predictions"],
-                "avg_latency_ms": (
-                    np.mean(metrics["latency_ms"]) if metrics["latency_ms"] else 0
-                ),
+                "avg_latency_ms": (np.mean(metrics["latency_ms"]) if metrics["latency_ms"] else 0),
                 "total_predictions": metrics["predictions"],
             }
 
@@ -290,9 +269,7 @@ class ProductionMLPipeline:
                 self.current_scaler,
                 self.current_metadata,
             ) = self.registry.get_production_model("anomaly_detection")
-            logger.info(
-                f"✅ Production model loaded: {self.current_metadata.model_id} v{self.current_metadata.version}"
-            )
+            logger.info(f"✅ Production model loaded: {self.current_metadata.model_id} v{self.current_metadata.version}")
         except Exception as e:
             logger.error(f"❌ Failed to load production model: {e}")
 
@@ -376,25 +353,19 @@ class ProductionMLPipeline:
 
             if ab_test_id and user_id:
                 try:
-                    test_model_version = self.ab_test_manager.get_test_model(
-                        ab_test_id, user_id
-                    )
+                    test_model_version = self.ab_test_manager.get_test_model(ab_test_id, user_id)
                     if test_model_version != self.current_metadata.version:
                         # Load test model
                         (
                             test_model,
                             test_scaler,
                             test_metadata,
-                        ) = self.registry.get_model(
-                            "anomaly_detection", test_model_version
-                        )
+                        ) = self.registry.get_model("anomaly_detection", test_model_version)
                         model_to_use = test_model
                         scaler_to_use = test_scaler
                         metadata_to_use = test_metadata
                 except Exception as e:
-                    logger.warning(
-                        f"A/B test model loading failed, using production model: {e}"
-                    )
+                    logger.warning(f"A/B test model loading failed, using production model: {e}")
 
             # Prepare features
             features = ["cpu_usage", "memory_usage", "disk_usage", "network_io"]
@@ -476,14 +447,8 @@ class ProductionMLPipeline:
             "pipeline_status": "healthy" if self.current_model else "unhealthy",
             "current_model": {
                 "id": self.current_metadata.model_id if self.current_metadata else None,
-                "version": (
-                    self.current_metadata.version if self.current_metadata else None
-                ),
-                "deployment_status": (
-                    self.current_metadata.deployment_status
-                    if self.current_metadata
-                    else None
-                ),
+                "version": (self.current_metadata.version if self.current_metadata else None),
+                "deployment_status": (self.current_metadata.deployment_status if self.current_metadata else None),
             },
             "performance_metrics": self.performance_monitor.get_metrics(),
             "active_ab_tests": len(self.ab_test_manager.active_tests),

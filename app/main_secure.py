@@ -113,9 +113,7 @@ required_env_vars = [
 
 missing_vars = [var for var in required_env_vars if not app.config.get(var)]
 if missing_vars:
-    raise ValueError(
-        f"Missing required environment variables: {', '.join(missing_vars)}"
-    )
+    raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
 
 
 # Initialize simple rate limiting (without external dependencies)
@@ -126,9 +124,7 @@ class SimpleRateLimiter:
         self.requests = defaultdict(list)
         self.blocked_ips = defaultdict(list)
 
-    def is_allowed(
-        self, ip_address: str, limit_per_minute: int = 10, limit_per_hour: int = 100
-    ) -> bool:
+    def is_allowed(self, ip_address: str, limit_per_minute: int = 10, limit_per_hour: int = 100) -> bool:
         """Check if request is allowed based on rate limits"""
         current_time = time.time()
 
@@ -136,16 +132,10 @@ class SimpleRateLimiter:
         minute_cutoff = current_time - 60
         hour_cutoff = current_time - 3600
 
-        self.requests[ip_address] = [
-            timestamp
-            for timestamp in self.requests[ip_address]
-            if timestamp > hour_cutoff
-        ]
+        self.requests[ip_address] = [timestamp for timestamp in self.requests[ip_address] if timestamp > hour_cutoff]
 
         # Check limits
-        minute_requests = len(
-            [t for t in self.requests[ip_address] if t > minute_cutoff]
-        )
+        minute_requests = len([t for t in self.requests[ip_address] if t > minute_cutoff])
         hour_requests = len(self.requests[ip_address])
 
         if minute_requests >= limit_per_minute or hour_requests >= limit_per_hour:
@@ -199,9 +189,7 @@ def after_request(response):
         response.headers["Access-Control-Allow-Origin"] = origin or "*"
 
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-    response.headers[
-        "Access-Control-Allow-Headers"
-    ] = "Content-Type, X-API-Key, Authorization"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, X-API-Key, Authorization"
     response.headers["Access-Control-Max-Age"] = "86400"
 
     return response
@@ -242,9 +230,7 @@ def security_headers():
     g.start_time = datetime.now(timezone.utc)
 
     # Log incoming request
-    logger.info(
-        f"REQUEST: {request.method} {request.path} - IP: {request.remote_addr} - ID: {g.request_id}"
-    )
+    logger.info(f"REQUEST: {request.method} {request.path} - IP: {request.remote_addr} - ID: {g.request_id}")
 
 
 @app.after_request
@@ -254,9 +240,7 @@ def apply_security_headers(response):
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
-    response.headers[
-        "Strict-Transport-Security"
-    ] = "max-age=31536000; includeSubDomains"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Content-Security-Policy"] = "default-src 'self'"
 
@@ -267,13 +251,8 @@ def apply_security_headers(response):
     response.headers["Expires"] = "0"
 
     # Log response
-    duration = (
-        datetime.now(timezone.utc)
-        - getattr(g, "start_time", datetime.now(timezone.utc))
-    ).total_seconds()
-    logger.info(
-        f"RESPONSE: {response.status_code} - Duration: {duration:.3f}s - ID: {getattr(g, 'request_id', 'unknown')}"
-    )
+    duration = (datetime.now(timezone.utc) - getattr(g, "start_time", datetime.now(timezone.utc))).total_seconds()
+    logger.info(f"RESPONSE: {response.status_code} - Duration: {duration:.3f}s - ID: {getattr(g, 'request_id', 'unknown')}")
 
     return response
 
@@ -282,9 +261,7 @@ def apply_security_headers(response):
 @app.errorhandler(ValidationError)
 def handle_validation_error(e):
     """Handle validation errors securely"""
-    logger.warning(
-        f"Validation error: {str(e)} - Request ID: {getattr(g, 'request_id', 'unknown')}"
-    )
+    logger.warning(f"Validation error: {str(e)} - Request ID: {getattr(g, 'request_id', 'unknown')}")
     return (
         jsonify(
             build_error_response(
@@ -385,9 +362,7 @@ def get_status():
         status_data = StatusDTO(
             status="operational",
             version="3.2.0-security",
-            environment=os.environ.get("ENVIRONMENT", "production")[
-                :20
-            ],  # Limit length
+            environment=os.environ.get("ENVIRONMENT", "production")[:20],  # Limit length
             timestamp=datetime.now(timezone.utc).isoformat(),
             features_available=3,  # Count of available features
             auth_enabled=True,
@@ -396,11 +371,7 @@ def get_status():
         logger.info(f"Status requested by user: {user.get('user_id', 'unknown')}")
 
         return (
-            jsonify(
-                build_success_response(
-                    status_data.to_dict(), request_id=get_request_id()
-                )
-            ),
+            jsonify(build_success_response(status_data.to_dict(), request_id=get_request_id())),
             200,
         )
 
@@ -437,17 +408,11 @@ def chat():
 
         # Sanitize inputs
         message = sanitize_input(data["message"], max_length=1000)
-        (
-            sanitize_input(data.get("context", ""), max_length=500)
-            if data.get("context")
-            else None
-        )
+        (sanitize_input(data.get("context", ""), max_length=500) if data.get("context") else None)
         session_id = data.get("session_id", str(uuid.uuid4()))
 
         user = get_current_user()
-        logger.info(
-            f"Chat request from user: {user.get('user_id', 'unknown')} - Message length: {len(message)}"
-        )
+        logger.info(f"Chat request from user: {user.get('user_id', 'unknown')} - Message length: {len(message)}")
 
         # Simulate chat response (replace with actual chat logic)
         response_data = {
@@ -496,11 +461,7 @@ def ml_health():
             )
         else:
             # Perform health check
-            health_status = (
-                ml_engine.health_check()
-                if hasattr(ml_engine, "health_check")
-                else {"status": "healthy"}
-            )
+            health_status = ml_engine.health_check() if hasattr(ml_engine, "health_check") else {"status": "healthy"}
 
             health_data = HealthCheckDTO(
                 status=health_status.get("status", "unknown"),
@@ -514,11 +475,7 @@ def ml_health():
         logger.info(f"ML health check by user: {user.get('user_id', 'unknown')}")
 
         return (
-            jsonify(
-                build_success_response(
-                    health_data.to_dict(), request_id=get_request_id()
-                )
-            ),
+            jsonify(build_success_response(health_data.to_dict(), request_id=get_request_id())),
             200,
         )
 
@@ -559,23 +516,14 @@ def ml_predict():
         # Validate optional parameters
         threshold = None
         if "threshold" in data:
-            if (
-                not isinstance(data["threshold"], (int, float))
-                or not 0 <= data["threshold"] <= 1
-            ):
+            if not isinstance(data["threshold"], (int, float)) or not 0 <= data["threshold"] <= 1:
                 raise ValidationError("Threshold must be a number between 0 and 1")
             threshold = float(data["threshold"])
 
-        (
-            sanitize_input(data.get("model_version", "latest"), max_length=50)
-            if data.get("model_version")
-            else "latest"
-        )
+        (sanitize_input(data.get("model_version", "latest"), max_length=50) if data.get("model_version") else "latest")
 
         user = get_current_user()
-        logger.info(
-            f"ML prediction request from user: {user.get('user_id', 'unknown')} - Metrics: {list(metrics.keys())}"
-        )
+        logger.info(f"ML prediction request from user: {user.get('user_id', 'unknown')} - Metrics: {list(metrics.keys())}")
 
         # Check ML engine availability
         if not ml_engine:
@@ -598,9 +546,7 @@ def ml_predict():
             # Build secure prediction response
             prediction_data = MLPredictionDTO(
                 anomaly_detected=prediction_result.get("anomaly_detected", False),
-                confidence_score=round(
-                    prediction_result.get("confidence_score", 0.0), 4
-                ),
+                confidence_score=round(prediction_result.get("confidence_score", 0.0), 4),
                 severity_level=prediction_result.get("severity_level", "unknown"),
                 prediction_id=str(uuid.uuid4()),
                 timestamp=datetime.now(timezone.utc).isoformat(),
@@ -614,11 +560,7 @@ def ml_predict():
             )
 
             return (
-                jsonify(
-                    build_success_response(
-                        prediction_data.to_dict(), request_id=get_request_id()
-                    )
-                ),
+                jsonify(build_success_response(prediction_data.to_dict(), request_id=get_request_id())),
                 200,
             )
 
@@ -671,21 +613,13 @@ def ml_metrics():
             }
         else:
             # Get sanitized metrics (no sensitive internal data)
-            raw_metrics = (
-                ml_engine.get_performance_metrics()
-                if hasattr(ml_engine, "get_performance_metrics")
-                else {}
-            )
+            raw_metrics = ml_engine.get_performance_metrics() if hasattr(ml_engine, "get_performance_metrics") else {}
 
             metrics_data = {
                 "service_status": "operational",
                 "total_predictions": raw_metrics.get("total_predictions", 0),
-                "average_response_time_ms": round(
-                    raw_metrics.get("avg_response_time", 0) * 1000, 2
-                ),
-                "model_version": raw_metrics.get("model_version", "unknown")[
-                    :20
-                ],  # Limit length
+                "average_response_time_ms": round(raw_metrics.get("avg_response_time", 0) * 1000, 2),
+                "model_version": raw_metrics.get("model_version", "unknown")[:20],  # Limit length
                 "last_updated": datetime.now(timezone.utc).isoformat(),
             }
 
@@ -734,9 +668,7 @@ def system_metrics():
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
-        logger.info(
-            f"System metrics requested by user: {user.get('user_id', 'unknown')}"
-        )
+        logger.info(f"System metrics requested by user: {user.get('user_id', 'unknown')}")
 
         return (
             jsonify(build_success_response(metrics_data, request_id=get_request_id())),
@@ -786,9 +718,7 @@ def security_audit():
             "audit_timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
-        logger.info(
-            f"Security audit accessed by admin: {user.get('user_id', 'unknown')}"
-        )
+        logger.info(f"Security audit accessed by admin: {user.get('user_id', 'unknown')}")
 
         return (
             jsonify(build_success_response(audit_data, request_id=get_request_id())),

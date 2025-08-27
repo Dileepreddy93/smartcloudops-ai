@@ -172,11 +172,7 @@ class CacheService:
                     deleted_count = self.redis_client.delete(*keys)
 
             # Clear memory cache
-            memory_keys = [
-                k
-                for k in self.memory_cache.keys()
-                if k.startswith(pattern.replace("*", ""))
-            ]
+            memory_keys = [k for k in self.memory_cache.keys() if k.startswith(pattern.replace("*", ""))]
             for key in memory_keys:
                 del self.memory_cache[key]
                 deleted_count += 1
@@ -190,11 +186,7 @@ class CacheService:
     def get_stats(self) -> Dict[str, Any]:
         """Get cache statistics."""
         total_requests = self.cache_stats["hits"] + self.cache_stats["misses"]
-        hit_rate = (
-            (self.cache_stats["hits"] / total_requests * 100)
-            if total_requests > 0
-            else 0
-        )
+        hit_rate = (self.cache_stats["hits"] / total_requests * 100) if total_requests > 0 else 0
 
         return {
             "hits": self.cache_stats["hits"],
@@ -232,9 +224,7 @@ class CacheService:
             return {
                 "status": "healthy" if set_success and get_success else "unhealthy",
                 "redis": redis_status,
-                "memory_cache": (
-                    "healthy" if set_success and get_success else "unhealthy"
-                ),
+                "memory_cache": ("healthy" if set_success and get_success else "unhealthy"),
                 "test_passed": set_success and get_success,
                 "stats": self.get_stats(),
             }
@@ -293,9 +283,7 @@ def cache_invalidate(prefix: str):
             # Invalidate cache
             pattern = f"smartcloudops:{prefix}:*"
             deleted_count = cache_service.clear(pattern)
-            logger.debug(
-                f"Invalidated {deleted_count} cache entries for pattern {pattern}"
-            )
+            logger.debug(f"Invalidated {deleted_count} cache entries for pattern {pattern}")
 
             return result
 

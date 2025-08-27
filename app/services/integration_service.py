@@ -44,9 +44,7 @@ class MLRemediationIntegration:
             return
 
         self.is_running = True
-        self.monitoring_thread = threading.Thread(
-            target=self._monitoring_loop, daemon=True
-        )
+        self.monitoring_thread = threading.Thread(target=self._monitoring_loop, daemon=True)
         self.monitoring_thread.start()
         logger.info("🚀 Started ML-Remediation monitoring loop")
 
@@ -69,14 +67,10 @@ class MLRemediationIntegration:
 
                 # Process through remediation engine
                 if ml_prediction:
-                    triggered_actions = remediation_engine.process_metrics(
-                        metrics, ml_prediction
-                    )
+                    triggered_actions = remediation_engine.process_metrics(metrics, ml_prediction)
 
                     if triggered_actions:
-                        logger.info(
-                            f"🎯 Triggered {len(triggered_actions)} remediation actions"
-                        )
+                        logger.info(f"🎯 Triggered {len(triggered_actions)} remediation actions")
                         for action in triggered_actions:
                             logger.info(
                                 f"  - {action['rule_name']}: {action['action']} ({'✅' if action['success'] else '❌'})"
@@ -225,9 +219,7 @@ class MLRemediationIntegration:
             features["disk_free_gb"] = metrics.get("disk_free_gb", 0.0)
 
             # Add time-based features
-            timestamp = datetime.fromisoformat(
-                metrics.get("timestamp", datetime.utcnow().isoformat())
-            )
+            timestamp = datetime.fromisoformat(metrics.get("timestamp", datetime.utcnow().isoformat()))
             features["hour"] = timestamp.hour
             features["minute"] = timestamp.minute
             features["day_of_week"] = timestamp.weekday()
@@ -274,13 +266,9 @@ class MLRemediationIntegration:
             ml_prediction = self._get_ml_prediction(metrics)
 
             # Process through remediation engine
-            triggered_actions = remediation_engine.process_metrics(
-                metrics, ml_prediction
-            )
+            triggered_actions = remediation_engine.process_metrics(metrics, ml_prediction)
 
-            logger.info(
-                f"🔧 Manual remediation triggered: {len(triggered_actions)} actions"
-            )
+            logger.info(f"🔧 Manual remediation triggered: {len(triggered_actions)} actions")
 
             return triggered_actions
 

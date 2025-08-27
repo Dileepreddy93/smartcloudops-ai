@@ -78,3 +78,80 @@ ERROR tests/phase_3/test_ml_inference.py
 2025-08-27 16:03:37,089 - INFO - ✅ Linting issues fixed
 2025-08-27 16:03:37,091 - INFO - 🔒 Fixing security issues...
 2025-08-27 16:03:50,498 - INFO - ✅ Security issues addressed
+2025-08-27 16:07:24,473 - INFO - 🔧 Fixing dependency issues...
+2025-08-27 16:07:24,473 - INFO - Updating Python dependencies...
+2025-08-27 16:07:34,346 - ERROR - ❌ Failed to fix dependency issues: Command '['pip', 'install', '-r', 'app/requirements.txt']' returned non-zero exit status 1.
+2025-08-27 16:07:34,346 - INFO - 🧪 Fixing test issues...
+2025-08-27 16:07:35,739 - WARNING - Test command failed: python -m pytest tests/phase_2/ -v --tb=short
+2025-08-27 16:07:35,739 - WARNING - Output: ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-8.4.1, pluggy-1.6.0 -- /home/dileep-reddy/smartcloudops-ai/workflow_monitor_env/bin/python
+cachedir: .pytest_cache
+rootdir: /home/dileep-reddy/smartcloudops-ai
+configfile: pytest.ini
+plugins: cov-6.2.1, anyio-4.10.0, flask-1.3.0, mock-3.14.1
+collecting ... collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+____________ ERROR collecting tests/phase_2/test_api_blueprints.py _____________
+ImportError while importing test module '/home/dileep-reddy/smartcloudops-ai/tests/phase_2/test_api_blueprints.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/phase_2/test_api_blueprints.py:8: in <module>
+    from app.api.v1 import health, chatops, logs, ml
+app/api/v1/health.py:5: in <module>
+    from app.core.ml_engine.secure_inference import SecureMLInferenceEngine
+app/core/ml_engine/secure_inference.py:19: in <module>
+    import numpy as np
+E   ModuleNotFoundError: No module named 'numpy'
+=========================== short test summary info ============================
+ERROR tests/phase_2/test_api_blueprints.py
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+=============================== 1 error in 0.19s ===============================
+
+2025-08-27 16:07:35,739 - WARNING - Error: 
+2025-08-27 16:07:36,229 - WARNING - Test command failed: python -m pytest tests/phase_3/ -v --tb=short
+2025-08-27 16:07:36,229 - WARNING - Output: ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-8.4.1, pluggy-1.6.0 -- /home/dileep-reddy/smartcloudops-ai/workflow_monitor_env/bin/python
+cachedir: .pytest_cache
+rootdir: /home/dileep-reddy/smartcloudops-ai
+configfile: pytest.ini
+plugins: cov-6.2.1, anyio-4.10.0, flask-1.3.0, mock-3.14.1
+collecting ... collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+_____________ ERROR collecting tests/phase_3/test_ml_inference.py ______________
+ImportError while importing test module '/home/dileep-reddy/smartcloudops-ai/tests/phase_3/test_ml_inference.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/phase_3/test_ml_inference.py:9: in <module>
+    from app.core.ml_engine.secure_inference import (
+app/core/ml_engine/secure_inference.py:19: in <module>
+    import numpy as np
+E   ModuleNotFoundError: No module named 'numpy'
+=========================== short test summary info ============================
+ERROR tests/phase_3/test_ml_inference.py
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+=============================== 1 error in 0.08s ===============================
+
+2025-08-27 16:07:36,229 - WARNING - Error: 
+2025-08-27 16:07:38,201 - INFO - ✅ Test issues addressed
+2025-08-27 16:07:38,202 - INFO - 🎨 Fixing linting issues...
+2025-08-27 16:07:39,404 - WARNING - Linting command failed: flake8 app/ --max-line-length 127 --ignore E501,W503
+2025-08-27 16:07:43,469 - INFO - ✅ Linting issues fixed
+2025-08-27 16:07:43,469 - INFO - 🔒 Fixing security issues...
+2025-08-27 16:07:56,324 - INFO - ✅ Security issues addressed
+2025-08-27 16:11:39,471 - INFO - 🔄 Running single workflow check...
+2025-08-27 16:11:39,475 - INFO - 🚀 Starting automated workflow monitoring and fixing...
+2025-08-27 16:11:39,475 - INFO - 🔄 Attempt 1/5
+2025-08-27 16:11:40,750 - INFO - ❌ Found 10 failed workflows
+2025-08-27 16:11:40,751 - INFO - 🔍 Analyzing failed workflow: Code Quality & Security (ID: 17264036264)
+2025-08-27 16:11:43,839 - INFO - Identified issues: ['security_issues: security']
+2025-08-27 16:11:43,839 - INFO - 🔒 Fixing security issues...
+2025-08-27 16:11:54,941 - INFO - ✅ Security issues addressed
+2025-08-27 16:11:54,941 - INFO - 📝 Committing and pushing fixes...

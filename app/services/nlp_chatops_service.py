@@ -9,6 +9,7 @@ Supports intent recognition and entity extraction for AWS operations.
 import logging
 import os
 import re
+import time
 from datetime import datetime
 from typing import Any, Dict, List
 
@@ -283,11 +284,15 @@ class NLPEnhancedChatOps:
                             for j, group in enumerate(match):
                                 if group:
                                     entity_name = (
-                                        intent_config["entities"][j] if j < len(intent_config["entities"]) else f"entity_{j}"
+                                        intent_config["entities"][j]
+                                        if j < len(intent_config["entities"])
+                                        else f"entity_{j}"
                                     )
                                     entities[entity_name] = group
                         else:
-                            entity_name = intent_config["entities"][i] if i < len(intent_config["entities"]) else f"entity_{i}"
+                            entity_name = (
+                                intent_config["entities"][i] if i < len(intent_config["entities"]) else f"entity_{i}"
+                            )
                             entities[entity_name] = match
 
         return entities

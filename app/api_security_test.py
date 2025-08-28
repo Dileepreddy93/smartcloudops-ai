@@ -6,6 +6,7 @@ SmartCloudOps AI - API Security Testing Demo
 Demonstrate the fixed security vulnerabilities with actual API tests.
 """
 
+
 import os
 import time
 from datetime import datetime
@@ -245,7 +246,7 @@ def test_rate_limiting():
                 rate_limited_count += 1
             time.sleep(0.1)  # Small delay
         except Exception as e:
-            print(f"   ⚠️ Request {i+1} failed: {e}")
+            print(f"   ⚠️ Request {i + 1} failed: {e}")
 
     if rate_limited_count > 0:
         print(f"   ✅ PASS: Rate limiting working ({success_count} success, {rate_limited_count} rate-limited)")

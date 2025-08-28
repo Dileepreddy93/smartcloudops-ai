@@ -5,6 +5,7 @@ Tests for Prometheus metrics collection, exposure, and monitoring functionality.
 
 import pytest
 from prometheus_client import Counter, generate_latest
+
 from app.api.v1.metrics import bp as metrics_bp
 from app.api.v1.ml import ML_PREDICTION_REQUESTS
 
@@ -125,11 +126,7 @@ class TestPrometheusMetrics:
 
         # Check that metrics have proper format
         lines = content.split("\n")
-        metric_lines = [
-            line
-            for line in lines
-            if line.startswith("ml_prediction_") and not line.startswith("#")
-        ]
+        metric_lines = [line for line in lines if line.startswith("ml_prediction_") and not line.startswith("#")]
         for line in metric_lines:
             assert " " in line  # Should have space between metric name and value
             parts = line.split(" ")

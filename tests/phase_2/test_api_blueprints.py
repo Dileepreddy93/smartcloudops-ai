@@ -5,7 +5,8 @@ Tests for API v1 blueprints (health, chatops, logs, ml).
 
 import pytest
 from flask import Flask
-from app.api.v1 import health, chatops, logs, ml
+
+from app.api.v1 import chatops, health, logs, ml
 
 
 class TestHealthBlueprint:
@@ -33,9 +34,7 @@ class TestHealthBlueprint:
             def health_check(self):
                 return {"status": "healthy", "metrics": {"test": "data"}}
 
-        monkeypatch.setattr(
-            "app.api.v1.health.SecureMLInferenceEngine", MockEngine
-        )
+        monkeypatch.setattr("app.api.v1.health.SecureMLInferenceEngine", MockEngine)
 
         # Act
         response = client.get("/status")
@@ -83,9 +82,7 @@ class TestChatOpsBlueprint:
     def test_query_endpoint_success(self, client, monkeypatch):
         """Test the /query endpoint with valid input."""
         # Arrange
-        monkeypatch.setattr(
-            "app.api.v1.chatops.chat", lambda q: "Mocked AI response"
-        )
+        monkeypatch.setattr("app.api.v1.chatops.chat", lambda q: "Mocked AI response")
 
         # Act
         response = client.post("/query", json={"query": "test query"})
@@ -196,9 +193,7 @@ class TestMLBlueprint:
             def health_check(self):
                 return {"status": "healthy", "model_loaded": True}
 
-        monkeypatch.setattr(
-            "app.api.v1.ml.SecureMLInferenceEngine", MockEngine
-        )
+        monkeypatch.setattr("app.api.v1.ml.SecureMLInferenceEngine", MockEngine)
 
         # Act
         response = client.get("/ml/health")
@@ -217,9 +212,7 @@ class TestMLBlueprint:
             def predict(self, metrics=None, user_id=None):
                 return {"anomaly": False, "confidence": 0.9, "metrics": metrics}
 
-        monkeypatch.setattr(
-            "app.api.v1.ml.SecureMLInferenceEngine", MockEngine
-        )
+        monkeypatch.setattr("app.api.v1.ml.SecureMLInferenceEngine", MockEngine)
 
         # Act
         response = client.post(
@@ -269,9 +262,7 @@ class TestMLBlueprint:
             def predict(self, metrics=None, user_id=None):
                 return {"error": "Engine error", "anomaly": False, "confidence": 0.0}
 
-        monkeypatch.setattr(
-            "app.api.v1.ml.SecureMLInferenceEngine", MockEngine
-        )
+        monkeypatch.setattr("app.api.v1.ml.SecureMLInferenceEngine", MockEngine)
 
         # Act
         response = client.post("/ml/predict", json={"metrics": {"cpu_usage": 50.0}})
@@ -293,9 +284,7 @@ class TestMLBlueprint:
                     "model_info": {"type": "iforest"},
                 }
 
-        monkeypatch.setattr(
-            "app.api.v1.ml.SecureMLInferenceEngine", MockEngine
-        )
+        monkeypatch.setattr("app.api.v1.ml.SecureMLInferenceEngine", MockEngine)
 
         # Act
         response = client.get("/ml/metrics")

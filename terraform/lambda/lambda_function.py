@@ -5,6 +5,7 @@ def lambda_handler(event, context):
     This function handles ML model training and inference tasks.
     It can be triggered by various AWS events like S3 uploads, CloudWatch events, etc.
     """
+import time
     import json
     import boto3
     import os

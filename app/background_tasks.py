@@ -7,7 +7,6 @@ Asynchronous task processing system using Celery for ML training,
 data processing, and system maintenance tasks.
 """
 
-import json
 import logging
 import os
 import sys
@@ -15,7 +14,11 @@ import time
 import traceback
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
+
+from app.cache_service import cache_service
+from app.core.ml_engine.secure_inference import SecureMLInferenceEngine
+from app.utils.response import build_error_response, build_success_response
 
 try:
     from celery import Celery, Task
@@ -30,9 +33,6 @@ except ImportError:
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from app.cache_service import cache_service
-from app.core.ml_engine.secure_inference import SecureMLInferenceEngine
-from app.utils.response import build_error_response, build_success_response
 
 logger = logging.getLogger(__name__)
 

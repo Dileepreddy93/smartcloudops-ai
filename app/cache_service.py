@@ -6,13 +6,14 @@ SmartCloudOps AI - Cache Service
 Comprehensive caching service with Redis and memory fallback.
 """
 
+
 import hashlib
 import json
 import logging
 import time
 from datetime import datetime, timezone
 from functools import wraps
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 try:
     import redis

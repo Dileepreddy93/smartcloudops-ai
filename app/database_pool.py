@@ -6,6 +6,7 @@ SmartCloudOps AI - Database Connection Pooling
 Database connection pooling system for improved performance and resource management.
 """
 
+import atexit
 import logging
 import os
 import sys
@@ -14,7 +15,10 @@ import time
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
+
+from app.cache_service import cache_service
+from app.utils.response import build_error_response, build_success_response
 
 try:
     import psycopg2
@@ -39,8 +43,6 @@ except ImportError:
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from app.cache_service import cache_service
-from app.utils.response import build_error_response, build_success_response
 
 logger = logging.getLogger(__name__)
 
@@ -537,7 +539,6 @@ def check_database_health() -> Dict[str, Any]:
 
 
 # Cleanup on application shutdown
-import atexit
 
 
 def cleanup_database_pool():

@@ -7,6 +7,7 @@ This file redirects to the secure main application.
 For production use, use app/main_secure.py directly.
 """
 
+
 import os
 import sys
 from pathlib import Path
@@ -56,3 +57,15 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+def create_app():
+    """Create Flask application instance"""
+    from app.main_secure import app
+
+    return app
+
+
+if __name__ == "__main__":
+    app = create_app()
+    app.run(debug=True)

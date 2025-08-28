@@ -7,6 +7,7 @@ Implements comprehensive monitoring with proactive alerting.
 Critical for production operations with 10-50 users.
 """
 
+
 import json
 import logging
 import os
@@ -120,12 +121,8 @@ class ProductionMonitor:
                 return {
                     "ml_available": True,
                     "accuracy": ml_data.get("metrics", {}).get("accuracy", 0),
-                    "predictions_count": ml_data.get("metrics", {}).get(
-                        "total_predictions", 0
-                    ),
-                    "avg_response_time": ml_data.get("metrics", {}).get(
-                        "avg_prediction_time", 0
-                    ),
+                    "predictions_count": ml_data.get("metrics", {}).get("total_predictions", 0),
+                    "avg_response_time": ml_data.get("metrics", {}).get("avg_prediction_time", 0),
                     "timestamp": datetime.now().isoformat(),
                 }
             else:
@@ -221,9 +218,7 @@ This is an automated alert from the SmartCloudOps AI monitoring system.
         except Exception as e:
             self.logger.error(f"Failed to send alert: {e}")
 
-    def analyze_and_alert(
-        self, system_health: Dict, app_health: Dict, ml_health: Dict, db_health: Dict
-    ):
+    def analyze_and_alert(self, system_health: Dict, app_health: Dict, ml_health: Dict, db_health: Dict):
         """Analyze metrics and send alerts if needed"""
 
         # System resource alerts
@@ -237,7 +232,9 @@ This is an automated alert from the SmartCloudOps AI monitoring system.
         if system_health.get("memory_percent", 0) > self.thresholds["memory_percent"]:
             self.send_alert(
                 "High Memory Usage",
-                f"Memory usage is {system_health['memory_percent']:.1f}% (threshold: {self.thresholds['memory_percent']}%)",
+                f"Memory usage is {
+                    system_health['memory_percent']:.1f}% (threshold: {
+                    self.thresholds['memory_percent']}%)",
                 "CRITICAL",
             )
 
@@ -259,7 +256,9 @@ This is an automated alert from the SmartCloudOps AI monitoring system.
         if app_health.get("response_time_ms", 0) > self.thresholds["response_time_ms"]:
             self.send_alert(
                 "Slow Response Time",
-                f"Response time is {app_health['response_time_ms']:.0f}ms (threshold: {self.thresholds['response_time_ms']}ms)",
+                f"Response time is {
+                    app_health['response_time_ms']:.0f}ms (threshold: {
+                    self.thresholds['response_time_ms']}ms)",
                 "WARNING",
             )
 
@@ -328,9 +327,7 @@ This is an automated alert from the SmartCloudOps AI monitoring system.
 
     def run_continuous_monitoring(self, interval_seconds: int = 60):
         """Run continuous monitoring"""
-        self.logger.info(
-            f"Starting continuous monitoring (interval: {interval_seconds}s)"
-        )
+        self.logger.info(f"Starting continuous monitoring (interval: {interval_seconds}s)")
 
         while True:
             try:
@@ -368,12 +365,8 @@ WantedBy=multi-user.target
         f.write(service_content)
 
     print("✅ Monitoring service file created at /tmp/smartcloudops-monitoring.service")
-    print(
-        "To install: sudo mv /tmp/smartcloudops-monitoring.service /etc/systemd/system/"
-    )
-    print(
-        "Then: sudo systemctl enable smartcloudops-monitoring && sudo systemctl start smartcloudops-monitoring"
-    )
+    print("To install: sudo mv /tmp/smartcloudops-monitoring.service /etc/systemd/system/")
+    print("Then: sudo systemctl enable smartcloudops-monitoring && sudo systemctl start smartcloudops-monitoring")
 
 
 if __name__ == "__main__":

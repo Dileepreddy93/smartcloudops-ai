@@ -6,9 +6,10 @@ SmartCloudOps AI - Response Utilities
 Standardized response formatting for API endpoints.
 """
 
-import json
+
+import time
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
 from flask import jsonify
 

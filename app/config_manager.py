@@ -7,6 +7,7 @@ Centralized configuration management for all environments.
 Replaces hardcoded values with environment-aware configuration.
 """
 
+
 import json
 import logging
 import os
@@ -122,7 +123,9 @@ class EnvironmentConfigManager:
 
         if self.environment == "production":
             # Production endpoints - replace with actual production URLs
-            self.monitoring.prometheus_endpoint = os.getenv("PROMETHEUS_ENDPOINT", "https://prometheus.smartcloudops.ai")
+            self.monitoring.prometheus_endpoint = os.getenv(
+                "PROMETHEUS_ENDPOINT", "https://prometheus.smartcloudops.ai"
+            )
             self.monitoring.grafana_endpoint = os.getenv("GRAFANA_ENDPOINT", "https://grafana.smartcloudops.ai")
         elif self.environment == "staging":
             # Staging endpoints

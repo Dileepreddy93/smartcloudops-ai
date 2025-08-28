@@ -122,9 +122,7 @@ class SecureValidator:
         "api_key": re.compile(r"^[a-zA-Z0-9_-]{32,128}$"),
         "username": re.compile(r"^[a-zA-Z0-9_-]{3,32}$"),
         "metric_name": re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]{0,63}$"),
-        "uuid": re.compile(
-            r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
-        ),
+        "uuid": re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
         "safe_string": re.compile(r"^[a-zA-Z0-9\s\-_.,!?()]{1,200}$"),
     }
 
@@ -141,9 +139,7 @@ class SecureValidator:
     ]
 
     @classmethod
-    def validate_json_structure(
-        cls, data: Any, required_fields: List[str], optional_fields: List[str] = None
-    ) -> bool:
+    def validate_json_structure(cls, data: Any, required_fields: List[str], optional_fields: List[str] = None) -> bool:
         """Validate JSON structure with required and optional fields."""
         if not isinstance(data, dict):
             raise ValidationError("Request body must be a JSON object")
@@ -155,9 +151,7 @@ class SecureValidator:
                 missing_fields.append(field)
 
         if missing_fields:
-            raise ValidationError(
-                f"Missing required fields: {', '.join(missing_fields)}"
-            )
+            raise ValidationError(f"Missing required fields: {', '.join(missing_fields)}")
 
         # Check for unexpected fields
         allowed_fields = set(required_fields)
@@ -171,17 +165,13 @@ class SecureValidator:
         return True
 
     @classmethod
-    def sanitize_text(
-        cls, text: str, max_length: int = 1000, allow_html: bool = False
-    ) -> str:
+    def sanitize_text(cls, text: str, max_length: int = 1000, allow_html: bool = False) -> str:
         """Comprehensive text sanitization."""
         if not isinstance(text, str):
             raise ValidationError("Input must be a string")
 
         if len(text) > max_length:
-            raise ValidationError(
-                f"Input exceeds maximum length of {max_length} characters"
-            )
+            raise ValidationError(f"Input exceeds maximum length of {max_length} characters")
 
         # Check for dangerous patterns
         for pattern in cls.DANGEROUS_PATTERNS:
@@ -236,9 +226,7 @@ class SecureValidator:
             if metric in metrics:
                 value = metrics[metric]
                 if value is not None:
-                    validated_value = cls._validate_numeric_value(
-                        value, metric, min_val=0, max_val=999999999
-                    )
+                    validated_value = cls._validate_numeric_value(value, metric, min_val=0, max_val=999999999)
                     validated_metrics[metric] = validated_value
 
         # Check for unexpected metrics
@@ -270,14 +258,10 @@ class SecureValidator:
 
             # Check range
             if min_val is not None and float_value < min_val:
-                raise ValidationError(
-                    f"{field_name} must be >= {min_val}, got {float_value}"
-                )
+                raise ValidationError(f"{field_name} must be >= {min_val}, got {float_value}")
 
             if max_val is not None and float_value > max_val:
-                raise ValidationError(
-                    f"{field_name} must be <= {max_val}, got {float_value}"
-                )
+                raise ValidationError(f"{field_name} must be <= {max_val}, got {float_value}")
 
             return float_value
 
@@ -285,9 +269,7 @@ class SecureValidator:
             raise ValidationError(f"Invalid numeric value for {field_name}: {value}")
 
     @classmethod
-    def validate_pagination(
-        cls, page: Any = None, limit: Any = None, max_limit: int = 100
-    ) -> tuple[int, int]:
+    def validate_pagination(cls, page: Any = None, limit: Any = None, max_limit: int = 100) -> tuple[int, int]:
         """Validate pagination parameters."""
         # Validate page
         if page is not None:
@@ -332,9 +314,7 @@ class ResponseBuilder:
     """Secure response builder with data sanitization."""
 
     @staticmethod
-    def success_response(
-        data: Dict[str, Any], request_id: str = None
-    ) -> Dict[str, Any]:
+    def success_response(data: Dict[str, Any], request_id: str = None) -> Dict[str, Any]:
         """Build successful API response."""
         response = APIResponse(
             success=True,
@@ -427,13 +407,9 @@ class ResponseBuilder:
 
 
 # Export functions for use in main application
-def validate_request_data(
-    data: Any, required_fields: List[str], optional_fields: List[str] = None
-) -> bool:
+def validate_request_data(data: Any, required_fields: List[str], optional_fields: List[str] = None) -> bool:
     """Public interface for request validation."""
-    return SecureValidator.validate_json_structure(
-        data, required_fields, optional_fields
-    )
+    return SecureValidator.validate_json_structure(data, required_fields, optional_fields)
 
 
 def sanitize_input(text: str, max_length: int = 1000) -> str:
@@ -446,9 +422,7 @@ def validate_ml_metrics(metrics: Dict[str, Any]) -> Dict[str, float]:
     return SecureValidator.validate_metrics(metrics)
 
 
-def build_success_response(
-    data: Dict[str, Any], request_id: str = None
-) -> Dict[str, Any]:
+def build_success_response(data: Dict[str, Any], request_id: str = None) -> Dict[str, Any]:
     """Public interface for success responses."""
     return ResponseBuilder.success_response(data, request_id)
 

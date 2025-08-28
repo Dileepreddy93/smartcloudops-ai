@@ -291,17 +291,13 @@ class NLPEnhancedChatOps:
                                     entities[entity_name] = group
                         else:
                             entity_name = (
-                                intent_config["entities"][i]
-                                if i < len(intent_config["entities"])
-                                else f"entity_{i}"
+                                intent_config["entities"][i] if i < len(intent_config["entities"]) else f"entity_{i}"
                             )
                             entities[entity_name] = match
 
         return entities
 
-    def _generate_action_plan(
-        self, intent: str, entities: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _generate_action_plan(self, intent: str, entities: Dict[str, Any]) -> Dict[str, Any]:
         """Generate action plan based on intent and entities."""
         action_plan = {
             "action": intent,
@@ -478,10 +474,7 @@ class NLPEnhancedChatOps:
         return {
             "total_commands": total_commands,
             "intents": intent_counts,
-            "success_rate": len(
-                [e for e in self.command_history if e.get("confidence", 0) > 0.7]
-            )
-            / total_commands,
+            "success_rate": len([e for e in self.command_history if e.get("confidence", 0) > 0.7]) / total_commands,
         }
 
     def health_check(self) -> Dict[str, Any]:

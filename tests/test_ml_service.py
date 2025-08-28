@@ -177,9 +177,7 @@ class TestMLService:
         mock_model.decision_function.return_value = np.array([-0.8])
         ml_service.model_manager.current_model = mock_model
         ml_service.model_manager.current_scaler = MagicMock()
-        ml_service.model_manager.current_scaler.transform.return_value = np.array(
-            [[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]]
-        )
+        ml_service.model_manager.current_scaler.transform.return_value = np.array([[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]])
         ml_service.model_manager.model_version = "1.0"
 
         # Test metrics
@@ -217,9 +215,7 @@ class TestMLService:
         mock_model.decision_function.return_value = np.array([0.1])
         ml_service.model_manager.current_model = mock_model
         ml_service.model_manager.current_scaler = MagicMock()
-        ml_service.model_manager.current_scaler.transform.return_value = np.array(
-            [[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]]
-        )
+        ml_service.model_manager.current_scaler.transform.return_value = np.array([[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]])
         ml_service.model_manager.model_version = "1.0"
 
         # Test with missing features (should use defaults)

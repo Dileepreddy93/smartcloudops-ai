@@ -17,19 +17,16 @@ Usage:
     python scripts/monitor_workflows.py [--continuous] [--interval SECONDS]
 """
 
-import os
-import sys
-import logging
-import time
-from auto_workflow_fixer import WorkflowMonitor
 import argparse
-
-
+import logging
+import os
 import signal
-
-
+import sys
+import time
 from datetime import datetime
 from pathlib import Path
+
+from auto_workflow_fixer import WorkflowMonitor
 
 # Add the parent directory to the path to import the workflow fixer
 sys.path.append(str(Path(__file__).parent.parent))
@@ -83,9 +80,7 @@ class ContinuousWorkflowMonitor:
             # Get repository info
             import subprocess
 
-            result = subprocess.run(
-                ["git", "remote", "get-url", "origin"], capture_output=True, text=True
-            )
+            result = subprocess.run(["git", "remote", "get-url", "origin"], capture_output=True, text=True)
             remote_url = result.stdout.strip()
 
             if "github.com" in remote_url:
@@ -110,9 +105,7 @@ class ContinuousWorkflowMonitor:
             self.stats["checks"] += 1
             self.stats["last_check"] = datetime.now()
 
-            logger.info(
-                f"🔍 Check #{self.stats['checks']} - Checking workflow status..."
-            )
+            logger.info(f"🔍 Check #{self.stats['checks']} - Checking workflow status...")
 
             # Get current workflow runs
             runs = self.monitor.get_workflow_runs()
@@ -131,9 +124,7 @@ class ContinuousWorkflowMonitor:
 
             # Analyze and fix each failed workflow
             for run in failed_runs:
-                logger.info(
-                    f"🔍 Analyzing failed workflow: {run.name} (ID: {run.run_id})"
-                )
+                logger.info(f"🔍 Analyzing failed workflow: {run.name} (ID: {run.run_id})")
 
                 # Get logs
                 logs = self.monitor.get_workflow_logs(run.run_id)
@@ -164,9 +155,7 @@ class ContinuousWorkflowMonitor:
 
                 # If no specific issues found, try general fixes
                 if not issues:
-                    logger.info(
-                        "No specific issues identified, applying general fixes..."
-                    )
+                    logger.info("No specific issues identified, applying general fixes...")
                     fixes_applied |= self.monitor.fix_dependency_issues()
                     fixes_applied |= self.monitor.fix_test_issues()
                     fixes_applied |= self.monitor.fix_linting_issues()
@@ -216,14 +205,10 @@ class ContinuousWorkflowMonitor:
                     success = self.check_workflows()
 
                     if success:
-                        logger.info(
-                            f"✅ All workflows passing - waiting {self.interval} seconds..."
-                        )
+                        logger.info(f"✅ All workflows passing - waiting {self.interval} seconds...")
                         time.sleep(self.interval)
                     else:
-                        logger.info(
-                            "🔄 Fixes applied - waiting 60 seconds for new workflow..."
-                        )
+                        logger.info("🔄 Fixes applied - waiting 60 seconds for new workflow...")
                         time.sleep(60)
 
                 except KeyboardInterrupt:
@@ -275,9 +260,7 @@ def main():
         import subprocess
 
         try:
-            result = subprocess.run(
-                ["git", "remote", "get-url", "origin"], capture_output=True, text=True
-            )
+            result = subprocess.run(["git", "remote", "get-url", "origin"], capture_output=True, text=True)
             remote_url = result.stdout.strip()
 
             if "github.com" in remote_url:

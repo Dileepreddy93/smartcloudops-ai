@@ -91,9 +91,7 @@ class ProductionDatabaseService:
                 echo=False,  # Set to True for SQL debugging
             )
 
-            self.SessionLocal = sessionmaker(
-                autocommit=False, autoflush=False, bind=self.engine
-            )
+            self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
 
             # Test database connection
             with self.engine.connect() as conn:
@@ -251,9 +249,7 @@ class ProductionDatabaseService:
                     return True
 
             except Exception as e:
-                logger.error(
-                    f"Failed to store metrics (attempt {attempt + 1}/{max_retries}): {e}"
-                )
+                logger.error(f"Failed to store metrics (attempt {attempt + 1}/{max_retries}): {e}")
                 if attempt < max_retries - 1:
                     import time
 

@@ -199,12 +199,8 @@ class TestAWSIntegrationService:
         parameters = {"count": 3, "resource_type": "instances"}
 
         # Mock AWS client responses
-        with patch.object(
-            aws_service.autoscaling_client, "describe_auto_scaling_groups"
-        ) as mock_describe:
-            mock_describe.return_value = {
-                "AutoScalingGroups": [{"AutoScalingGroupName": "test-asg"}]
-            }
+        with patch.object(aws_service.autoscaling_client, "describe_auto_scaling_groups") as mock_describe:
+            mock_describe.return_value = {"AutoScalingGroups": [{"AutoScalingGroupName": "test-asg"}]}
 
             with patch.object(aws_service.autoscaling_client, "set_desired_capacity"):
                 result = aws_service._execute_scale(parameters)
@@ -218,12 +214,8 @@ class TestAWSIntegrationService:
         parameters = {"service_name": "ec2", "metric_type": "cpu"}
 
         # Mock AWS client responses
-        with patch.object(
-            aws_service.cloudwatch_client, "get_metric_data"
-        ) as mock_metrics:
-            mock_metrics.return_value = {
-                "MetricDataResults": [{"Values": [75.5, 80.2, 65.1]}]
-            }
+        with patch.object(aws_service.cloudwatch_client, "get_metric_data") as mock_metrics:
+            mock_metrics.return_value = {"MetricDataResults": [{"Values": [75.5, 80.2, 65.1]}]}
 
             result = aws_service._execute_monitor(parameters)
 
@@ -307,9 +299,7 @@ class TestAWSIntegrationService:
         """Test health check with no AWS credentials."""
         from botocore.exceptions import NoCredentialsError
 
-        with patch.object(
-            aws_service.ec2_client, "describe_regions", side_effect=NoCredentialsError()
-        ):
+        with patch.object(aws_service.ec2_client, "describe_regions", side_effect=NoCredentialsError()):
             health = aws_service.health_check()
 
             assert health["status"] == "unhealthy"

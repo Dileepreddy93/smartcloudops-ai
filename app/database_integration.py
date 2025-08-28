@@ -113,9 +113,7 @@ class DatabaseService:
             logger.error(f"Error getting anomalies: {e}")
             return []
 
-    def store_prediction(
-        self, metrics: Dict[str, Any], prediction: Dict[str, Any]
-    ) -> bool:
+    def store_prediction(self, metrics: Dict[str, Any], prediction: Dict[str, Any]) -> bool:
         """Store prediction result in database."""
         if not self.is_available():
             logger.warning("Database not available - prediction not stored")
@@ -178,9 +176,7 @@ class DatabaseService:
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                     (
-                        metrics.get(
-                            "timestamp", datetime.now(timezone.utc).isoformat()
-                        ),
+                        metrics.get("timestamp", datetime.now(timezone.utc).isoformat()),
                         metrics.get("source", "api"),
                         metrics.get("cpu_usage", 0.0),
                         metrics.get("memory_usage", 0.0),

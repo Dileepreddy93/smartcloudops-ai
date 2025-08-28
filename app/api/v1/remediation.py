@@ -139,9 +139,7 @@ def get_rules():
                     "priority": rule.priority,
                     "cooldown_minutes": rule.cooldown_minutes,
                     "trigger_count": rule.trigger_count,
-                    "last_triggered": (
-                        rule.last_triggered.isoformat() if rule.last_triggered else None
-                    ),
+                    "last_triggered": (rule.last_triggered.isoformat() if rule.last_triggered else None),
                     "conditions": rule.conditions,
                     "actions": [action.value for action in rule.actions],
                 }
@@ -280,11 +278,7 @@ def get_action_history():
     """Get the history of remediation actions."""
     try:
         limit = request.args.get("limit", 50, type=int)
-        actions = (
-            remediation_engine.action_history[-limit:]
-            if remediation_engine.action_history
-            else []
-        )
+        actions = remediation_engine.action_history[-limit:] if remediation_engine.action_history else []
 
         return jsonify(
             {
@@ -366,12 +360,8 @@ def get_remediation_metrics():
 
         # Calculate success rate from recent actions
         recent_actions = status["recent_actions"]
-        successful_actions = sum(
-            1 for action in recent_actions if action.get("success", False)
-        )
-        success_rate = (
-            (successful_actions / len(recent_actions) * 100) if recent_actions else 0
-        )
+        successful_actions = sum(1 for action in recent_actions if action.get("success", False))
+        success_rate = (successful_actions / len(recent_actions) * 100) if recent_actions else 0
 
         metrics = {
             "engine_status": {
@@ -391,9 +381,7 @@ def get_remediation_metrics():
             "performance": {
                 "uptime_percent": 100 if status["enabled"] else 0,
                 "response_time_ms": 50,  # Placeholder
-                "last_action_timestamp": (
-                    recent_actions[-1]["timestamp"] if recent_actions else None
-                ),
+                "last_action_timestamp": (recent_actions[-1]["timestamp"] if recent_actions else None),
             },
         }
 

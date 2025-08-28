@@ -105,9 +105,7 @@ class SecureMLInferenceEngine:
             X_scaled = scaler.fit_transform(X)
 
             # Train isolation forest model
-            self.model = IsolationForest(
-                contamination=0.1, random_state=42, n_estimators=100
-            )
+            self.model = IsolationForest(contamination=0.1, random_state=42, n_estimators=100)
             self.model.fit(X_scaled)
 
             # Save model
@@ -321,11 +319,7 @@ class SecureMLInferenceEngine:
                 prediction_working = False
 
             return {
-                "status": (
-                    "healthy"
-                    if all([model_loaded, files_exist, prediction_working])
-                    else "unhealthy"
-                ),
+                "status": ("healthy" if all([model_loaded, files_exist, prediction_working]) else "unhealthy"),
                 "model_loaded": model_loaded,
                 "files_exist": files_exist,
                 "prediction_working": prediction_working,

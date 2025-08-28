@@ -8,10 +8,10 @@ This script tests the critical components and provides a summary report.
 """
 
 
+import json
 import os
 import sys
 import time
-import json
 from datetime import datetime
 
 # Add app directory to path
@@ -40,10 +40,7 @@ def test_environment_variables():
             missing_vars.append(var)
         elif len(value) < 32:
             insecure_vars.append(f"{var} (too short: {len(value)} chars)")
-        elif any(
-            pattern in value.lower()
-            for pattern in ["demo", "test", "default", "password", "123"]
-        ):
+        elif any(pattern in value.lower() for pattern in ["demo", "test", "default", "password", "123"]):
             insecure_vars.append(f"{var} (contains insecure pattern)")
 
     if missing_vars:

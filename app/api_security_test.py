@@ -56,9 +56,7 @@ def validate_api_keys():
             key_lower = key_value.lower()
             for pattern in insecure_patterns:
                 if pattern in key_lower:
-                    print(
-                        f"⚠️ WARNING: {key_name} contains potentially insecure pattern: {pattern}"
-                    )
+                    print(f"⚠️ WARNING: {key_name} contains potentially insecure pattern: {pattern}")
 
     return True
 
@@ -124,9 +122,7 @@ def test_input_validation():
                 "memory_usage": 60.2,
             }
         }
-        response = requests.post(
-            f"{BASE_URL}/ml/predict", headers=headers, json=invalid_data, timeout=5
-        )
+        response = requests.post(f"{BASE_URL}/ml/predict", headers=headers, json=invalid_data, timeout=5)
         if response.status_code == 400:
             print("   ✅ PASS: Invalid metrics rejected")
         else:
@@ -144,9 +140,7 @@ def test_input_validation():
                 # Missing required fields: memory_usage, disk_usage, load_1m
             }
         }
-        response = requests.post(
-            f"{BASE_URL}/ml/predict", headers=headers, json=incomplete_data, timeout=5
-        )
+        response = requests.post(f"{BASE_URL}/ml/predict", headers=headers, json=incomplete_data, timeout=5)
         if response.status_code == 400:
             print("   ✅ PASS: Missing required fields rejected")
         else:
@@ -166,9 +160,7 @@ def test_input_validation():
                 "load_1m": 1.5,
             }
         }
-        response = requests.post(
-            f"{BASE_URL}/ml/predict", headers=headers, json=valid_data, timeout=5
-        )
+        response = requests.post(f"{BASE_URL}/ml/predict", headers=headers, json=valid_data, timeout=5)
         if response.status_code == 200:
             print("   ✅ PASS: Valid metrics accepted")
         else:
@@ -199,9 +191,7 @@ def test_data_exposure_protection():
                     "secret_key",
                     "user_data",
                 ]
-                has_sensitive = any(
-                    key in str(status_data).lower() for key in sensitive_keys
-                )
+                has_sensitive = any(key in str(status_data).lower() for key in sensitive_keys)
                 if not has_sensitive:
                     print("   ✅ PASS: Status data properly sanitized")
                 else:
@@ -259,9 +249,7 @@ def test_rate_limiting():
             print(f"   ⚠️ Request {i + 1} failed: {e}")
 
     if rate_limited_count > 0:
-        print(
-            f"   ✅ PASS: Rate limiting working ({success_count} success, {rate_limited_count} rate-limited)"
-        )
+        print(f"   ✅ PASS: Rate limiting working ({success_count} success, {rate_limited_count} rate-limited)")
     else:
         print(f"   ⚠️ INFO: No rate limiting triggered ({success_count} success)")
 
@@ -274,9 +262,7 @@ def test_permission_system():
     print("   Test 1: Readonly key accessing admin endpoint (should fail)")
     try:
         headers = {"X-API-Key": READONLY_KEY}
-        response = requests.get(
-            f"{BASE_URL}/security/audit", headers=headers, timeout=5
-        )
+        response = requests.get(f"{BASE_URL}/security/audit", headers=headers, timeout=5)
         if response.status_code == 403:
             print("   ✅ PASS: Readonly key denied admin access")
         else:
@@ -288,9 +274,7 @@ def test_permission_system():
     print("   Test 2: Admin key accessing admin endpoint (should succeed)")
     try:
         headers = {"X-API-Key": ADMIN_KEY}
-        response = requests.get(
-            f"{BASE_URL}/security/audit", headers=headers, timeout=5
-        )
+        response = requests.get(f"{BASE_URL}/security/audit", headers=headers, timeout=5)
         if response.status_code == 200:
             print("   ✅ PASS: Admin key granted admin access")
         else:

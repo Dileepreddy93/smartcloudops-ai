@@ -16,9 +16,9 @@ Usage:
 """
 
 
+import json
 import sys
 import time
-import json
 from datetime import datetime
 from pathlib import Path
 
@@ -251,9 +251,7 @@ def main():
     print("📚 Next Steps:")
     print("   1. Set up your GitHub token: export GITHUB_TOKEN=your_token")
     print("   2. Run single check: python3 scripts/monitor_workflows.py")
-    print(
-        "   3. Run continuous monitoring: python3 scripts/monitor_workflows.py --continuous"
-    )
+    print("   3. Run continuous monitoring: python3 scripts/monitor_workflows.py --continuous")
     print("   4. View the full guide: WORKFLOW_MONITORING_GUIDE.md")
     print("")
     print("🚀 Your workflow monitoring system is ready to use!")

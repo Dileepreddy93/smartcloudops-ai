@@ -8,13 +8,12 @@ Test suite to verify that all security fixes are working correctly.
 
 import os
 import sys
-from app.services.auth_service import AuthenticationService
-
-
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+
+from app.services.auth_service import AuthenticationService
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -39,9 +38,7 @@ class TestSecurityFixes:
     @patch.dict(os.environ, {}, clear=True)
     def test_missing_environment_variables(self):
         """Test that missing environment variables raise appropriate errors."""
-        with pytest.raises(
-            ValueError, match="JWT_SECRET_KEY environment variable is required"
-        ):
+        with pytest.raises(ValueError, match="JWT_SECRET_KEY environment variable is required"):
             AuthenticationService()
 
     @patch.dict(
@@ -57,9 +54,7 @@ class TestSecurityFixes:
     )
     def test_weak_environment_variables(self):
         """Test that weak environment variables raise appropriate errors."""
-        with pytest.raises(
-            ValueError, match="JWT_SECRET_KEY must be at least 32 characters long"
-        ):
+        with pytest.raises(ValueError, match="JWT_SECRET_KEY must be at least 32 characters long"):
             AuthenticationService()
 
     @patch.dict(
@@ -123,9 +118,7 @@ class TestSecurityFixes:
         auth_service = AuthenticationService()
 
         # Generate token
-        token = auth_service.generate_jwt_token(
-            user_id="test_user", role="admin", permissions=["read", "write"]
-        )
+        token = auth_service.generate_jwt_token(user_id="test_user", role="admin", permissions=["read", "write"])
 
         assert token is not None
         assert len(token) > 0
@@ -235,9 +228,7 @@ class TestSecurityFixes:
         """Test that weak passwords are rejected."""
         auth_service = AuthenticationService()
 
-        with pytest.raises(
-            ValueError, match="Password must be at least 8 characters long"
-        ):
+        with pytest.raises(ValueError, match="Password must be at least 8 characters long"):
             auth_service.create_user(
                 username="test_user",
                 password="short",
@@ -261,9 +252,7 @@ class TestSecurityFixes:
         auth_service = AuthenticationService()
 
         # Create new API key
-        new_key = auth_service.create_api_key(
-            key_id="test_key", role="user", permissions=["read"]
-        )
+        new_key = auth_service.create_api_key(key_id="test_key", role="user", permissions=["read"])
 
         assert new_key is not None
         assert new_key.startswith("sk-test_key-")
@@ -290,9 +279,7 @@ class TestSecurityFixes:
         auth_service = AuthenticationService()
 
         # Create and then revoke API key
-        new_key = auth_service.create_api_key(
-            key_id="test_revoke", role="user", permissions=["read"]
-        )
+        new_key = auth_service.create_api_key(key_id="test_revoke", role="user", permissions=["read"])
 
         # Verify key exists
         key_info = auth_service.get_api_key_info(new_key)

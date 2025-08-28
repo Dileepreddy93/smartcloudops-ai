@@ -29,9 +29,7 @@ class CacheService(BaseService):
         self.use_redis = self.get_config("use_redis", True)
         self.redis_url = self.get_config("redis_url", "redis://localhost:6379")
         self.default_ttl = self.get_config("default_ttl", 3600)  # 1 hour
-        self.max_memory_size = self.get_config(
-            "max_memory_size", 1000
-        )  # Max items in memory cache
+        self.max_memory_size = self.get_config("max_memory_size", 1000)  # Max items in memory cache
 
     def _initialize_service(self) -> None:
         """Initialize the cache service."""
@@ -39,16 +37,12 @@ class CacheService(BaseService):
             try:
                 import redis
 
-                self.redis_client = redis.from_url(
-                    self.redis_url, decode_responses=True
-                )
+                self.redis_client = redis.from_url(self.redis_url, decode_responses=True)
                 # Test connection
                 self.redis_client.ping()
                 logger.info("Redis cache initialized successfully")
             except Exception as e:
-                logger.warning(
-                    f"Redis connection failed, falling back to memory cache: {e}"
-                )
+                logger.warning(f"Redis connection failed, falling back to memory cache: {e}")
                 self.use_redis = False
                 self.redis_client = None
 
@@ -214,11 +208,7 @@ class CacheService(BaseService):
                 self._cleanup_memory_cache()
                 import fnmatch
 
-                return [
-                    key
-                    for key in self.memory_cache.keys()
-                    if fnmatch.fnmatch(key, pattern)
-                ]
+                return [key for key in self.memory_cache.keys() if fnmatch.fnmatch(key, pattern)]
         except Exception as e:
             logger.error(f"Error getting cache keys: {e}")
             return []
@@ -288,8 +278,7 @@ class CacheService(BaseService):
                     "type": "memory",
                     "total_keys": len(self.memory_cache),
                     "max_size": self.max_memory_size,
-                    "usage_percent": (len(self.memory_cache) / self.max_memory_size)
-                    * 100,
+                    "usage_percent": (len(self.memory_cache) / self.max_memory_size) * 100,
                 }
         except Exception as e:
             logger.error(f"Error getting cache stats: {e}")

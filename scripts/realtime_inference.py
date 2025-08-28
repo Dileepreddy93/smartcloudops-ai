@@ -7,16 +7,14 @@ Real-time inference system for deployed anomaly detection models.
 """
 
 
-import os
 import logging
+import os
 import time
-import requests
-import joblib
 from datetime import datetime
 
-
+import joblib
 import pandas as pd
-
+import requests
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -27,13 +25,9 @@ class AnomalyInferenceEngine:
     Real-time anomaly detection inference engine.
     """
 
-    def __init__(
-        self, model_path="ml_models/optimized", prometheus_url: str | None = None
-    ):
+    def __init__(self, model_path="ml_models/optimized", prometheus_url: str | None = None):
         self.model_path = model_path
-        self.prometheus_url = prometheus_url or os.getenv(
-            "PROMETHEUS_URL", "http://localhost:9090"
-        )
+        self.prometheus_url = prometheus_url or os.getenv("PROMETHEUS_URL", "http://localhost:9090")
         self.model = None
         self.scaler = None
         self.feature_columns = None
@@ -52,9 +46,7 @@ class AnomalyInferenceEngine:
                 self.scaler = joblib.load(scaler_file)
                 logger.info("✅ Models loaded successfully from local storage")
             else:
-                logger.warning(
-                    "⚠️ Local models not found, would load from S3 in production"
-                )
+                logger.warning("⚠️ Local models not found, would load from S3 in production")
 
         except Exception as e:
             logger.error(f"❌ Error loading models: {e}")
@@ -114,9 +106,7 @@ class AnomalyInferenceEngine:
             df["day_of_week"] = df["timestamp"].dt.dayofweek
             df["is_weekend"] = df["day_of_week"].isin([5, 6]).astype(int)
             df["is_business_hours"] = (
-                (df["hour"] >= 9)
-                & (df["hour"] <= 17)
-                & (~df["is_weekend"].astype(bool))
+                (df["hour"] >= 9) & (df["hour"] <= 17) & (~df["is_weekend"].astype(bool))
             ).astype(int)
 
             # Cross-metric features

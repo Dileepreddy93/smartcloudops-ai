@@ -12,19 +12,17 @@ Complete test suite covering all aspects of the application including:
 - End-to-end tests
 """
 
+import concurrent.futures
+import json
 import os
 import sys
 import time
-import json
-import requests
-import concurrent.futures
-
-
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import requests
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -119,9 +117,7 @@ class TestSuite:
                     stat = file_path.stat()
                     mode = stat.st_mode & 0o777
                     if mode != 0o600:
-                        print(
-                            f"❌ Insecure file permissions: {file_path} ({oct(mode)})"
-                        )
+                        print(f"❌ Insecure file permissions: {file_path} ({oct(mode)})")
                         return False
 
         print("✅ Environment setup test passed")
@@ -143,9 +139,7 @@ class TestSuite:
                     print(f"❌ Authentication service unhealthy: {data}")
                     return False
             else:
-                print(
-                    f"❌ Authentication service health check failed: {response.status_code}"
-                )
+                print(f"❌ Authentication service health check failed: {response.status_code}")
                 return False
 
         except requests.exceptions.RequestException as e:
@@ -191,9 +185,7 @@ class TestSuite:
                     print(f"❌ Main application unhealthy: {data}")
                     return False
             else:
-                print(
-                    f"❌ Main application health check failed: {response.status_code}"
-                )
+                print(f"❌ Main application health check failed: {response.status_code}")
                 return False
 
         except requests.exceptions.RequestException as e:
@@ -208,9 +200,7 @@ class TestSuite:
             # Test login
             login_data = {"username": "admin", "password": "admin_password"}
 
-            response = requests.post(
-                f"{self.auth_service_url}/auth/login", json=login_data, timeout=5
-            )
+            response = requests.post(f"{self.auth_service_url}/auth/login", json=login_data, timeout=5)
 
             if response.status_code != 200:
                 print(f"❌ Login failed: {response.status_code}")
@@ -225,9 +215,7 @@ class TestSuite:
 
             # Test token verification
             verify_data = {"token": token}
-            response = requests.post(
-                f"{self.auth_service_url}/auth/verify", json=verify_data, timeout=5
-            )
+            response = requests.post(f"{self.auth_service_url}/auth/verify", json=verify_data, timeout=5)
 
             if response.status_code != 200:
                 print(f"❌ Token verification failed: {response.status_code}")
@@ -292,9 +280,7 @@ class TestSuite:
             # Test prediction
             prediction_data = {"features": self.test_features}
 
-            response = requests.post(
-                f"{self.ml_service_url}/ml/predict", json=prediction_data, timeout=10
-            )
+            response = requests.post(f"{self.ml_service_url}/ml/predict", json=prediction_data, timeout=10)
 
             if response.status_code != 200:
                 print(f"❌ ML prediction failed: {response.status_code}")
@@ -378,9 +364,7 @@ class TestSuite:
             ]
 
             for payload in sql_injection_payloads:
-                response = requests.post(
-                    f"{self.base_url}/api/v1/query", json={"query": payload}, timeout=5
-                )
+                response = requests.post(f"{self.base_url}/api/v1/query", json={"query": payload}, timeout=5)
 
                 # Should not return 500 (internal error) for SQL injection
                 if response.status_code == 500:
@@ -395,9 +379,7 @@ class TestSuite:
             ]
 
             for payload in xss_payloads:
-                response = requests.post(
-                    f"{self.base_url}/api/v1/query", json={"query": payload}, timeout=5
-                )
+                response = requests.post(f"{self.base_url}/api/v1/query", json={"query": payload}, timeout=5)
 
                 # Check if payload is reflected in response
                 if payload in response.text:
@@ -436,9 +418,7 @@ class TestSuite:
             if rate_limited_count == 0:
                 print("⚠️ No rate limiting detected (may be disabled)")
             else:
-                print(
-                    f"✅ Rate limiting working: {rate_limited_count} requests limited"
-                )
+                print(f"✅ Rate limiting working: {rate_limited_count} requests limited")
 
             return True
 
@@ -479,9 +459,7 @@ class TestSuite:
             # Test load using auth service (less likely to be rate limited)
             def make_request():
                 try:
-                    response = requests.get(
-                        f"{self.auth_service_url}/health", timeout=5
-                    )
+                    response = requests.get(f"{self.auth_service_url}/health", timeout=5)
                     return response.status_code
                 except (requests.RequestException, Exception):
                     return 0
@@ -489,10 +467,7 @@ class TestSuite:
             # Make 10 concurrent requests (reduced to avoid rate limiting)
             with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
                 futures = [executor.submit(make_request) for _ in range(10)]
-                results = [
-                    future.result()
-                    for future in concurrent.futures.as_completed(futures)
-                ]
+                results = [future.result() for future in concurrent.futures.as_completed(futures)]
 
             success_count = sum(1 for code in results if code == 200)
             success_rate = success_count / len(results)
@@ -536,9 +511,7 @@ class TestSuite:
                 return False
 
             headers = {"X-API-Key": admin_key}
-            response = requests.get(
-                f"{self.base_url}/metrics", headers=headers, timeout=5
-            )
+            response = requests.get(f"{self.base_url}/metrics", headers=headers, timeout=5)
             if response.status_code == 200:
                 print("✅ main-app metrics available")
             else:
@@ -563,9 +536,7 @@ class TestSuite:
             if response.status_code == 404:
                 print("✅ 404 error handling working")
             else:
-                print(
-                    f"❌ Unexpected response for invalid endpoint: {response.status_code}"
-                )
+                print(f"❌ Unexpected response for invalid endpoint: {response.status_code}")
                 return False
 
             # Test malformed JSON
@@ -582,15 +553,11 @@ class TestSuite:
             ]:  # Accept both 400 and 500 for malformed JSON
                 print("✅ Malformed JSON handling working")
             else:
-                print(
-                    f"❌ Unexpected response for malformed JSON: {response.status_code}"
-                )
+                print(f"❌ Unexpected response for malformed JSON: {response.status_code}")
                 return False
 
             # Test missing required fields
-            response = requests.post(
-                f"{self.ml_service_url}/ml/predict", json={}, timeout=5
-            )
+            response = requests.post(f"{self.ml_service_url}/ml/predict", json={}, timeout=5)
 
             if response.status_code in [
                 400,
@@ -598,9 +565,7 @@ class TestSuite:
             ]:  # Accept both 400 and 500 for missing fields
                 print("✅ Missing fields handling working")
             else:
-                print(
-                    f"❌ Unexpected response for missing fields: {response.status_code}"
-                )
+                print(f"❌ Unexpected response for missing fields: {response.status_code}")
                 return False
 
             print("✅ Error handling test passed")
@@ -639,9 +604,7 @@ class TestSuite:
             self.results.append(result)
 
             status_icon = "✅" if result.status == "PASS" else "❌"
-            print(
-                f"{status_icon} {result.test_name}: {result.status} ({result.duration:.3f}s)"
-            )
+            print(f"{status_icon} {result.test_name}: {result.status} ({result.duration:.3f}s)")
 
             if result.error_message:
                 print(f"   Error: {result.error_message}")
@@ -683,36 +646,24 @@ class TestSuite:
 
         for result in failed_tests:
             if "environment" in result.test_name.lower():
-                recommendations.append(
-                    "Fix environment configuration and ensure all required variables are set"
-                )
+                recommendations.append("Fix environment configuration and ensure all required variables are set")
             elif "health" in result.test_name.lower():
                 recommendations.append("Ensure all services are running and healthy")
             elif "auth" in result.test_name.lower():
-                recommendations.append(
-                    "Verify authentication service configuration and API keys"
-                )
+                recommendations.append("Verify authentication service configuration and API keys")
             elif "ml" in result.test_name.lower():
-                recommendations.append(
-                    "Check ML service configuration and model availability"
-                )
+                recommendations.append("Check ML service configuration and model availability")
             elif "security" in result.test_name.lower():
                 recommendations.append("Address security vulnerabilities immediately")
             elif "performance" in result.test_name.lower():
                 recommendations.append("Optimize application performance")
             elif "load" in result.test_name.lower():
-                recommendations.append(
-                    "Improve application scalability and load handling"
-                )
+                recommendations.append("Improve application scalability and load handling")
             elif "monitoring" in result.test_name.lower():
-                recommendations.append(
-                    "Set up proper monitoring and metrics collection"
-                )
+                recommendations.append("Set up proper monitoring and metrics collection")
 
         if not failed_tests:
-            recommendations.append(
-                "All tests passed! Application is ready for production deployment"
-            )
+            recommendations.append("All tests passed! Application is ready for production deployment")
 
         return recommendations
 

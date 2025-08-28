@@ -8,11 +8,9 @@ Optimized test runner for Phase 5 ChatOps functionality with resource monitoring
 
 
 import os
+import subprocess
 import sys
 import time
-import subprocess
-
-
 from pathlib import Path
 
 import psutil

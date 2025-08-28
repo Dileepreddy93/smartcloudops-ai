@@ -88,9 +88,7 @@ class RateLimiter:
             self.requests[client_id].append(time.time())
 
         # Calculate remaining requests and reset time
-        remaining_requests = max(
-            0, limit_config["requests"] - current_requests - (0 if is_limited else 1)
-        )
+        remaining_requests = max(0, limit_config["requests"] - current_requests - (0 if is_limited else 1))
 
         # Calculate reset time
         if self.requests[client_id]:
@@ -135,9 +133,7 @@ def rate_limit(endpoint_type: Optional[str] = None):
             is_limited, limit_info = rate_limiter.is_rate_limited(endpoint)
 
             if is_limited:
-                logger.warning(
-                    f"Rate limit exceeded for {limit_info['client_id']} on {endpoint}"
-                )
+                logger.warning(f"Rate limit exceeded for {limit_info['client_id']} on {endpoint}")
 
                 # Return rate limit error
                 error_data = {

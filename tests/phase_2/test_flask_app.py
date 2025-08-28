@@ -186,9 +186,7 @@ class TestFlaskAppErrorHandling:
     def test_query_endpoint_invalid_json(self, client):
         """Test query endpoint handles invalid JSON gracefully."""
         # Act
-        response = client.post(
-            "/query", data="invalid json", content_type="application/json"
-        )
+        response = client.post("/query", data="invalid json", content_type="application/json")
 
         # Assert
         assert response.status_code == 400

@@ -8,19 +8,18 @@ Critical for production operations with 10-50 users.
 """
 
 
-import os
-import logging
-import time
 import json
-import requests
+import logging
+import os
 import smtplib
-
+import time
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Any, Dict
 
 import psutil
+import requests
 
 
 class ProductionMonitor:
@@ -122,12 +121,8 @@ class ProductionMonitor:
                 return {
                     "ml_available": True,
                     "accuracy": ml_data.get("metrics", {}).get("accuracy", 0),
-                    "predictions_count": ml_data.get("metrics", {}).get(
-                        "total_predictions", 0
-                    ),
-                    "avg_response_time": ml_data.get("metrics", {}).get(
-                        "avg_prediction_time", 0
-                    ),
+                    "predictions_count": ml_data.get("metrics", {}).get("total_predictions", 0),
+                    "avg_response_time": ml_data.get("metrics", {}).get("avg_prediction_time", 0),
                     "timestamp": datetime.now().isoformat(),
                 }
             else:
@@ -223,9 +218,7 @@ This is an automated alert from the SmartCloudOps AI monitoring system.
         except Exception as e:
             self.logger.error(f"Failed to send alert: {e}")
 
-    def analyze_and_alert(
-        self, system_health: Dict, app_health: Dict, ml_health: Dict, db_health: Dict
-    ):
+    def analyze_and_alert(self, system_health: Dict, app_health: Dict, ml_health: Dict, db_health: Dict):
         """Analyze metrics and send alerts if needed"""
 
         # System resource alerts
@@ -334,9 +327,7 @@ This is an automated alert from the SmartCloudOps AI monitoring system.
 
     def run_continuous_monitoring(self, interval_seconds: int = 60):
         """Run continuous monitoring"""
-        self.logger.info(
-            f"Starting continuous monitoring (interval: {interval_seconds}s)"
-        )
+        self.logger.info(f"Starting continuous monitoring (interval: {interval_seconds}s)")
 
         while True:
             try:
@@ -374,12 +365,8 @@ WantedBy=multi-user.target
         f.write(service_content)
 
     print("✅ Monitoring service file created at /tmp/smartcloudops-monitoring.service")
-    print(
-        "To install: sudo mv /tmp/smartcloudops-monitoring.service /etc/systemd/system/"
-    )
-    print(
-        "Then: sudo systemctl enable smartcloudops-monitoring && sudo systemctl start smartcloudops-monitoring"
-    )
+    print("To install: sudo mv /tmp/smartcloudops-monitoring.service /etc/systemd/system/")
+    print("Then: sudo systemctl enable smartcloudops-monitoring && sudo systemctl start smartcloudops-monitoring")
 
 
 if __name__ == "__main__":

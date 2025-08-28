@@ -129,9 +129,7 @@ class AWSIntegrationService:
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-    def _check_safety_limits(
-        self, action: str, parameters: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _check_safety_limits(self, action: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """Check if action is within safety limits."""
         try:
             if action == "scale":
@@ -152,10 +150,7 @@ class AWSIntegrationService:
                     for e in self.execution_history[-10:]
                     if e.get("action") == "deploy"
                     and (
-                        datetime.utcnow()
-                        - datetime.fromisoformat(
-                            e.get("timestamp", "2020-01-01T00:00:00")
-                        )
+                        datetime.utcnow() - datetime.fromisoformat(e.get("timestamp", "2020-01-01T00:00:00"))
                     ).total_seconds()
                     < self.safety_limits["cooldown_period_minutes"] * 60
                 ]
@@ -192,9 +187,7 @@ class AWSIntegrationService:
                 "app_name": app_name,
                 "environment": environment,
                 "status": "initiated",
-                "estimated_completion": (
-                    datetime.utcnow() + timedelta(minutes=5)
-                ).isoformat(),
+                "estimated_completion": (datetime.utcnow() + timedelta(minutes=5)).isoformat(),
             }
 
         except Exception as e:
@@ -217,9 +210,7 @@ class AWSIntegrationService:
                 asg_name = asg_response["AutoScalingGroups"][0]["AutoScalingGroupName"]
 
                 # Update desired capacity
-                self.autoscaling_client.set_desired_capacity(
-                    AutoScalingGroupName=asg_name, DesiredCapacity=count
-                )
+                self.autoscaling_client.set_desired_capacity(AutoScalingGroupName=asg_name, DesiredCapacity=count)
 
                 return {
                     "asg_name": asg_name,
@@ -266,9 +257,7 @@ class AWSIntegrationService:
             return {
                 "service": service_name,
                 "metric": metric_type,
-                "data_points": len(
-                    response.get("MetricDataResults", [{}])[0].get("Values", [])
-                ),
+                "data_points": len(response.get("MetricDataResults", [{}])[0].get("Values", [])),
                 "latest_value": (
                     response.get("MetricDataResults", [{}])[0].get("Values", [0])[-1]
                     if response.get("MetricDataResults")
@@ -297,9 +286,7 @@ class AWSIntegrationService:
 
             if instance_ids:
                 # Restart instances (in production, you'd be more selective)
-                self.ec2_client.reboot_instances(
-                    InstanceIds=instance_ids[:1]
-                )  # Only restart first instance for safety
+                self.ec2_client.reboot_instances(InstanceIds=instance_ids[:1])  # Only restart first instance for safety
 
                 return {
                     "service": service_name,
@@ -329,9 +316,7 @@ class AWSIntegrationService:
                 # Create snapshot
                 snapshot_id = f"{db_identifier}-backup-{int(time.time())}"
 
-                self.rds_client.create_db_snapshot(
-                    DBSnapshotIdentifier=snapshot_id, DBInstanceIdentifier=db_identifier
-                )
+                self.rds_client.create_db_snapshot(DBSnapshotIdentifier=snapshot_id, DBInstanceIdentifier=db_identifier)
 
                 return {
                     "resource": resource_name,
@@ -360,9 +345,7 @@ class AWSIntegrationService:
             if guardduty_response["DetectorIds"]:
                 detector_id = guardduty_response["DetectorIds"][0]
 
-                findings_response = self.guardduty_client.list_findings(
-                    DetectorId=detector_id, MaxResults=10
-                )
+                findings_response = self.guardduty_client.list_findings(DetectorId=detector_id, MaxResults=10)
 
                 findings = findings_response.get("FindingIds", [])
 
@@ -436,20 +419,8 @@ class AWSIntegrationService:
 
             compliance_results = config_response.get("EvaluationResults", [])
 
-            compliant_count = len(
-                [
-                    r
-                    for r in compliance_results
-                    if r.get("ComplianceType") == "COMPLIANT"
-                ]
-            )
-            non_compliant_count = len(
-                [
-                    r
-                    for r in compliance_results
-                    if r.get("ComplianceType") == "NON_COMPLIANT"
-                ]
-            )
+            compliant_count = len([r for r in compliance_results if r.get("ComplianceType") == "COMPLIANT"])
+            non_compliant_count = len([r for r in compliance_results if r.get("ComplianceType") == "NON_COMPLIANT"])
 
             return {
                 "compliance_type": compliance_type,
@@ -458,9 +429,7 @@ class AWSIntegrationService:
                 "compliant": compliant_count,
                 "non_compliant": non_compliant_count,
                 "compliance_rate": (
-                    round(compliant_count / len(compliance_results) * 100, 2)
-                    if compliance_results
-                    else 0
+                    round(compliant_count / len(compliance_results) * 100, 2) if compliance_results else 0
                 ),
                 "status": "check_completed",
             }
@@ -517,9 +486,7 @@ class AWSIntegrationService:
             reason = parameters.get("reason", "manual_rollback")
 
             # Get recent deployments
-            deployments_response = self.codedeploy_client.list_deployments(
-                MaxResults=10
-            )
+            deployments_response = self.codedeploy_client.list_deployments(MaxResults=10)
 
             if deployments_response.get("deployments"):
                 deployments_response["deployments"][0]
@@ -568,9 +535,7 @@ class AWSIntegrationService:
             logger.error(f"Rollback execution error: {e}")
             return {"error": str(e)}
 
-    def _log_execution(
-        self, action: str, parameters: Dict[str, Any], result: Dict[str, Any]
-    ):
+    def _log_execution(self, action: str, parameters: Dict[str, Any], result: Dict[str, Any]):
         """Log action execution for audit."""
         log_entry = {
             "timestamp": datetime.utcnow().isoformat(),
@@ -598,13 +563,7 @@ class AWSIntegrationService:
 
         action_counts: dict = {}
         total_executions = len(self.execution_history)
-        successful_executions = len(
-            [
-                e
-                for e in self.execution_history
-                if e.get("result", {}).get("status") != "error"
-            ]
-        )
+        successful_executions = len([e for e in self.execution_history if e.get("result", {}).get("status") != "error"])
 
         for entry in self.execution_history:
             action = entry.get("action", "unknown")
@@ -613,9 +572,7 @@ class AWSIntegrationService:
         return {
             "total_executions": total_executions,
             "successful_executions": successful_executions,
-            "success_rate": (
-                successful_executions / total_executions if total_executions > 0 else 0
-            ),
+            "success_rate": (successful_executions / total_executions if total_executions > 0 else 0),
             "actions": action_counts,
         }
 

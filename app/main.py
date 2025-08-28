@@ -57,3 +57,15 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+def create_app():
+    """Create Flask application instance"""
+    from app.main_secure import app
+
+    return app
+
+
+if __name__ == "__main__":
+    app = create_app()
+    app.run(debug=True)

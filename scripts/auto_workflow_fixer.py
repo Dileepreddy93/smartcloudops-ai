@@ -16,20 +16,18 @@ Features:
 """
 
 
-import os
-import sys
-import logging
-import time
 import json
-import requests
+import logging
+import os
 import subprocess
-
-
+import sys
+import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+import requests
 
 # Configure logging
 logging.basicConfig(
@@ -199,9 +197,7 @@ class WorkflowMonitor:
 
             for package in additional_packages:
                 try:
-                    subprocess.run(
-                        ["pip", "install", package], check=True, capture_output=True
-                    )
+                    subprocess.run(["pip", "install", package], check=True, capture_output=True)
                 except subprocess.CalledProcessError:
                     logger.warning(f"Failed to install {package}")
 
@@ -377,9 +373,7 @@ class WorkflowMonitor:
             subprocess.run(["git", "add", "."], check=True, capture_output=True)
 
             # Check if there are changes to commit
-            result = subprocess.run(
-                ["git", "status", "--porcelain"], capture_output=True, text=True
-            )
+            result = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True)
 
             if result.stdout.strip():
                 # Commit changes
@@ -423,9 +417,7 @@ class WorkflowMonitor:
                         logger.info(f"✅ Workflow {run_id} completed successfully")
                         return True
                     else:
-                        logger.error(
-                            f"❌ Workflow {run_id} failed with conclusion: {conclusion}"
-                        )
+                        logger.error(f"❌ Workflow {run_id} failed with conclusion: {conclusion}")
                         return False
 
                 time.sleep(30)  # Wait 30 seconds before checking again
@@ -464,9 +456,7 @@ class WorkflowMonitor:
 
             # Analyze and fix issues
             for run in failed_runs:
-                logger.info(
-                    f"🔍 Analyzing failed workflow: {run.name} (ID: {run.run_id})"
-                )
+                logger.info(f"🔍 Analyzing failed workflow: {run.name} (ID: {run.run_id})")
 
                 # Get logs
                 logs = self.get_workflow_logs(run.run_id)
@@ -497,9 +487,7 @@ class WorkflowMonitor:
 
                 # If no specific issues found, try general fixes
                 if not issues:
-                    logger.info(
-                        "No specific issues identified, applying general fixes..."
-                    )
+                    logger.info("No specific issues identified, applying general fixes...")
                     fixes_applied |= self.fix_dependency_issues()
                     fixes_applied |= self.fix_test_issues()
                     fixes_applied |= self.fix_linting_issues()
@@ -542,9 +530,7 @@ def main():
 
     # Get repository info from git
     try:
-        result = subprocess.run(
-            ["git", "remote", "get-url", "origin"], capture_output=True, text=True
-        )
+        result = subprocess.run(["git", "remote", "get-url", "origin"], capture_output=True, text=True)
         remote_url = result.stdout.strip()
 
         # Parse repository owner and name

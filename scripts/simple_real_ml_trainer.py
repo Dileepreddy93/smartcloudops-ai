@@ -2,9 +2,9 @@
 """Simple ML Trainer"""
 
 
+import json
 import os
 import time
-import json
 from datetime import datetime
 
 

@@ -2,9 +2,9 @@
 """
 Simple mock training script for tests.
 """
+import argparse
 import os
 import pickle
-import argparse
 
 
 def main(save_path: str | None = None):

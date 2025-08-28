@@ -251,3 +251,6 @@ ERROR tests/phase_3/test_ml_inference.py
 2025-08-28 13:08:13,589 - INFO - 🚀 Starting continuous workflow monitoring...
 2025-08-28 13:08:13,589 - ERROR - ❌ GITHUB_TOKEN environment variable not set
 2025-08-28 13:08:13,589 - ERROR - ❌ Failed to initialize monitor
+2025-08-28 13:09:35,647 - INFO - 🚀 Starting continuous workflow monitoring...
+2025-08-28 13:09:35,647 - ERROR - ❌ GITHUB_TOKEN environment variable not set
+2025-08-28 13:09:35,647 - ERROR - ❌ Failed to initialize monitor

@@ -7,12 +7,11 @@ This script performs a complete security audit and fixes all identified vulnerab
 """
 
 
-import os
-import time
 import json
+import os
 import re
 import secrets
-
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
@@ -57,10 +56,7 @@ class SecurityAuditor:
                 ".env",
             ]:
                 # Skip virtual environment and cache directories
-                if any(
-                    skip_dir in str(file_path)
-                    for skip_dir in [".venv", "venv", "__pycache__", ".git"]
-                ):
+                if any(skip_dir in str(file_path) for skip_dir in [".venv", "venv", "__pycache__", ".git"]):
                     continue
 
                 try:
@@ -70,9 +66,7 @@ class SecurityAuditor:
                         for match in matches:
                             vulnerable_files.append(
                                 {
-                                    "file": str(
-                                        file_path.relative_to(self.project_root)
-                                    ),
+                                    "file": str(file_path.relative_to(self.project_root)),
                                     "line": content[: match.start()].count("\n") + 1,
                                     "pattern": pattern,
                                     "match": match.group(),
@@ -108,10 +102,7 @@ class SecurityAuditor:
                 missing_vars.append(var)
             elif len(value) < 32:
                 weak_vars.append(f"{var} (length: {len(value)})")
-            elif any(
-                pattern in value.lower()
-                for pattern in ["demo", "test", "default", "password", "123"]
-            ):
+            elif any(pattern in value.lower() for pattern in ["demo", "test", "default", "password", "123"]):
                 weak_vars.append(f"{var} (contains insecure pattern)")
 
         return {
@@ -186,10 +177,7 @@ class SecurityAuditor:
         issues = []
 
         for file_path in self.project_root.rglob("*.py"):
-            if any(
-                skip_dir in str(file_path)
-                for skip_dir in [".venv", "venv", "__pycache__", ".git"]
-            ):
+            if any(skip_dir in str(file_path) for skip_dir in [".venv", "venv", "__pycache__", ".git"]):
                 continue
 
             try:
@@ -407,34 +395,18 @@ MOCK_AWS_SERVICE=False
         report = {
             "summary": {
                 "total_issues": results["total_issues"],
-                "critical_issues": len(
-                    [
-                        i
-                        for i in results["hardcoded_secrets"]
-                        if i["severity"] == "CRITICAL"
-                    ]
-                ),
+                "critical_issues": len([i for i in results["hardcoded_secrets"] if i["severity"] == "CRITICAL"]),
                 "high_issues": len(
-                    [
-                        i
-                        for i in results["hardcoded_secrets"]
-                        + results["file_permissions"]
-                        if i["severity"] == "HIGH"
-                    ]
+                    [i for i in results["hardcoded_secrets"] + results["file_permissions"] if i["severity"] == "HIGH"]
                 ),
-                "medium_issues": len(
-                    [i for i in results["code_quality"] if i["severity"] == "MEDIUM"]
-                ),
+                "medium_issues": len([i for i in results["code_quality"] if i["severity"] == "MEDIUM"]),
             },
             "details": results,
             "recommendations": self._generate_recommendations(results),
         }
 
         # Save report
-        report_file = (
-            self.project_root
-            / f"security_audit_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        )
+        report_file = self.project_root / f"security_audit_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         with open(report_file, "w") as f:
             json.dump(report, f, indent=2)
 
@@ -455,17 +427,13 @@ MOCK_AWS_SERVICE=False
         recommendations = []
 
         if results["hardcoded_secrets"]:
-            recommendations.append(
-                "Remove all hardcoded secrets and use environment variables"
-            )
+            recommendations.append("Remove all hardcoded secrets and use environment variables")
 
         if results["environment_variables"]["missing"]:
             recommendations.append("Set all required environment variables")
 
         if results["environment_variables"]["weak"]:
-            recommendations.append(
-                "Use stronger passwords and keys (minimum 32 characters)"
-            )
+            recommendations.append("Use stronger passwords and keys (minimum 32 characters)")
 
         if results["file_permissions"]:
             recommendations.append("Fix file permissions for sensitive files")
@@ -474,9 +442,7 @@ MOCK_AWS_SERVICE=False
             recommendations.append("Update vulnerable dependencies")
 
         if results["code_quality"]:
-            recommendations.append(
-                "Fix code quality issues and potential vulnerabilities"
-            )
+            recommendations.append("Fix code quality issues and potential vulnerabilities")
 
         return recommendations
 

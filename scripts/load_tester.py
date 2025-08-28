@@ -7,15 +7,12 @@ Comprehensive load testing to validate 10-50 user capacity.
 Identifies performance bottlenecks before production deployment.
 """
 
-import os
-import logging
-import time
-import json
 import asyncio
-
-
+import json
+import logging
+import os
 import statistics
-
+import time
 from datetime import datetime
 from typing import Any, Dict, List
 
@@ -38,9 +35,7 @@ class LoadTester:
             level=logging.INFO,
             format="%(asctime)s - %(levelname)s - %(message)s",
             handlers=[
-                logging.FileHandler(
-                    f'load_test_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'
-                ),
+                logging.FileHandler(f'load_test_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'),
                 logging.StreamHandler(),
             ],
         )
@@ -61,9 +56,7 @@ class LoadTester:
         start_time = time.time()
         try:
             if method.upper() == "GET":
-                async with session.get(
-                    f"{self.base_url}{endpoint}", headers=headers
-                ) as response:
+                async with session.get(f"{self.base_url}{endpoint}", headers=headers) as response:
                     response_time = time.time() - start_time
                     content = await response.text()
                     return {
@@ -76,9 +69,7 @@ class LoadTester:
                         "timestamp": datetime.now().isoformat(),
                     }
             else:
-                async with session.post(
-                    f"{self.base_url}{endpoint}", headers=headers, json=data
-                ) as response:
+                async with session.post(f"{self.base_url}{endpoint}", headers=headers, json=data) as response:
                     response_time = time.time() - start_time
                     content = await response.text()
                     return {
@@ -102,9 +93,7 @@ class LoadTester:
                 "timestamp": datetime.now().isoformat(),
             }
 
-    async def simulate_user_session(
-        self, session: aiohttp.ClientSession, user_id: int
-    ) -> List[Dict[str, Any]]:
+    async def simulate_user_session(self, session: aiohttp.ClientSession, user_id: int) -> List[Dict[str, Any]]:
         """Simulate a realistic user session"""
         session_results = []
 
@@ -138,9 +127,7 @@ class LoadTester:
         ]
 
         for step in workflows:
-            result = await self.make_request(
-                session, step["endpoint"], step.get("method", "GET"), step.get("data")
-            )
+            result = await self.make_request(session, step["endpoint"], step.get("method", "GET"), step.get("data"))
             result["user_id"] = user_id
             result["step"] = step["endpoint"]
             session_results.append(result)
@@ -152,36 +139,26 @@ class LoadTester:
 
     async def run_concurrent_users(self, num_users: int, duration_seconds: int = 60):
         """Run load test with concurrent users"""
-        self.logger.info(
-            f"Starting load test: {num_users} concurrent users for {duration_seconds}s"
-        )
+        self.logger.info(f"Starting load test: {num_users} concurrent users for {duration_seconds}s")
 
         connector = aiohttp.TCPConnector(limit=100, limit_per_host=50)
         timeout = aiohttp.ClientTimeout(total=30)
 
-        async with aiohttp.ClientSession(
-            connector=connector, timeout=timeout
-        ) as session:
+        async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
             start_time = time.time()
 
             # Start monitoring system resources
-            resource_monitor = asyncio.create_task(
-                self.monitor_system_resources(duration_seconds)
-            )
+            resource_monitor = asyncio.create_task(self.monitor_system_resources(duration_seconds))
 
             while time.time() - start_time < duration_seconds:
                 # Create batch of concurrent users
                 batch_tasks = []
                 for user_id in range(num_users):
-                    task = asyncio.create_task(
-                        self.simulate_user_session(session, user_id)
-                    )
+                    task = asyncio.create_task(self.simulate_user_session(session, user_id))
                     batch_tasks.append(task)
 
                 # Wait for batch to complete
-                batch_results = await asyncio.gather(
-                    *batch_tasks, return_exceptions=True
-                )
+                batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
 
                 # Process results
                 for result in batch_results:
@@ -222,14 +199,10 @@ class LoadTester:
             pass
 
         # Save resource data
-        with open(
-            f'resource_usage_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json', "w"
-        ) as f:
+        with open(f'resource_usage_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json', "w") as f:
             json.dump(resource_data, f, indent=2)
 
-        self.logger.info(
-            f"Resource monitoring data saved ({len(resource_data)} samples)"
-        )
+        self.logger.info(f"Resource monitoring data saved ({len(resource_data)} samples)")
 
     def analyze_results(self) -> Dict[str, Any]:
         """Analyze load test results"""
@@ -252,16 +225,8 @@ class LoadTester:
                 "max": max(response_times) if response_times else 0,
                 "mean": statistics.mean(response_times) if response_times else 0,
                 "median": statistics.median(response_times) if response_times else 0,
-                "p95": (
-                    statistics.quantiles(response_times, n=20)[18]
-                    if len(response_times) > 20
-                    else 0
-                ),
-                "p99": (
-                    statistics.quantiles(response_times, n=100)[98]
-                    if len(response_times) > 100
-                    else 0
-                ),
+                "p95": (statistics.quantiles(response_times, n=20)[18] if len(response_times) > 20 else 0),
+                "p99": (statistics.quantiles(response_times, n=100)[98] if len(response_times) > 100 else 0),
             },
             "requests_per_second": len(self.results)
             / (max([r["timestamp"] for r in self.results]) if self.results else 1),
@@ -279,9 +244,7 @@ class LoadTester:
                 "total_requests": len(endpoint_results),
                 "successful_requests": len(endpoint_successful),
                 "success_rate": len(endpoint_successful) / len(endpoint_results) * 100,
-                "avg_response_time": (
-                    statistics.mean(endpoint_times) if endpoint_times else 0
-                ),
+                "avg_response_time": (statistics.mean(endpoint_times) if endpoint_times else 0),
                 "max_response_time": max(endpoint_times) if endpoint_times else 0,
             }
 
@@ -332,9 +295,7 @@ Requests/Second: {stats['requests_per_second']:.1f}
             report += "⚠️  WARNING: Success rate below 95% - investigate error causes\n"
 
         if stats["response_times"]["p95"] > 5:
-            report += (
-                "⚠️  WARNING: 95th percentile response time > 5s - performance issue\n"
-            )
+            report += "⚠️  WARNING: 95th percentile response time > 5s - performance issue\n"
 
         if stats["response_times"]["mean"] > 2:
             report += "⚠️  WARNING: Average response time > 2s - optimization needed\n"

@@ -149,9 +149,7 @@ def train_ml_model(
             ml_engine.set_hyperparameters(hyperparameters)
 
         # Train model
-        training_result = ml_engine._train_model(
-            model_type=model_type, data_path=training_data_path
-        )
+        training_result = ml_engine._train_model(model_type=model_type, data_path=training_data_path)
 
         # Cache training results
         cache_service.set(
@@ -161,9 +159,7 @@ def train_ml_model(
         )
 
         logger.info(f"ML model training completed: {model_type}")
-        return build_success_response(
-            data=training_result, message=f"ML model {model_type} trained successfully"
-        )
+        return build_success_response(data=training_result, message=f"ML model {model_type} trained successfully")
 
     except Exception as exc:
         logger.error(f"ML model training failed: {exc}")
@@ -171,9 +167,7 @@ def train_ml_model(
 
 
 @celery_app.task(base=SmartCloudOpsTask, bind=True, max_retries=3)
-def process_metrics_data(
-    self, metrics_data: List[Dict[str, Any]], operation: str = "analyze"
-) -> Dict[str, Any]:
+def process_metrics_data(self, metrics_data: List[Dict[str, Any]], operation: str = "analyze") -> Dict[str, Any]:
     """
     Process metrics data in background.
 
@@ -202,9 +196,7 @@ def process_metrics_data(
         for metric in metrics_data:
             try:
                 # Validate metric data
-                if not all(
-                    key in metric for key in ["cpu_usage", "memory_usage", "timestamp"]
-                ):
+                if not all(key in metric for key in ["cpu_usage", "memory_usage", "timestamp"]):
                     continue
 
                 # Detect anomalies
@@ -227,12 +219,8 @@ def process_metrics_data(
             ttl=3600,
         )
 
-        logger.info(
-            f"Metrics processing completed: {results['processed_count']} processed"
-        )
-        return build_success_response(
-            data=results, message=f"Processed {results['processed_count']} metrics"
-        )
+        logger.info(f"Metrics processing completed: {results['processed_count']} processed")
+        return build_success_response(data=results, message=f"Processed {results['processed_count']} metrics")
 
     except Exception as exc:
         logger.error(f"Metrics processing failed: {exc}")
@@ -263,9 +251,7 @@ def system_maintenance(self, maintenance_type: str = "cleanup") -> Dict[str, Any
         if maintenance_type == "cleanup":
             # Clean up old cache entries
             deleted_count = cache_service.clear("smartcloudops:old:*")
-            results["completed_tasks"].append(
-                f"Cleaned {deleted_count} old cache entries"
-            )
+            results["completed_tasks"].append(f"Cleaned {deleted_count} old cache entries")
 
             # Clean up old logs
             log_cleanup_result = cleanup_old_logs()
@@ -295,9 +281,7 @@ def system_maintenance(self, maintenance_type: str = "cleanup") -> Dict[str, Any
         )
 
         logger.info(f"System maintenance completed: {maintenance_type}")
-        return build_success_response(
-            data=results, message=f"System maintenance {maintenance_type} completed"
-        )
+        return build_success_response(data=results, message=f"System maintenance {maintenance_type} completed")
 
     except Exception as exc:
         logger.error(f"System maintenance failed: {exc}")
@@ -325,9 +309,7 @@ def send_notifications(
         Notification results
     """
     try:
-        logger.info(
-            f"Sending {notification_type} notification to {len(recipients)} recipients"
-        )
+        logger.info(f"Sending {notification_type} notification to {len(recipients)} recipients")
 
         results = {
             "notification_type": notification_type,
@@ -344,9 +326,7 @@ def send_notifications(
                     results["sent_count"] += 1
                 except Exception as e:
                     results["failed_count"] += 1
-                    results["errors"].append(
-                        f"Failed to send email to {recipient}: {e}"
-                    )
+                    results["errors"].append(f"Failed to send email to {recipient}: {e}")
 
         elif notification_type == "slack":
             try:
@@ -363,9 +343,7 @@ def send_notifications(
                     results["sent_count"] += 1
                 except Exception as e:
                     results["failed_count"] += 1
-                    results["errors"].append(
-                        f"Failed to send webhook to {webhook_url}: {e}"
-                    )
+                    results["errors"].append(f"Failed to send webhook to {webhook_url}: {e}")
 
         # Cache notification results
         cache_service.set(
@@ -374,12 +352,8 @@ def send_notifications(
             ttl=3600,
         )
 
-        logger.info(
-            f"Notification sent: {results['sent_count']} successful, {results['failed_count']} failed"
-        )
-        return build_success_response(
-            data=results, message=f"Sent {results['sent_count']} notifications"
-        )
+        logger.info(f"Notification sent: {results['sent_count']} successful, {results['failed_count']} failed")
+        return build_success_response(data=results, message=f"Sent {results['sent_count']} notifications")
 
     except Exception as exc:
         logger.error(f"Notification sending failed: {exc}")
@@ -459,9 +433,7 @@ def backup_ml_models() -> str:
             return "No ML models directory found"
 
         # Create backup directory
-        backup_dir = Path("backups") / datetime.now(timezone.utc).strftime(
-            "%Y%m%d_%H%M%S"
-        )
+        backup_dir = Path("backups") / datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         backup_dir.mkdir(parents=True, exist_ok=True)
 
         # Copy models
@@ -478,9 +450,7 @@ def backup_configuration() -> str:
     """Backup configuration files."""
     try:
         config_files = [".env", "config.py", "requirements.txt"]
-        backup_dir = Path("backups") / datetime.now(timezone.utc).strftime(
-            "%Y%m%d_%H%M%S"
-        )
+        backup_dir = Path("backups") / datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         backup_dir.mkdir(parents=True, exist_ok=True)
 
         copied_count = 0
@@ -586,25 +556,19 @@ def check_memory_usage() -> bool:
         return False
 
 
-def send_email_notification(
-    recipient: str, message: str, data: Optional[Dict[str, Any]] = None
-):
+def send_email_notification(recipient: str, message: str, data: Optional[Dict[str, Any]] = None):
     """Send email notification."""
     # Implement email sending logic
     logger.info(f"Email notification sent to {recipient}")
 
 
-def send_slack_notification(
-    webhook_urls: List[str], message: str, data: Optional[Dict[str, Any]] = None
-):
+def send_slack_notification(webhook_urls: List[str], message: str, data: Optional[Dict[str, Any]] = None):
     """Send Slack notification."""
     # Implement Slack webhook sending logic
     logger.info(f"Slack notification sent to {len(webhook_urls)} webhooks")
 
 
-def send_webhook_notification(
-    webhook_url: str, message: str, data: Optional[Dict[str, Any]] = None
-):
+def send_webhook_notification(webhook_url: str, message: str, data: Optional[Dict[str, Any]] = None):
     """Send webhook notification."""
     # Implement webhook sending logic
     logger.info(f"Webhook notification sent to {webhook_url}")
@@ -623,10 +587,7 @@ def schedule_periodic_tasks():
     # Schedule system maintenance daily at 2 AM
     system_maintenance.apply_async(
         kwargs={"maintenance_type": "cleanup"},
-        eta=datetime.now(timezone.utc).replace(
-            hour=2, minute=0, second=0, microsecond=0
-        )
-        + timedelta(days=1),
+        eta=datetime.now(timezone.utc).replace(hour=2, minute=0, second=0, microsecond=0) + timedelta(days=1),
     )
 
 

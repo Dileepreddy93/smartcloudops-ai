@@ -1,42 +1,55 @@
 name: Simple Test Workflow
-
-on:
+true:
   push:
-    branches: [ main ]
+    branches:
+    - main
   pull_request:
-    branches: [ main ]
-
+    branches:
+    - main
 jobs:
   test-simple:
     name: Simple Test
     runs-on: ubuntu-latest
-    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-        
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: '| ${{ runner.os }}-pip-'
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
+      run: 'python -m pip install --upgrade pip
+
         pip install -r app/requirements.txt
-        
+
+        '
     - name: Test basic functionality
-      run: |
-        echo "Testing basic functionality..."
-        python -c "print('✅ Python is working')"
-        
+      run: "echo \"Testing basic functionality...\"\npython -c \"print('\u2705 Python\
+        \ is working')\"\n"
     - name: Test Flask import
-      run: |
-        echo "Testing Flask import..."
-        cd app
-        python -c "from main import create_app; print('✅ Flask import successful')"
-        
+      run: "echo \"Testing Flask import...\"\ncd app\npython -c \"from main import\
+        \ create_app; print('\u2705 Flask import successful')\"\n"
     - name: Run basic pytest
-      run: |
-        echo "Running basic pytest..."
+      run: 'echo "Running basic pytest..."
+
         python -m pytest tests/phase_1/ -v --tb=short
+
+        '
+'on':
+  push:
+    branches:
+    - main
+    - develop
+  pull_request:
+    branches:
+    - main
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write

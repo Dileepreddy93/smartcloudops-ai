@@ -1,0 +1,130 @@
+name: Continuous Workflow Monitor
+
+on:
+  schedule:
+    # Run every 30 minutes
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+    # Allow manual triggering
+  workflow_run:
+    # Trigger when other workflows fail
+    workflows: ["CI/CD Pipeline", "Code Quality & Security", "Infrastructure Validation", "Simple Test Workflow"]
+    types: [completed]
+    branches: [main, develop, cursor/*]
+
+env:
+  PYTHON_VERSION: '3.11'
+  CHECK_INTERVAL: '120'  # 2 minutes for GitHub Actions
+  MAX_RETRIES: '3'
+
+jobs:
+  continuous-monitor:
+    name: Continuous Workflow Monitor
+    runs-on: ubuntu-latest
+    timeout-minutes: 60  # Maximum 1 hour runtime
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests pyyaml python-dotenv
+    
+    - name: Configure Git
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+    
+    - name: Run continuous workflow monitor
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+        GITHUB_REPOSITORY_NAME: ${{ github.event.repository.name }}
+        CHECK_INTERVAL: ${{ env.CHECK_INTERVAL }}
+        MAX_RETRIES: ${{ env.MAX_RETRIES }}
+      run: |
+        echo "🚀 Starting continuous workflow monitoring..."
+        echo "📊 Check interval: ${CHECK_INTERVAL} seconds"
+        echo "🔄 Max retries: ${MAX_RETRIES}"
+        echo "📁 Repository: ${GITHUB_REPOSITORY_OWNER}/${GITHUB_REPOSITORY_NAME}"
+        
+        # Run the continuous monitor
+        python3 scripts/continuous_workflow_monitor.py
+    
+    - name: Upload monitoring reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: continuous-monitoring-reports
+        path: |
+          continuous_monitoring_report_*.json
+          continuous_monitoring_final_report.json
+          continuous_workflow_monitor.log
+    
+    - name: Create monitoring summary
+      if: always()
+      run: |
+        echo "📊 Continuous Monitoring Summary" >> $GITHUB_STEP_SUMMARY
+        echo "================================" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ -f "continuous_monitoring_final_report.json" ]; then
+          echo "✅ Monitoring completed successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Extract summary from final report
+          TOTAL_ISSUES=$(jq -r '.total_issues_found' continuous_monitoring_final_report.json 2>/dev/null || echo "0")
+          TOTAL_FIXES=$(jq -r '.total_fixes_applied' continuous_monitoring_final_report.json 2>/dev/null || echo "0")
+          SUCCESS_RATE=$(jq -r '.success_rate' continuous_monitoring_final_report.json 2>/dev/null || echo "0%")
+          
+          echo "📈 **Statistics:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Total Issues Found: $TOTAL_ISSUES" >> $GITHUB_STEP_SUMMARY
+          echo "- Total Fixes Applied: $TOTAL_FIXES" >> $GITHUB_STEP_SUMMARY
+          echo "- Success Rate: $SUCCESS_RATE" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Show issues by type
+          echo "🔍 **Issues by Type:**" >> $GITHUB_STEP_SUMMARY
+          jq -r '.issues_by_type | to_entries[] | "- " + .key + ": " + (.value | tostring)' continuous_monitoring_final_report.json 2>/dev/null || echo "- No issues found" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Show fixes by type
+          echo "🔧 **Fixes by Type:**" >> $GITHUB_STEP_SUMMARY
+          jq -r '.fixes_by_type | to_entries[] | "- " + .key + ": " + (.value | tostring)' continuous_monitoring_final_report.json 2>/dev/null || echo "- No fixes applied" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ Monitoring failed or was interrupted" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "📁 **Reports:**" >> $GITHUB_STEP_SUMMARY
+        echo "- Continuous monitoring reports are available as artifacts" >> $GITHUB_STEP_SUMMARY
+        echo "- Check the 'continuous-monitoring-reports' artifact for detailed logs" >> $GITHUB_STEP_SUMMARY
+    
+    - name: Create issue for persistent failures
+      if: failure()
+      run: |
+        # Check if there are persistent issues that need manual attention
+        if [ -f "continuous_monitoring_final_report.json" ]; then
+          MANUAL_ISSUES=$(jq -r '.issues[] | select(.status == "manual_fix_required") | .issue_type' continuous_monitoring_final_report.json 2>/dev/null | wc -l)
+          
+          if [ "$MANUAL_ISSUES" -gt 0 ]; then
+            echo "⚠️ Found $MANUAL_ISSUES issues requiring manual attention"
+            echo "Creating GitHub issue for manual intervention..."
+            
+            # This would create a GitHub issue, but requires additional permissions
+            # For now, we'll just log the information
+            echo "Manual intervention required for the following issues:"
+            jq -r '.issues[] | select(.status == "manual_fix_required") | "- " + .workflow_name + ": " + .issue_type + " - " + .error_message' continuous_monitoring_final_report.json 2>/dev/null
+          fi
+        fi

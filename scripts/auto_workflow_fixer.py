@@ -35,7 +35,10 @@ from typing import Dict, List, Optional, Tuple
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.FileHandler("workflow_monitor.log"), logging.StreamHandler(sys.stdout)],
+    handlers=[
+        logging.FileHandler("workflow_monitor.log"),
+        logging.StreamHandler(sys.stdout),
+    ],
 )
 logger = logging.getLogger(__name__)
 
@@ -61,7 +64,10 @@ class WorkflowMonitor:
         self.repo_name = repo_name
         self.token = token
         self.api_base = f"https://api.github.com/repos/{repo_owner}/{repo_name}"
-        self.headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
+        self.headers = {
+            "Authorization": f"token {token}",
+            "Accept": "application/vnd.github.v3+json",
+        }
         self.fixes_applied = []
         self.max_retries = 5
         self.retry_delay = 30  # seconds
@@ -116,10 +122,27 @@ class WorkflowMonitor:
                 "requirements.txt",
                 "package.json",
             ],
-            "test_failures": ["FAILED", "AssertionError", "pytest", "test_", "Assertion failed"],
+            "test_failures": [
+                "FAILED",
+                "AssertionError",
+                "pytest",
+                "test_",
+                "Assertion failed",
+            ],
             "linting_issues": ["flake8", "black", "isort", "mypy", "eslint", "lint"],
-            "security_issues": ["bandit", "safety", "trivy", "vulnerability", "security"],
-            "build_issues": ["docker build", "docker run", "Build failed", "build error"],
+            "security_issues": [
+                "bandit",
+                "safety",
+                "trivy",
+                "vulnerability",
+                "security",
+            ],
+            "build_issues": [
+                "docker build",
+                "docker run",
+                "Build failed",
+                "build error",
+            ],
         }
 
         for category, patterns_list in patterns.items():
@@ -136,16 +159,28 @@ class WorkflowMonitor:
         try:
             # Update Python dependencies
             logger.info("Updating Python dependencies...")
-            subprocess.run(["python", "-m", "pip", "install", "--upgrade", "pip"], check=True, capture_output=True)
+            subprocess.run(
+                ["python", "-m", "pip", "install", "--upgrade", "pip"],
+                check=True,
+                capture_output=True,
+            )
 
             # Install/update requirements
             if os.path.exists("app/requirements.txt"):
-                subprocess.run(["pip", "install", "-r", "app/requirements.txt"], check=True, capture_output=True)
+                subprocess.run(
+                    ["pip", "install", "-r", "app/requirements.txt"],
+                    check=True,
+                    capture_output=True,
+                )
 
             # Update Node.js dependencies
             if os.path.exists("frontend/package.json"):
                 logger.info("Updating Node.js dependencies...")
-                subprocess.run(["npm", "install", "--prefix", "frontend"], check=True, capture_output=True)
+                subprocess.run(
+                    ["npm", "install", "--prefix", "frontend"],
+                    check=True,
+                    capture_output=True,
+                )
 
             # Install additional common dependencies
             additional_packages = [
@@ -164,7 +199,9 @@ class WorkflowMonitor:
 
             for package in additional_packages:
                 try:
-                    subprocess.run(["pip", "install", package], check=True, capture_output=True)
+                    subprocess.run(
+                        ["pip", "install", package], check=True, capture_output=True
+                    )
                 except subprocess.CalledProcessError:
                     logger.warning(f"Failed to install {package}")
 
@@ -202,7 +239,14 @@ class WorkflowMonitor:
                 ["python", "-m", "pytest", "tests/phase_1/", "-v", "--tb=short"],
                 ["python", "-m", "pytest", "tests/phase_2/", "-v", "--tb=short"],
                 ["python", "-m", "pytest", "tests/phase_3/", "-v", "--tb=short"],
-                ["python", "-m", "pytest", "tests/test_security_fixes.py", "-v", "--tb=short"],
+                [
+                    "python",
+                    "-m",
+                    "pytest",
+                    "tests/test_security_fixes.py",
+                    "-v",
+                    "--tb=short",
+                ],
             ]
 
             for cmd in test_commands:
@@ -244,7 +288,11 @@ class WorkflowMonitor:
             # Frontend linting fixes
             if os.path.exists("frontend/package.json"):
                 try:
-                    subprocess.run(["npm", "run", "lint:fix", "--prefix", "frontend"], check=True, capture_output=True)
+                    subprocess.run(
+                        ["npm", "run", "lint:fix", "--prefix", "frontend"],
+                        check=True,
+                        capture_output=True,
+                    )
                 except subprocess.CalledProcessError:
                     logger.warning("Frontend linting fix failed")
 
@@ -263,14 +311,22 @@ class WorkflowMonitor:
         try:
             # Run security audit
             if os.path.exists("scripts/security_audit.py"):
-                subprocess.run(["python", "scripts/security_audit.py"], check=True, capture_output=True)
+                subprocess.run(
+                    ["python", "scripts/security_audit.py"],
+                    check=True,
+                    capture_output=True,
+                )
 
             # Update security dependencies
             security_packages = ["bandit", "safety", "cryptography", "PyJWT", "bcrypt"]
 
             for package in security_packages:
                 try:
-                    subprocess.run(["pip", "install", "--upgrade", package], check=True, capture_output=True)
+                    subprocess.run(
+                        ["pip", "install", "--upgrade", package],
+                        check=True,
+                        capture_output=True,
+                    )
                 except subprocess.CalledProcessError:
                     logger.warning(f"Failed to update {package}")
 
@@ -290,11 +346,19 @@ class WorkflowMonitor:
             # Check Dockerfile
             if os.path.exists("Dockerfile"):
                 # Validate Dockerfile syntax
-                subprocess.run(["docker", "build", "--dry-run", "."], check=True, capture_output=True)
+                subprocess.run(
+                    ["docker", "build", "--dry-run", "."],
+                    check=True,
+                    capture_output=True,
+                )
 
             # Build frontend
             if os.path.exists("frontend/package.json"):
-                subprocess.run(["npm", "run", "build", "--prefix", "frontend"], check=True, capture_output=True)
+                subprocess.run(
+                    ["npm", "run", "build", "--prefix", "frontend"],
+                    check=True,
+                    capture_output=True,
+                )
 
             self.fixes_applied.append("build_issues")
             logger.info("✅ Build issues addressed")
@@ -313,12 +377,18 @@ class WorkflowMonitor:
             subprocess.run(["git", "add", "."], check=True, capture_output=True)
 
             # Check if there are changes to commit
-            result = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True)
+            result = subprocess.run(
+                ["git", "status", "--porcelain"], capture_output=True, text=True
+            )
 
             if result.stdout.strip():
                 # Commit changes
                 commit_message = f"🔧 Auto-fix: {', '.join(self.fixes_applied)} - {datetime.now().isoformat()}"
-                subprocess.run(["git", "commit", "-m", commit_message], check=True, capture_output=True)
+                subprocess.run(
+                    ["git", "commit", "-m", commit_message],
+                    check=True,
+                    capture_output=True,
+                )
 
                 # Push changes
                 subprocess.run(["git", "push"], check=True, capture_output=True)
@@ -353,7 +423,9 @@ class WorkflowMonitor:
                         logger.info(f"✅ Workflow {run_id} completed successfully")
                         return True
                     else:
-                        logger.error(f"❌ Workflow {run_id} failed with conclusion: {conclusion}")
+                        logger.error(
+                            f"❌ Workflow {run_id} failed with conclusion: {conclusion}"
+                        )
                         return False
 
                 time.sleep(30)  # Wait 30 seconds before checking again
@@ -392,7 +464,9 @@ class WorkflowMonitor:
 
             # Analyze and fix issues
             for run in failed_runs:
-                logger.info(f"🔍 Analyzing failed workflow: {run.name} (ID: {run.run_id})")
+                logger.info(
+                    f"🔍 Analyzing failed workflow: {run.name} (ID: {run.run_id})"
+                )
 
                 # Get logs
                 logs = self.get_workflow_logs(run.run_id)
@@ -423,7 +497,9 @@ class WorkflowMonitor:
 
                 # If no specific issues found, try general fixes
                 if not issues:
-                    logger.info("No specific issues identified, applying general fixes...")
+                    logger.info(
+                        "No specific issues identified, applying general fixes..."
+                    )
                     fixes_applied |= self.fix_dependency_issues()
                     fixes_applied |= self.fix_test_issues()
                     fixes_applied |= self.fix_linting_issues()
@@ -466,7 +542,9 @@ def main():
 
     # Get repository info from git
     try:
-        result = subprocess.run(["git", "remote", "get-url", "origin"], capture_output=True, text=True)
+        result = subprocess.run(
+            ["git", "remote", "get-url", "origin"], capture_output=True, text=True
+        )
         remote_url = result.stdout.strip()
 
         # Parse repository owner and name

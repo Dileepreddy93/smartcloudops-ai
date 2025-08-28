@@ -41,8 +41,16 @@ TEST_CONFIG = {
         "ml": os.getenv("ML_API_KEY", "test-ml-key"),
         "readonly": os.getenv("READONLY_API_KEY", "test-readonly-key"),
     },
-    "load_test": {"concurrent_users": 50, "duration_seconds": 60, "ramp_up_seconds": 10},
-    "performance_thresholds": {"response_time_ms": 500, "error_rate_percent": 1.0, "throughput_rps": 100},
+    "load_test": {
+        "concurrent_users": 50,
+        "duration_seconds": 60,
+        "ramp_up_seconds": 10,
+    },
+    "performance_thresholds": {
+        "response_time_ms": 500,
+        "error_rate_percent": 1.0,
+        "throughput_rps": 100,
+    },
 }
 
 
@@ -67,7 +75,12 @@ class TestBase:
 
     def setup_test_data(self):
         """Setup test data for tests."""
-        self.test_metrics = {"cpu_usage": 75.5, "memory_usage": 60.2, "disk_usage": 45.8, "network_io": 1024.5}
+        self.test_metrics = {
+            "cpu_usage": 75.5,
+            "memory_usage": 60.2,
+            "disk_usage": 45.8,
+            "network_io": 1024.5,
+        }
 
         self.test_user_id = "test-user-123"
         self.test_ab_test_id = "test-ab-123"
@@ -77,7 +90,9 @@ class TestBase:
         # Clean up any test data created during tests
         pass
 
-    def make_request(self, method: str, endpoint: str, api_key: str = None, data: Dict = None) -> requests.Response:
+    def make_request(
+        self, method: str, endpoint: str, api_key: str = None, data: Dict = None
+    ) -> requests.Response:
         """Make HTTP request with proper headers."""
         headers = {"Content-Type": "application/json"}
         if api_key:
@@ -152,7 +167,9 @@ class TestAPIEndpoints(TestBase):
 
     def test_health_endpoint(self):
         """Test health check endpoint."""
-        response = self.make_request("GET", "/health", api_key=TEST_CONFIG["api_keys"]["admin"])
+        response = self.make_request(
+            "GET", "/health", api_key=TEST_CONFIG["api_keys"]["admin"]
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -161,7 +178,9 @@ class TestAPIEndpoints(TestBase):
 
     def test_status_endpoint(self):
         """Test status endpoint."""
-        response = self.make_request("GET", "/status", api_key=TEST_CONFIG["api_keys"]["readonly"])
+        response = self.make_request(
+            "GET", "/status", api_key=TEST_CONFIG["api_keys"]["readonly"]
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -171,7 +190,9 @@ class TestAPIEndpoints(TestBase):
     def test_ml_prediction_endpoint(self):
         """Test ML prediction endpoint."""
         data = {"metrics": self.test_metrics}
-        response = self.make_request("POST", "/ml/predict", api_key=TEST_CONFIG["api_keys"]["ml"], data=data)
+        response = self.make_request(
+            "POST", "/ml/predict", api_key=TEST_CONFIG["api_keys"]["ml"], data=data
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -180,7 +201,9 @@ class TestAPIEndpoints(TestBase):
 
     def test_metrics_endpoint(self):
         """Test metrics endpoint."""
-        response = self.make_request("GET", "/metrics", api_key=TEST_CONFIG["api_keys"]["readonly"])
+        response = self.make_request(
+            "GET", "/metrics", api_key=TEST_CONFIG["api_keys"]["readonly"]
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -198,7 +221,9 @@ class TestAPIEndpoints(TestBase):
 
     def test_permission_denied(self):
         """Test that readonly keys cannot access admin endpoints."""
-        response = self.make_request("GET", "/admin/status", api_key=TEST_CONFIG["api_keys"]["readonly"])
+        response = self.make_request(
+            "GET", "/admin/status", api_key=TEST_CONFIG["api_keys"]["readonly"]
+        )
         assert response.status_code == 403
 
 
@@ -207,18 +232,38 @@ class TestSecurityVulnerabilities(TestBase):
 
     def test_sql_injection_prevention(self):
         """Test SQL injection prevention."""
-        malicious_data = {"metrics": {"cpu_usage": "'; DROP TABLE system_metrics; --", "memory_usage": 60.2}}
+        malicious_data = {
+            "metrics": {
+                "cpu_usage": "'; DROP TABLE system_metrics; --",
+                "memory_usage": 60.2,
+            }
+        }
 
-        response = self.make_request("POST", "/ml/predict", api_key=TEST_CONFIG["api_keys"]["ml"], data=malicious_data)
+        response = self.make_request(
+            "POST",
+            "/ml/predict",
+            api_key=TEST_CONFIG["api_keys"]["ml"],
+            data=malicious_data,
+        )
 
         # Should handle gracefully, not crash
         assert response.status_code in [200, 400, 422]
 
     def test_xss_prevention(self):
         """Test XSS prevention."""
-        malicious_data = {"metrics": {"cpu_usage": '<script>alert("xss")</script>', "memory_usage": 60.2}}
+        malicious_data = {
+            "metrics": {
+                "cpu_usage": '<script>alert("xss")</script>',
+                "memory_usage": 60.2,
+            }
+        }
 
-        response = self.make_request("POST", "/ml/predict", api_key=TEST_CONFIG["api_keys"]["ml"], data=malicious_data)
+        response = self.make_request(
+            "POST",
+            "/ml/predict",
+            api_key=TEST_CONFIG["api_keys"]["ml"],
+            data=malicious_data,
+        )
 
         # Should handle gracefully
         assert response.status_code in [200, 400, 422]
@@ -228,7 +273,9 @@ class TestSecurityVulnerabilities(TestBase):
         # Make many rapid requests
         responses = []
         for _ in range(100):
-            response = self.make_request("GET", "/status", api_key=TEST_CONFIG["api_keys"]["readonly"])
+            response = self.make_request(
+                "GET", "/status", api_key=TEST_CONFIG["api_keys"]["readonly"]
+            )
             responses.append(response.status_code)
 
         # Should have some rate limiting (429 responses)
@@ -246,7 +293,10 @@ class TestSecurityVulnerabilities(TestBase):
 
         for invalid_input in invalid_inputs:
             response = self.make_request(
-                "POST", "/ml/predict", api_key=TEST_CONFIG["api_keys"]["ml"], data=invalid_input
+                "POST",
+                "/ml/predict",
+                api_key=TEST_CONFIG["api_keys"]["ml"],
+                data=invalid_input,
             )
 
             # Should reject invalid input
@@ -254,7 +304,9 @@ class TestSecurityVulnerabilities(TestBase):
 
     def test_sensitive_data_exposure(self):
         """Test that sensitive data is not exposed."""
-        response = self.make_request("GET", "/status", api_key=TEST_CONFIG["api_keys"]["readonly"])
+        response = self.make_request(
+            "GET", "/status", api_key=TEST_CONFIG["api_keys"]["readonly"]
+        )
 
         data = response.json()
         sensitive_keys = ["password", "secret", "key", "token"]
@@ -271,19 +323,25 @@ class TestPerformanceLoad(TestBase):
     def test_single_request_performance(self):
         """Test single request performance."""
         start_time = time.time()
-        response = self.make_request("GET", "/status", api_key=TEST_CONFIG["api_keys"]["readonly"])
+        response = self.make_request(
+            "GET", "/status", api_key=TEST_CONFIG["api_keys"]["readonly"]
+        )
         end_time = time.time()
 
         response_time_ms = (end_time - start_time) * 1000
 
         assert response.status_code == 200
-        assert response_time_ms < TEST_CONFIG["performance_thresholds"]["response_time_ms"]
+        assert (
+            response_time_ms < TEST_CONFIG["performance_thresholds"]["response_time_ms"]
+        )
 
     def test_concurrent_requests(self):
         """Test concurrent request handling."""
 
         def make_concurrent_request():
-            return self.make_request("GET", "/status", api_key=TEST_CONFIG["api_keys"]["readonly"])
+            return self.make_request(
+                "GET", "/status", api_key=TEST_CONFIG["api_keys"]["readonly"]
+            )
 
         # Make concurrent requests
         with ThreadPoolExecutor(max_workers=10) as executor:
@@ -304,7 +362,9 @@ class TestPerformanceLoad(TestBase):
 
         while time.time() - start_time < TEST_CONFIG["load_test"]["duration_seconds"]:
             try:
-                response = self.make_request("GET", "/status", api_key=TEST_CONFIG["api_keys"]["readonly"])
+                response = self.make_request(
+                    "GET", "/status", api_key=TEST_CONFIG["api_keys"]["readonly"]
+                )
                 request_count += 1
 
                 if response.status_code != 200:
@@ -329,7 +389,9 @@ class TestPerformanceLoad(TestBase):
 
         def make_ml_request():
             data = {"metrics": self.test_metrics}
-            return self.make_request("POST", "/ml/predict", api_key=TEST_CONFIG["api_keys"]["ml"], data=data)
+            return self.make_request(
+                "POST", "/ml/predict", api_key=TEST_CONFIG["api_keys"]["ml"], data=data
+            )
 
         # Test ML pipeline with concurrent requests
         start_time = time.time()
@@ -454,17 +516,23 @@ def run_all_tests():
         test_instance.setup()
 
         # Run all test methods
-        test_methods = [method for method in dir(test_class) if method.startswith("test_")]
+        test_methods = [
+            method for method in dir(test_class) if method.startswith("test_")
+        ]
 
         for method_name in test_methods:
             try:
                 method = getattr(test_instance, method_name)
                 method()
                 print(f"  ✅ {method_name}")
-                test_results["unit_tests"].append({"test": method_name, "status": "PASS", "duration_ms": 0})
+                test_results["unit_tests"].append(
+                    {"test": method_name, "status": "PASS", "duration_ms": 0}
+                )
             except Exception as e:
                 print(f"  ❌ {method_name}: {e}")
-                test_results["unit_tests"].append({"test": method_name, "status": "FAIL", "error": str(e)})
+                test_results["unit_tests"].append(
+                    {"test": method_name, "status": "FAIL", "error": str(e)}
+                )
 
         test_instance.cleanup_test_data()
 
@@ -473,7 +541,9 @@ def run_all_tests():
     print("=" * 50)
 
     total_tests = len(test_results["unit_tests"])
-    passed_tests = sum(1 for test in test_results["unit_tests"] if test["status"] == "PASS")
+    passed_tests = sum(
+        1 for test in test_results["unit_tests"] if test["status"] == "PASS"
+    )
     failed_tests = total_tests - passed_tests
 
     print(f"Total Tests: {total_tests}")

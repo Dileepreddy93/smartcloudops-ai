@@ -6,20 +6,19 @@ SmartCloudOps AI - Database Connection Pooling
 Database connection pooling system for improved performance and resource management.
 """
 
+import atexit
+import logging
 import os
 import sys
-import logging
-import time
 import threading
-import atexit
-from app.utils.response import build_error_response, build_success_response
-from app.cache_service import cache_service
-
-
+import time
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+from app.cache_service import cache_service
+from app.utils.response import build_error_response, build_success_response
 
 try:
     import psycopg2
@@ -81,7 +80,9 @@ class DatabasePool:
             elif self.db_type == "mysql" and MYSQL_AVAILABLE:
                 self._init_mysql_pool()
             else:
-                logger.error(f"Database type {self.db_type} not supported or not available")
+                logger.error(
+                    f"Database type {self.db_type} not supported or not available"
+                )
                 raise ValueError(f"Unsupported database type: {self.db_type}")
 
             logger.info(f"Database pool initialized for {self.db_type}")
@@ -118,7 +119,9 @@ class DatabasePool:
                 application_name="SmartCloudOps",
             )
 
-            logger.info(f"PostgreSQL pool created: {min_connections}-{max_connections} connections")
+            logger.info(
+                f"PostgreSQL pool created: {min_connections}-{max_connections} connections"
+            )
 
         except Exception as e:
             logger.error(f"Failed to create PostgreSQL pool: {e}")
@@ -208,7 +211,9 @@ class DatabasePool:
                 except Exception as e:
                     logger.error(f"Error returning connection to pool: {e}")
 
-    def execute_query(self, query: str, params: Optional[tuple] = None) -> List[Dict[str, Any]]:
+    def execute_query(
+        self, query: str, params: Optional[tuple] = None
+    ) -> List[Dict[str, Any]]:
         """
         Execute a query and return results.
 
@@ -362,7 +367,9 @@ class DatabasePool:
         if self.db_type == "postgresql" and self.pool:
             try:
                 stats_copy["pool_size"] = self.pool.get_size()
-                stats_copy["available_connections"] = self.pool.get_size() - self.pool.get_used()
+                stats_copy["available_connections"] = (
+                    self.pool.get_size() - self.pool.get_used()
+                )
             except Exception:
                 stats_copy["pool_size"] = "unknown"
                 stats_copy["available_connections"] = "unknown"

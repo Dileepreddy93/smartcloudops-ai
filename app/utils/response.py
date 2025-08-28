@@ -207,7 +207,9 @@ def build_remediation_response(
     return response
 
 
-def build_pagination_response(data: list, page: int, per_page: int, total: int, endpoint: str) -> Dict[str, Any]:
+def build_pagination_response(
+    data: list, page: int, per_page: int, total: int, endpoint: str
+) -> Dict[str, Any]:
     """
     Build a standardized paginated response.
 
@@ -247,10 +249,14 @@ def build_pagination_response(data: list, page: int, per_page: int, total: int, 
     }
 
     if page < total_pages:
-        response["pagination"]["links"]["next"] = f"{base_url}?page={page + 1}&per_page={per_page}"
+        response["pagination"]["links"][
+            "next"
+        ] = f"{base_url}?page={page + 1}&per_page={per_page}"
 
     if page > 1:
-        response["pagination"]["links"]["prev"] = f"{base_url}?page={page - 1}&per_page={per_page}"
+        response["pagination"]["links"][
+            "prev"
+        ] = f"{base_url}?page={page - 1}&per_page={per_page}"
 
     return response
 
@@ -273,7 +279,9 @@ def json_response(data: Dict[str, Any], status_code: int = 200) -> tuple:
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
-    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Strict-Transport-Security"] = (
+        "max-age=31536000; includeSubDomains"
+    )
 
     return response
 
@@ -327,6 +335,8 @@ def success_response(
     Returns:
         Flask success response tuple
     """
-    success_data = build_success_response(data=data, message=message, status_code=status_code, metadata=metadata)
+    success_data = build_success_response(
+        data=data, message=message, status_code=status_code, metadata=metadata
+    )
 
     return json_response(success_data, status_code)

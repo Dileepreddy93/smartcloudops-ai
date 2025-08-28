@@ -39,11 +39,26 @@ def demo_failure_analysis():
 
     # Sample failure logs
     failure_logs = [
-        {"name": "Dependency Failure", "logs": "ModuleNotFoundError: No module named 'requests'\npip install requests"},
-        {"name": "Test Failure", "logs": "FAILED test_example.py::test_function\nAssertionError: expected 2, got 1"},
-        {"name": "Linting Failure", "logs": "flake8 found 5 errors\nblack would reformat 3 files"},
-        {"name": "Security Failure", "logs": "bandit found 2 security issues\nsafety check failed"},
-        {"name": "Build Failure", "logs": "docker build failed\nBuild error in Dockerfile"},
+        {
+            "name": "Dependency Failure",
+            "logs": "ModuleNotFoundError: No module named 'requests'\npip install requests",
+        },
+        {
+            "name": "Test Failure",
+            "logs": "FAILED test_example.py::test_function\nAssertionError: expected 2, got 1",
+        },
+        {
+            "name": "Linting Failure",
+            "logs": "flake8 found 5 errors\nblack would reformat 3 files",
+        },
+        {
+            "name": "Security Failure",
+            "logs": "bandit found 2 security issues\nsafety check failed",
+        },
+        {
+            "name": "Build Failure",
+            "logs": "docker build failed\nBuild error in Dockerfile",
+        },
     ]
 
     for failure in failure_logs:
@@ -106,7 +121,12 @@ def demo_monitoring_loop():
     monitor = WorkflowMonitor("demo_owner", "demo_repo", "demo_token")
 
     # Simulate monitoring statistics
-    stats = {"checks": 0, "fixes_applied": 0, "workflows_fixed": 0, "start_time": datetime.now()}
+    stats = {
+        "checks": 0,
+        "fixes_applied": 0,
+        "workflows_fixed": 0,
+        "start_time": datetime.now(),
+    }
 
     print("🚀 Starting simulated monitoring loop...")
     print("   (This simulates 5 monitoring cycles)")
@@ -231,7 +251,9 @@ def main():
     print("📚 Next Steps:")
     print("   1. Set up your GitHub token: export GITHUB_TOKEN=your_token")
     print("   2. Run single check: python3 scripts/monitor_workflows.py")
-    print("   3. Run continuous monitoring: python3 scripts/monitor_workflows.py --continuous")
+    print(
+        "   3. Run continuous monitoring: python3 scripts/monitor_workflows.py --continuous"
+    )
     print("   4. View the full guide: WORKFLOW_MONITORING_GUIDE.md")
     print("")
     print("🚀 Your workflow monitoring system is ready to use!")

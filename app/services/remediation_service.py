@@ -9,15 +9,14 @@ Handles automated remediation actions based on ML predictions and system metrics
 
 
 import logging
-import time
-import threading
-import boto3
 import subprocess
-
+import threading
+import time
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Dict, List, Optional
 
+import boto3
 
 logger = logging.getLogger(__name__)
 
@@ -204,7 +203,9 @@ class AutoRemediationEngine:
         cooldown_end = rule.last_triggered + timedelta(minutes=rule.cooldown_minutes)
         return datetime.utcnow() < cooldown_end
 
-    def execute_remediation_action(self, action: RemediationAction, context: Dict) -> bool:
+    def execute_remediation_action(
+        self, action: RemediationAction, context: Dict
+    ) -> bool:
         """Execute a remediation action."""
         try:
             logger.info(f"🔧 Executing remediation action: {action.value}")
@@ -379,7 +380,9 @@ class AutoRemediationEngine:
             )
 
             # Stop the application gracefully
-            subprocess.run(["pkill", "-f", "smartcloudops-ai"], capture_output=True, timeout=10)
+            subprocess.run(
+                ["pkill", "-f", "smartcloudops-ai"], capture_output=True, timeout=10
+            )
 
             logger.info("🛑 Emergency shutdown completed")
             return True
@@ -406,7 +409,9 @@ class AutoRemediationEngine:
 
             # In production, this would send to SNS, Slack, etc.
             # For now, we'll just log it
-            self.action_history.append({"type": "alert", "data": alert_data, "timestamp": datetime.utcnow()})
+            self.action_history.append(
+                {"type": "alert", "data": alert_data, "timestamp": datetime.utcnow()}
+            )
 
             return True
 
@@ -414,7 +419,9 @@ class AutoRemediationEngine:
             logger.error(f"❌ Error sending alert: {e}")
             return False
 
-    def process_metrics(self, metrics: Dict, ml_prediction: Optional[Dict] = None) -> List[Dict]:
+    def process_metrics(
+        self, metrics: Dict, ml_prediction: Optional[Dict] = None
+    ) -> List[Dict]:
         """Process metrics and trigger remediation actions if needed."""
         if not self.is_enabled or self.manual_override:
             return []
@@ -483,7 +490,9 @@ class AutoRemediationEngine:
                     "enabled": rule.enabled,
                     "priority": rule.priority,
                     "trigger_count": rule.trigger_count,
-                    "last_triggered": (rule.last_triggered.isoformat() if rule.last_triggered else None),
+                    "last_triggered": (
+                        rule.last_triggered.isoformat() if rule.last_triggered else None
+                    ),
                 }
                 for rule in self.rules
             ],

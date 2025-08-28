@@ -138,8 +138,12 @@ def test_ml_engine():
             print_success("ML prediction working")
         except Exception as pred_error:
             # Handle case where models are not loaded (expected in test environment)
-            if "not properly initialized" in str(pred_error) or "No valid model files" in str(pred_error):
-                print_info("ML prediction skipped - models not loaded (expected in test environment)")
+            if "not properly initialized" in str(
+                pred_error
+            ) or "No valid model files" in str(pred_error):
+                print_info(
+                    "ML prediction skipped - models not loaded (expected in test environment)"
+                )
                 return True  # Consider this a success in test environment
             else:
                 raise pred_error
@@ -245,7 +249,9 @@ def test_terraform():
 
     try:
         # Check if Terraform is installed
-        result = subprocess.run(["terraform", "--version"], capture_output=True, text=True, timeout=10)
+        result = subprocess.run(
+            ["terraform", "--version"], capture_output=True, text=True, timeout=10
+        )
         assert result.returncode == 0
         print_success("Terraform is installed")
 
@@ -413,7 +419,9 @@ def main():
         print_success("🎉 All tests passed! SmartCloudOps AI is ready for use.")
         return 0
     else:
-        print_error(f"⚠️  {total - passed} tests failed. Please review the issues above.")
+        print_error(
+            f"⚠️  {total - passed} tests failed. Please review the issues above."
+        )
         return 1
 
 

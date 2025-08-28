@@ -207,15 +207,29 @@ class SmartCloudOpsAnomalyDetector:
             day_of_week = ts.weekday()
 
             # Base patterns with daily/weekly seasonality
-            cpu_base = 30 + 20 * np.sin(2 * np.pi * hour / 24) + 10 * np.sin(2 * np.pi * day_of_week / 7)
-            memory_base = 45 + 15 * np.sin(2 * np.pi * hour / 24) + 5 * np.sin(2 * np.pi * day_of_week / 7)
+            cpu_base = (
+                30
+                + 20 * np.sin(2 * np.pi * hour / 24)
+                + 10 * np.sin(2 * np.pi * day_of_week / 7)
+            )
+            memory_base = (
+                45
+                + 15 * np.sin(2 * np.pi * hour / 24)
+                + 5 * np.sin(2 * np.pi * day_of_week / 7)
+            )
 
             # Add normal noise
             cpu_usage = max(0, min(100, cpu_base + np.random.normal(0, 5)))
             memory_usage = max(0, min(100, memory_base + np.random.normal(0, 3)))
-            disk_io = max(0, 100 + 50 * np.sin(2 * np.pi * hour / 24) + np.random.normal(0, 10))
-            network_io = max(0, 200 + 100 * np.sin(2 * np.pi * hour / 24) + np.random.normal(0, 20))
-            response_time = max(50, 200 + 50 * np.sin(2 * np.pi * hour / 24) + np.random.normal(0, 15))
+            disk_io = max(
+                0, 100 + 50 * np.sin(2 * np.pi * hour / 24) + np.random.normal(0, 10)
+            )
+            network_io = max(
+                0, 200 + 100 * np.sin(2 * np.pi * hour / 24) + np.random.normal(0, 20)
+            )
+            response_time = max(
+                50, 200 + 50 * np.sin(2 * np.pi * hour / 24) + np.random.normal(0, 15)
+            )
 
             # Inject anomalies (10% of data points)
             is_anomaly = False
@@ -290,8 +304,12 @@ class SmartCloudOpsAnomalyDetector:
             df[f"{col}_ma_60"] = df[col].rolling(window=60, min_periods=1).mean()
 
             # Moving standard deviations
-            df[f"{col}_std_5"] = df[col].rolling(window=5, min_periods=1).std().fillna(0)
-            df[f"{col}_std_15"] = df[col].rolling(window=15, min_periods=1).std().fillna(0)
+            df[f"{col}_std_5"] = (
+                df[col].rolling(window=5, min_periods=1).std().fillna(0)
+            )
+            df[f"{col}_std_15"] = (
+                df[col].rolling(window=15, min_periods=1).std().fillna(0)
+            )
 
             # Rate of change
             df[f"{col}_diff"] = df[col].diff().fillna(0)
@@ -392,7 +410,9 @@ class SmartCloudOpsAnomalyDetector:
             )
 
             logger.info(f"🎯 Isolation Forest F1-Score: {f1:.4f}")
-            logger.info(f"📊 Classification Report:\n{results['classification_report']}")
+            logger.info(
+                f"📊 Classification Report:\n{results['classification_report']}"
+            )
 
         return results
 
@@ -430,7 +450,9 @@ class SmartCloudOpsAnomalyDetector:
         forecast = prophet_model.predict(future)
 
         # Calculate residuals and identify anomalies
-        merged = pd.merge(prophet_df, forecast[["ds", "yhat", "yhat_lower", "yhat_upper"]], on="ds")
+        merged = pd.merge(
+            prophet_df, forecast[["ds", "yhat", "yhat_lower", "yhat_upper"]], on="ds"
+        )
         merged["residual"] = merged["y"] - merged["yhat"]
         merged["residual_abs"] = np.abs(merged["residual"])
 
@@ -469,12 +491,16 @@ class SmartCloudOpsAnomalyDetector:
                 # Save model
                 model_path = "/tmp/anomaly_model.pkl"
                 joblib.dump(self.models["isolation_forest"], model_path)
-                self.s3_client.upload_file(model_path, self.s3_bucket, "models/anomaly_model.pkl")
+                self.s3_client.upload_file(
+                    model_path, self.s3_bucket, "models/anomaly_model.pkl"
+                )
 
                 # Save scaler
                 scaler_path = "/tmp/isolation_forest_scaler.pkl"
                 joblib.dump(self.scalers["isolation_forest"], scaler_path)
-                self.s3_client.upload_file(scaler_path, self.s3_bucket, "models/isolation_forest_scaler.pkl")
+                self.s3_client.upload_file(
+                    scaler_path, self.s3_bucket, "models/isolation_forest_scaler.pkl"
+                )
 
                 logger.info("✅ Isolation Forest model saved to S3")
 
@@ -483,7 +509,9 @@ class SmartCloudOpsAnomalyDetector:
                 if model_name.startswith("prophet_"):
                     model_path = f"/tmp/{model_name}_model.pkl"
                     joblib.dump(model, model_path)
-                    self.s3_client.upload_file(model_path, self.s3_bucket, f"models/{model_name}_model.pkl")
+                    self.s3_client.upload_file(
+                        model_path, self.s3_bucket, f"models/{model_name}_model.pkl"
+                    )
                     logger.info(f"✅ {model_name} model saved to S3")
 
             # Save metadata
@@ -498,7 +526,9 @@ class SmartCloudOpsAnomalyDetector:
             with open(metadata_path, "w") as f:
                 json.dump(metadata, f, indent=2)
 
-            self.s3_client.upload_file(metadata_path, self.s3_bucket, "models/metadata.json")
+            self.s3_client.upload_file(
+                metadata_path, self.s3_bucket, "models/metadata.json"
+            )
             logger.info("✅ All models and metadata saved to S3")
 
         except Exception as e:
@@ -515,7 +545,9 @@ class SmartCloudOpsAnomalyDetector:
 
             # Save Isolation Forest
             if "isolation_forest" in self.models:
-                joblib.dump(self.models["isolation_forest"], "../ml_models/anomaly_model.pkl")
+                joblib.dump(
+                    self.models["isolation_forest"], "../ml_models/anomaly_model.pkl"
+                )
                 joblib.dump(
                     self.scalers["isolation_forest"],
                     "../ml_models/isolation_forest_scaler.pkl",
@@ -646,15 +678,21 @@ class SmartCloudOpsAnomalyDetector:
                 "response_time",
             ]
             correlation_matrix = df[feature_cols].corr()
-            sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", center=0, ax=ax4)
+            sns.heatmap(
+                correlation_matrix, annot=True, cmap="coolwarm", center=0, ax=ax4
+            )
             ax4.set_title("Feature Correlation Matrix")
 
             plt.tight_layout()
 
             # Save visualization
             os.makedirs("../docs", exist_ok=True)
-            plt.savefig("../docs/anomaly_detection_analysis.png", dpi=300, bbox_inches="tight")
-            logger.info("✅ Visualization saved to ../docs/anomaly_detection_analysis.png")
+            plt.savefig(
+                "../docs/anomaly_detection_analysis.png", dpi=300, bbox_inches="tight"
+            )
+            logger.info(
+                "✅ Visualization saved to ../docs/anomaly_detection_analysis.png"
+            )
 
             plt.close()
 
@@ -683,9 +721,13 @@ class SmartCloudOpsAnomalyDetector:
                     logger.info("📊 Using real monitoring data for training")
                     data = real_df
                 else:
-                    logger.info("📊 No real data available, falling back to synthetic data")
+                    logger.info(
+                        "📊 No real data available, falling back to synthetic data"
+                    )
             except Exception as e:
-                logger.warning(f"⚠️ Real data collection failed, falling back to synthetic: {e}")
+                logger.warning(
+                    f"⚠️ Real data collection failed, falling back to synthetic: {e}"
+                )
 
         if data.empty:
             data = self.generate_synthetic_data(days=7)
@@ -698,7 +740,11 @@ class SmartCloudOpsAnomalyDetector:
         logger.info("🤖 Step 3: Model Training")
 
         # Define feature columns for Isolation Forest (exclude non-numeric/meta cols)
-        feature_columns = [col for col in enhanced_data.columns if col not in ["timestamp", "is_anomaly", "source"]]
+        feature_columns = [
+            col
+            for col in enhanced_data.columns
+            if col not in ["timestamp", "is_anomaly", "source"]
+        ]
 
         # Train Isolation Forest
         iso_results = self.train_isolation_forest(enhanced_data, feature_columns)
@@ -707,7 +753,9 @@ class SmartCloudOpsAnomalyDetector:
         prophet_results = {}
         for metric in ["cpu_usage", "memory_usage", "response_time"]:
             if metric in enhanced_data.columns:
-                prophet_results[metric] = self.train_prophet_model(enhanced_data, metric)
+                prophet_results[metric] = self.train_prophet_model(
+                    enhanced_data, metric
+                )
 
         # Step 4: Model Evaluation
         logger.info("📊 Step 4: Model Evaluation")
@@ -761,7 +809,11 @@ class SmartCloudOpsAnomalyDetector:
             if "f1_score" in iso_results:
                 f1_score = iso_results["f1_score"]
                 target_score = 0.85
-                status = "✅ TARGET ACHIEVED" if f1_score >= target_score else "⚠️ NEEDS IMPROVEMENT"
+                status = (
+                    "✅ TARGET ACHIEVED"
+                    if f1_score >= target_score
+                    else "⚠️ NEEDS IMPROVEMENT"
+                )
                 print(f"   F1-Score: {f1_score:.4f} (Target: ≥{target_score}) {status}")
 
         # Prophet Results
@@ -778,7 +830,9 @@ class SmartCloudOpsAnomalyDetector:
             print(f"   Total Data Points: {summary['total_points']:,}")
             print(f"   Features Engineered: {summary['feature_count']}")
             print(f"   Ground Truth Anomaly Rate: {summary['anomaly_rate']:.2%}")
-            print(f"   Time Range: {summary['time_range']['start']} to {summary['time_range']['end']}")
+            print(
+                f"   Time Range: {summary['time_range']['start']} to {summary['time_range']['end']}"
+            )
 
         print("\n💾 MODELS SAVED:")
         print(f"   S3 Bucket: {self.s3_bucket}")

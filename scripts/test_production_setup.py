@@ -22,7 +22,14 @@ def test_environment_variables():
     """Test that required environment variables are set."""
     print("🔍 Testing environment variables...")
 
-    required_vars = ["SECRET_KEY", "ADMIN_API_KEY", "ML_API_KEY", "READONLY_API_KEY", "API_KEY_SALT", "DB_PASSWORD"]
+    required_vars = [
+        "SECRET_KEY",
+        "ADMIN_API_KEY",
+        "ML_API_KEY",
+        "READONLY_API_KEY",
+        "API_KEY_SALT",
+        "DB_PASSWORD",
+    ]
 
     missing_vars = []
     insecure_vars = []
@@ -33,7 +40,10 @@ def test_environment_variables():
             missing_vars.append(var)
         elif len(value) < 32:
             insecure_vars.append(f"{var} (too short: {len(value)} chars)")
-        elif any(pattern in value.lower() for pattern in ["demo", "test", "default", "password", "123"]):
+        elif any(
+            pattern in value.lower()
+            for pattern in ["demo", "test", "default", "password", "123"]
+        ):
             insecure_vars.append(f"{var} (contains insecure pattern)")
 
     if missing_vars:

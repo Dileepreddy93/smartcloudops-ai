@@ -213,3 +213,41 @@ ERROR tests/phase_3/test_ml_inference.py
 2025-08-27 16:24:03,954 - INFO - 🔍 Analyzing failed workflow: Code Quality & Security (ID: 17264605986)
 2025-08-27 16:24:06,750 - INFO - Identified issues: ['security_issues: security']
 2025-08-27 16:24:06,750 - INFO - 🔒 Fixing security issues...
+2025-08-28 13:05:13,248 - ERROR - ❌ GITHUB_TOKEN environment variable not set
+2025-08-28 13:05:22,248 - INFO - 🔍 Monitoring repository: Dileepreddy93/smartcloudops-ai
+2025-08-28 13:05:22,248 - INFO - 🚀 Starting automated workflow monitoring and fixing...
+2025-08-28 13:05:22,248 - INFO - 🔄 Attempt 1/5
+2025-08-28 13:05:22,316 - ERROR - Failed to get workflow runs: 401 Client Error: Unauthorized for url: https://api.github.com/repos/Dileepreddy93/smartcloudops-ai/actions/runs
+2025-08-28 13:05:22,317 - WARNING - No workflow runs found
+2025-08-28 13:05:52,317 - INFO - 🔄 Attempt 2/5
+2025-08-28 13:05:52,652 - ERROR - Failed to get workflow runs: 401 Client Error: Unauthorized for url: https://api.github.com/repos/Dileepreddy93/smartcloudops-ai/actions/runs
+2025-08-28 13:05:52,653 - WARNING - No workflow runs found
+2025-08-28 13:06:22,654 - INFO - 🔄 Attempt 3/5
+2025-08-28 13:06:22,709 - ERROR - Failed to get workflow runs: 401 Client Error: Unauthorized for url: https://api.github.com/repos/Dileepreddy93/smartcloudops-ai/actions/runs
+2025-08-28 13:06:22,709 - WARNING - No workflow runs found
+2025-08-28 13:06:52,710 - INFO - 🔄 Attempt 4/5
+2025-08-28 13:06:52,764 - ERROR - Failed to get workflow runs: 401 Client Error: Unauthorized for url: https://api.github.com/repos/Dileepreddy93/smartcloudops-ai/actions/runs
+2025-08-28 13:06:52,765 - WARNING - No workflow runs found
+2025-08-28 13:07:22,765 - INFO - 🔄 Attempt 5/5
+2025-08-28 13:07:22,833 - ERROR - Failed to get workflow runs: 401 Client Error: Unauthorized for url: https://api.github.com/repos/Dileepreddy93/smartcloudops-ai/actions/runs
+2025-08-28 13:07:22,834 - WARNING - No workflow runs found
+2025-08-28 13:07:52,834 - ERROR - ❌ Failed to fix workflows after 5 attempts
+2025-08-28 13:07:52,835 - ERROR - ❌ Failed to fix all workflows
+2025-08-28 13:07:59,561 - INFO - 🔧 Fixing dependency issues...
+2025-08-28 13:07:59,561 - INFO - Updating Python dependencies...
+2025-08-28 13:07:59,562 - ERROR - ❌ Failed to fix dependency issues: [Errno 2] No such file or directory: 'python'
+2025-08-28 13:07:59,562 - INFO - 🧪 Fixing test issues...
+2025-08-28 13:07:59,563 - WARNING - Failed to run test command python -m pytest tests/phase_1/ -v --tb=short: [Errno 2] No such file or directory: 'python'
+2025-08-28 13:07:59,563 - WARNING - Failed to run test command python -m pytest tests/phase_2/ -v --tb=short: [Errno 2] No such file or directory: 'python'
+2025-08-28 13:07:59,564 - WARNING - Failed to run test command python -m pytest tests/phase_3/ -v --tb=short: [Errno 2] No such file or directory: 'python'
+2025-08-28 13:07:59,564 - WARNING - Failed to run test command python -m pytest tests/test_security_fixes.py -v --tb=short: [Errno 2] No such file or directory: 'python'
+2025-08-28 13:07:59,564 - INFO - ✅ Test issues addressed
+2025-08-28 13:07:59,564 - INFO - 🎨 Fixing linting issues...
+2025-08-28 13:08:00,848 - WARNING - Linting command failed: flake8 app/ --max-line-length 127 --ignore E501,W503
+2025-08-28 13:08:01,172 - WARNING - Frontend linting fix failed
+2025-08-28 13:08:01,172 - INFO - ✅ Linting issues fixed
+2025-08-28 13:08:01,172 - INFO - 🔒 Fixing security issues...
+2025-08-28 13:08:01,172 - ERROR - ❌ Failed to fix security issues: [Errno 2] No such file or directory: 'python'
+2025-08-28 13:08:13,589 - INFO - 🚀 Starting continuous workflow monitoring...
+2025-08-28 13:08:13,589 - ERROR - ❌ GITHUB_TOKEN environment variable not set
+2025-08-28 13:08:13,589 - ERROR - ❌ Failed to initialize monitor

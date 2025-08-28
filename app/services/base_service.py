@@ -62,7 +62,9 @@ class BaseService(ABC):
         """Set a configuration value."""
         self.config[key] = value
 
-    def log_operation(self, operation: str, details: Optional[Dict[str, Any]] = None) -> None:
+    def log_operation(
+        self, operation: str, details: Optional[Dict[str, Any]] = None
+    ) -> None:
         """Log an operation for audit purposes."""
         log_data = {
             "operation": operation,
@@ -101,7 +103,9 @@ class ServiceRegistry:
 
     def health_check_all(self) -> Dict[str, Dict[str, Any]]:
         """Perform health checks on all services."""
-        return {name: service.health_check() for name, service in self._services.items()}
+        return {
+            name: service.health_check() for name, service in self._services.items()
+        }
 
 
 # Global service registry

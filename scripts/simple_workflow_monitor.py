@@ -302,7 +302,9 @@ class SimpleWorkflowMonitor:
             print("🔧 Committing and pushing fixes...")
 
             # Add all changes
-            result = subprocess.run(["git", "add", "."], capture_output=True, text=True, cwd=PROJECT_ROOT)
+            result = subprocess.run(
+                ["git", "add", "."], capture_output=True, text=True, cwd=PROJECT_ROOT
+            )
 
             if result.returncode != 0:
                 print(f"❌ Git add failed: {result.stderr}")
@@ -412,7 +414,9 @@ class SimpleWorkflowMonitor:
         print("\n💡 Next steps:")
         print("   • Wait for new workflow run to complete")
         print("   • Check status: ./scripts/quick_status.sh")
-        print("   • Monitor continuously: python scripts/simple_workflow_monitor.py monitor")
+        print(
+            "   • Monitor continuously: python scripts/simple_workflow_monitor.py monitor"
+        )
 
 
 def main():

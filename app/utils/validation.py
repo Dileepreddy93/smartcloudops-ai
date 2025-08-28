@@ -9,8 +9,8 @@ Validation functions for API inputs, ML metrics, and data integrity.
 
 import datetime
 import logging
-import time
 import re
+import time
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -58,13 +58,17 @@ def validate_ml_metrics(metrics: Dict[str, Any]) -> Dict[str, float]:
 
             # Check for infinite or NaN values
             if not (float("inf") > float_value > float("-inf")):
-                logger.warning(f"Invalid value for {metric_name}: {value}, using default")
+                logger.warning(
+                    f"Invalid value for {metric_name}: {value}, using default"
+                )
                 validated_metrics[metric_name] = rules["default"]
                 continue
 
             # Apply range validation
             if float_value < rules["min"] or float_value > rules["max"]:
-                logger.warning(f"Value for {metric_name} out of range [{rules['min']}, {rules['max']}]: {float_value}")
+                logger.warning(
+                    f"Value for {metric_name} out of range [{rules['min']}, {rules['max']}]: {float_value}"
+                )
                 # Clamp to valid range
                 float_value = max(rules["min"], min(rules["max"], float_value))
 
@@ -130,7 +134,9 @@ def validate_jwt_token(token: str) -> bool:
     return True
 
 
-def validate_user_input(input_data: Dict[str, Any], required_fields: List[str]) -> Dict[str, Any]:
+def validate_user_input(
+    input_data: Dict[str, Any], required_fields: List[str]
+) -> Dict[str, Any]:
     """
     Validate user input data.
 
@@ -191,9 +197,13 @@ def validate_user_input(input_data: Dict[str, Any], required_fields: List[str]) 
                 if isinstance(value, list):
                     validated_data[field] = [str(item) for item in value if item]
                 elif isinstance(value, str):
-                    validated_data[field] = [item.strip() for item in value.split(",") if item.strip()]
+                    validated_data[field] = [
+                        item.strip() for item in value.split(",") if item.strip()
+                    ]
                 else:
-                    raise ValueError(f"Field '{field}' must be a list or comma-separated string")
+                    raise ValueError(
+                        f"Field '{field}' must be a list or comma-separated string"
+                    )
 
             # Default: keep as is
             else:
@@ -309,7 +319,9 @@ def sanitize_string(input_string: str, max_length: int = 1000) -> str:
     string_value = str(input_string)
 
     # Remove null bytes and control characters
-    string_value = "".join(char for char in string_value if ord(char) >= 32 or char in "\n\r\t")
+    string_value = "".join(
+        char for char in string_value if ord(char) >= 32 or char in "\n\r\t"
+    )
 
     # Truncate if too long
     if len(string_value) > max_length:
@@ -318,7 +330,9 @@ def sanitize_string(input_string: str, max_length: int = 1000) -> str:
     return string_value.strip()
 
 
-def validate_json_schema(data: Dict[str, Any], schema: Dict[str, Any]) -> Dict[str, Any]:
+def validate_json_schema(
+    data: Dict[str, Any], schema: Dict[str, Any]
+) -> Dict[str, Any]:
     """
     Validate data against a JSON schema.
 

@@ -73,7 +73,10 @@ class TestFlaskAppEndpoints:
     def test_status_endpoint(self, client):
         """Test the status endpoint (/status) returns correct response."""
         # Act
-        response = client.get("/status", headers={"X-API-Key": "sk-readonly-test-key-12345678901234567890"})
+        response = client.get(
+            "/status",
+            headers={"X-API-Key": "sk-readonly-test-key-12345678901234567890"},
+        )
 
         # Assert
         assert response.status_code == 200
@@ -92,7 +95,9 @@ class TestFlaskAppEndpoints:
 
         # Act
         response = client.post(
-            "/chat", json={"message": "test query"}, headers={"X-API-Key": "sk-ml-test-key-12345678901234567890"}
+            "/chat",
+            json={"message": "test query"},
+            headers={"X-API-Key": "sk-ml-test-key-12345678901234567890"},
         )
 
         # Assert
@@ -104,7 +109,9 @@ class TestFlaskAppEndpoints:
         """Test the chat endpoint with invalid input."""
         # Act
         response = client.post(
-            "/chat", json={"invalid": "data"}, headers={"X-API-Key": "sk-ml-test-key-12345678901234567890"}
+            "/chat",
+            json={"invalid": "data"},
+            headers={"X-API-Key": "sk-ml-test-key-12345678901234567890"},
         )
 
         # Assert
@@ -113,7 +120,11 @@ class TestFlaskAppEndpoints:
     def test_chat_endpoint_missing_query(self, client):
         """Test the chat endpoint with missing query field."""
         # Act
-        response = client.post("/chat", json={}, headers={"X-API-Key": "sk-ml-test-key-12345678901234567890"})
+        response = client.post(
+            "/chat",
+            json={},
+            headers={"X-API-Key": "sk-ml-test-key-12345678901234567890"},
+        )
 
         # Assert
         assert response.status_code == 400
@@ -161,7 +172,9 @@ class TestFlaskAppErrorHandling:
 
         # Act
         response = client.post(
-            "/chat", json={"message": "test query"}, headers={"X-API-Key": "sk-ml-test-key-12345678901234567890"}
+            "/chat",
+            json={"message": "test query"},
+            headers={"X-API-Key": "sk-ml-test-key-12345678901234567890"},
         )
 
         # Assert
@@ -173,7 +186,9 @@ class TestFlaskAppErrorHandling:
     def test_query_endpoint_invalid_json(self, client):
         """Test query endpoint handles invalid JSON gracefully."""
         # Act
-        response = client.post("/query", data="invalid json", content_type="application/json")
+        response = client.post(
+            "/query", data="invalid json", content_type="application/json"
+        )
 
         # Assert
         assert response.status_code == 400

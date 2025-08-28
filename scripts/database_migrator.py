@@ -134,7 +134,9 @@ class DatabaseMigrator:
             # Insert into PostgreSQL
             with pg_conn.cursor() as pg_cursor:
                 placeholders = ",".join(["%s"] * len(columns))
-                insert_sql = f"INSERT INTO {table} ({','.join(columns)}) VALUES ({placeholders})"
+                insert_sql = (
+                    f"INSERT INTO {table} ({','.join(columns)}) VALUES ({placeholders})"
+                )
 
                 for row in rows:
                     try:
@@ -206,9 +208,13 @@ echo "✅ Backup completed: $BACKUP_FILE.gz"
                 pg_count = pg_cursor.fetchone()[0]
 
                 if sqlite_count == pg_count:
-                    self.logger.info(f"✅ {table}: {pg_count} rows migrated successfully")
+                    self.logger.info(
+                        f"✅ {table}: {pg_count} rows migrated successfully"
+                    )
                 else:
-                    self.logger.error(f"❌ {table}: SQLite({sqlite_count}) != PostgreSQL({pg_count})")
+                    self.logger.error(
+                        f"❌ {table}: SQLite({sqlite_count}) != PostgreSQL({pg_count})"
+                    )
 
         sqlite_conn.close()
         pg_conn.close()

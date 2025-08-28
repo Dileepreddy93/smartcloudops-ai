@@ -45,8 +45,14 @@ class TestWorkflowMonitor(unittest.TestCase):
 
         # Initialize git repository for testing
         subprocess.run(["git", "init"], check=True, capture_output=True)
-        subprocess.run(["git", "config", "user.name", "Test User"], check=True, capture_output=True)
-        subprocess.run(["git", "config", "user.email", "test@example.com"], check=True, capture_output=True)
+        subprocess.run(
+            ["git", "config", "user.name", "Test User"], check=True, capture_output=True
+        )
+        subprocess.run(
+            ["git", "config", "user.email", "test@example.com"],
+            check=True,
+            capture_output=True,
+        )
 
     def tearDown(self):
         """Clean up test environment"""
@@ -68,12 +74,17 @@ class TestWorkflowMonitor(unittest.TestCase):
         """Test WorkflowMonitor initialization"""
         from auto_workflow_fixer import WorkflowMonitor
 
-        monitor = WorkflowMonitor(self.test_repo_owner, self.test_repo_name, self.test_token)
+        monitor = WorkflowMonitor(
+            self.test_repo_owner, self.test_repo_name, self.test_token
+        )
 
         self.assertEqual(monitor.repo_owner, self.test_repo_owner)
         self.assertEqual(monitor.repo_name, self.test_repo_name)
         self.assertEqual(monitor.token, self.test_token)
-        self.assertEqual(monitor.api_base, f"https://api.github.com/repos/{self.test_repo_owner}/{self.test_repo_name}")
+        self.assertEqual(
+            monitor.api_base,
+            f"https://api.github.com/repos/{self.test_repo_owner}/{self.test_repo_name}",
+        )
         self.assertIn("Authorization", monitor.headers)
         self.assertIn("Accept", monitor.headers)
 
@@ -100,7 +111,9 @@ class TestWorkflowMonitor(unittest.TestCase):
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
 
-        monitor = WorkflowMonitor(self.test_repo_owner, self.test_repo_name, self.test_token)
+        monitor = WorkflowMonitor(
+            self.test_repo_owner, self.test_repo_name, self.test_token
+        )
         runs = monitor.get_workflow_runs()
 
         self.assertEqual(len(runs), 1)
@@ -113,7 +126,9 @@ class TestWorkflowMonitor(unittest.TestCase):
         """Test failure pattern analysis"""
         from auto_workflow_fixer import WorkflowMonitor
 
-        monitor = WorkflowMonitor(self.test_repo_owner, self.test_repo_name, self.test_token)
+        monitor = WorkflowMonitor(
+            self.test_repo_owner, self.test_repo_name, self.test_token
+        )
 
         # Test dependency issues
         logs_with_deps = "ModuleNotFoundError: No module named 'requests'"
@@ -144,7 +159,9 @@ class TestWorkflowMonitor(unittest.TestCase):
         """Test dependency issue fixing"""
         from auto_workflow_fixer import WorkflowMonitor
 
-        monitor = WorkflowMonitor(self.test_repo_owner, self.test_repo_name, self.test_token)
+        monitor = WorkflowMonitor(
+            self.test_repo_owner, self.test_repo_name, self.test_token
+        )
 
         # Create a test requirements file
         with open("requirements.txt", "w") as f:
@@ -159,7 +176,9 @@ class TestWorkflowMonitor(unittest.TestCase):
         """Test test issue fixing"""
         from auto_workflow_fixer import WorkflowMonitor
 
-        monitor = WorkflowMonitor(self.test_repo_owner, self.test_repo_name, self.test_token)
+        monitor = WorkflowMonitor(
+            self.test_repo_owner, self.test_repo_name, self.test_token
+        )
 
         # Test test fixing
         result = monitor.fix_test_issues()
@@ -173,7 +192,9 @@ class TestWorkflowMonitor(unittest.TestCase):
         """Test linting issue fixing"""
         from auto_workflow_fixer import WorkflowMonitor
 
-        monitor = WorkflowMonitor(self.test_repo_owner, self.test_repo_name, self.test_token)
+        monitor = WorkflowMonitor(
+            self.test_repo_owner, self.test_repo_name, self.test_token
+        )
 
         # Create a test Python file
         with open("test_file.py", "w") as f:
@@ -188,7 +209,9 @@ class TestWorkflowMonitor(unittest.TestCase):
         """Test security issue fixing"""
         from auto_workflow_fixer import WorkflowMonitor
 
-        monitor = WorkflowMonitor(self.test_repo_owner, self.test_repo_name, self.test_token)
+        monitor = WorkflowMonitor(
+            self.test_repo_owner, self.test_repo_name, self.test_token
+        )
 
         # Test security fixing
         result = monitor.fix_security_issues()
@@ -199,7 +222,9 @@ class TestWorkflowMonitor(unittest.TestCase):
         """Test committing and pushing fixes"""
         from auto_workflow_fixer import WorkflowMonitor
 
-        monitor = WorkflowMonitor(self.test_repo_owner, self.test_repo_name, self.test_token)
+        monitor = WorkflowMonitor(
+            self.test_repo_owner, self.test_repo_name, self.test_token
+        )
 
         # Create a test file to commit
         with open("test_fix.txt", "w") as f:
@@ -213,7 +238,9 @@ class TestWorkflowMonitor(unittest.TestCase):
         """Test report generation"""
         from auto_workflow_fixer import WorkflowMonitor
 
-        monitor = WorkflowMonitor(self.test_repo_owner, self.test_repo_name, self.test_token)
+        monitor = WorkflowMonitor(
+            self.test_repo_owner, self.test_repo_name, self.test_token
+        )
         monitor.fixes_applied = ["dependency_issues", "test_issues"]
 
         report = monitor.generate_report()
@@ -223,7 +250,9 @@ class TestWorkflowMonitor(unittest.TestCase):
         self.assertIn("fixes_applied", report)
         self.assertIn("max_retries", report)
         self.assertIn("status", report)
-        self.assertEqual(report["repo"], f"{self.test_repo_owner}/{self.test_repo_name}")
+        self.assertEqual(
+            report["repo"], f"{self.test_repo_owner}/{self.test_repo_name}"
+        )
         self.assertEqual(report["fixes_applied"], ["dependency_issues", "test_issues"])
 
 
@@ -267,7 +296,9 @@ def run_integration_tests():
         import subprocess
 
         subprocess.run(
-            [sys.executable, "-m", "pip", "install", "requests", "python-dotenv"], check=True, capture_output=True
+            [sys.executable, "-m", "pip", "install", "requests", "python-dotenv"],
+            check=True,
+            capture_output=True,
         )
         print("    ✅ Dependencies installed successfully")
     except subprocess.CalledProcessError as e:

@@ -6,24 +6,21 @@ SmartCloudOps AI - Secure ML Inference Engine
 Production-ready ML inference engine with proper security and validation.
 """
 
-from typing import Union
+import json
+import logging
 import os
 import sys
-import logging
 import time
-import json
-import joblib
-from app.utils.validation import validate_ml_metrics
-from app.utils.response import build_error_response, build_success_response
-
-
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
-
+import joblib
 import numpy as np
 import pandas as pd
+
+from app.utils.response import build_error_response, build_success_response
+from app.utils.validation import validate_ml_metrics
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent.parent
@@ -108,7 +105,9 @@ class SecureMLInferenceEngine:
             X_scaled = scaler.fit_transform(X)
 
             # Train isolation forest model
-            self.model = IsolationForest(contamination=0.1, random_state=42, n_estimators=100)
+            self.model = IsolationForest(
+                contamination=0.1, random_state=42, n_estimators=100
+            )
             self.model.fit(X_scaled)
 
             # Save model
@@ -322,7 +321,11 @@ class SecureMLInferenceEngine:
                 prediction_working = False
 
             return {
-                "status": ("healthy" if all([model_loaded, files_exist, prediction_working]) else "unhealthy"),
+                "status": (
+                    "healthy"
+                    if all([model_loaded, files_exist, prediction_working])
+                    else "unhealthy"
+                ),
                 "model_loaded": model_loaded,
                 "files_exist": files_exist,
                 "prediction_working": prediction_working,

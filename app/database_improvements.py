@@ -12,14 +12,13 @@ Features:
 """
 
 
-import os
 import logging
-import psycopg2
+import os
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
-
+import psycopg2
 import redis
 from psycopg2.extras import RealDictCursor
 from redis.exceptions import RedisError
@@ -92,7 +91,9 @@ class ProductionDatabaseService:
                 echo=False,  # Set to True for SQL debugging
             )
 
-            self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
+            self.SessionLocal = sessionmaker(
+                autocommit=False, autoflush=False, bind=self.engine
+            )
 
             # Test database connection
             with self.engine.connect() as conn:
@@ -250,7 +251,9 @@ class ProductionDatabaseService:
                     return True
 
             except Exception as e:
-                logger.error(f"Failed to store metrics (attempt {attempt + 1}/{max_retries}): {e}")
+                logger.error(
+                    f"Failed to store metrics (attempt {attempt + 1}/{max_retries}): {e}"
+                )
                 if attempt < max_retries - 1:
                     import time
 

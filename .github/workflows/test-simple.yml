@@ -1,5 +1,5 @@
 name: Simple Test Workflow
-true:
+on:
   push:
     branches:
     - main

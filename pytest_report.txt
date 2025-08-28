@@ -1,0 +1,172 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.3, pytest-8.4.1, pluggy-1.6.0 -- /workspace/test_env/bin/python
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pytest.ini
+plugins: cov-6.2.1, flask-1.3.0, mock-3.14.1
+collecting ... collected 118 items
+
+tests/phase_1/test_core_utilities.py::TestResponseUtilities::test_timestamp_in_response PASSED [  0%]
+tests/phase_1/test_core_utilities.py::TestResponseUtilities::test_success_response PASSED [  1%]
+tests/phase_1/test_core_utilities.py::TestResponseUtilities::test_error_response PASSED [  2%]
+tests/phase_1/test_core_utilities.py::TestResponseUtilities::test_success_response_with_metadata PASSED [  3%]
+tests/phase_1/test_core_utilities.py::TestValidationUtilities::test_validate_user_input_valid_input PASSED [  4%]
+tests/phase_1/test_core_utilities.py::TestValidationUtilities::test_validate_user_input_missing_keys PASSED [  5%]
+tests/phase_1/test_core_utilities.py::TestValidationUtilities::test_validate_user_input_invalid_input_type PASSED [  5%]
+tests/phase_1/test_core_utilities.py::TestValidationUtilities::test_sanitize_string_normal_input PASSED [  6%]
+tests/phase_1/test_core_utilities.py::TestValidationUtilities::test_sanitize_string_truncation PASSED [  7%]
+tests/phase_1/test_core_utilities.py::TestValidationUtilities::test_sanitize_string_non_string_input PASSED [  8%]
+tests/phase_1/test_core_utilities.py::TestValidationUtilities::test_sanitize_string_empty_input PASSED [  9%]
+tests/phase_1/test_core_utilities.py::TestValidationUtilities::test_sanitize_string_default_max_length PASSED [ 10%]
+tests/phase_1/test_terraform_infrastructure.py::TestTerraformInfrastructure::test_vpc_configuration PASSED [ 11%]
+tests/phase_1/test_terraform_infrastructure.py::TestTerraformInfrastructure::test_public_subnets_configuration PASSED [ 11%]
+tests/phase_1/test_terraform_infrastructure.py::TestTerraformInfrastructure::test_security_groups_hardened_ports PASSED [ 12%]
+tests/phase_1/test_terraform_infrastructure.py::TestTerraformInfrastructure::test_internet_gateway_configuration PASSED [ 13%]
+tests/phase_1/test_terraform_infrastructure.py::TestTerraformInfrastructure::test_route_table_configuration PASSED [ 14%]
+tests/phase_1/test_terraform_infrastructure.py::TestTerraformInfrastructure::test_ec2_instances_configuration PASSED [ 15%]
+tests/phase_1/test_terraform_infrastructure.py::TestTerraformInfrastructure::test_s3_buckets_configuration PASSED [ 16%]
+tests/phase_1/test_terraform_infrastructure.py::TestTerraformInfrastructure::test_iam_roles_and_policies PASSED [ 16%]
+tests/phase_1/test_terraform_infrastructure.py::TestTerraformInfrastructure::test_cloudwatch_log_groups PASSED [ 17%]
+tests/phase_1/test_terraform_infrastructure.py::TestTerraformInfrastructure::test_terraform_version_and_providers PASSED [ 18%]
+tests/phase_1/test_terraform_infrastructure.py::TestTerraformInfrastructure::test_security_hardening_features PASSED [ 19%]
+tests/phase_2/test_api_blueprints.py::TestHealthBlueprint::test_status_endpoint PASSED [ 20%]
+tests/phase_2/test_api_blueprints.py::TestHealthBlueprint::test_home_endpoint PASSED [ 21%]
+tests/phase_2/test_api_blueprints.py::TestChatOpsBlueprint::test_query_endpoint_success PASSED [ 22%]
+tests/phase_2/test_api_blueprints.py::TestChatOpsBlueprint::test_query_endpoint_missing_query PASSED [ 22%]
+tests/phase_2/test_api_blueprints.py::TestChatOpsBlueprint::test_query_endpoint_empty_json PASSED [ 23%]
+tests/phase_2/test_api_blueprints.py::TestChatOpsBlueprint::test_query_endpoint_service_error PASSED [ 24%]
+tests/phase_2/test_api_blueprints.py::TestLogsBlueprint::test_logs_endpoint PASSED [ 25%]
+tests/phase_2/test_api_blueprints.py::TestLogsBlueprint::test_logs_endpoint_no_file PASSED [ 26%]
+tests/phase_2/test_api_blueprints.py::TestMLBlueprint::test_ml_health_endpoint PASSED [ 27%]
+tests/phase_2/test_api_blueprints.py::TestMLBlueprint::test_ml_predict_endpoint_success PASSED [ 27%]
+tests/phase_2/test_api_blueprints.py::TestMLBlueprint::test_ml_predict_endpoint_invalid_metrics PASSED [ 28%]
+tests/phase_2/test_api_blueprints.py::TestMLBlueprint::test_ml_predict_endpoint_missing_metrics PASSED [ 29%]
+tests/phase_2/test_api_blueprints.py::TestMLBlueprint::test_ml_predict_endpoint_engine_error PASSED [ 30%]
+tests/phase_2/test_api_blueprints.py::TestMLBlueprint::test_ml_metrics_endpoint PASSED [ 31%]
+tests/phase_2/test_flask_app.py::TestFlaskAppCreation::test_app_is_flask_instance PASSED [ 32%]
+tests/phase_2/test_flask_app.py::TestFlaskAppCreation::test_app_configuration PASSED [ 33%]
+tests/phase_2/test_flask_app.py::TestHelperFunctions::test_chat_function_exists PASSED [ 33%]
+tests/phase_2/test_flask_app.py::TestHelperFunctions::test_chat_function_handles_errors PASSED [ 34%]
+tests/phase_2/test_flask_app.py::TestFlaskAppEndpoints::test_health_endpoint PASSED [ 35%]
+tests/phase_2/test_flask_app.py::TestFlaskAppEndpoints::test_status_endpoint FAILED [ 36%]
+tests/phase_2/test_flask_app.py::TestFlaskAppEndpoints::test_chat_endpoint_success FAILED [ 37%]
+tests/phase_2/test_flask_app.py::TestFlaskAppEndpoints::test_chat_endpoint_invalid_input FAILED [ 38%]
+tests/phase_2/test_flask_app.py::TestFlaskAppEndpoints::test_chat_endpoint_missing_query FAILED [ 38%]
+tests/phase_2/test_flask_app.py::TestFlaskAppEndpoints::test_metrics_endpoint FAILED [ 39%]
+tests/phase_2/test_flask_app.py::TestFlaskAppEndpoints::test_nonexistent_endpoint PASSED [ 40%]
+tests/phase_2/test_flask_app.py::TestFlaskAppErrorHandling::test_chat_endpoint_service_error FAILED [ 41%]
+tests/phase_2/test_flask_app.py::TestFlaskAppErrorHandling::test_query_endpoint_invalid_json FAILED [ 42%]
+tests/phase_3/test_ml_inference.py::TestSecureMLInferenceEngine::test_engine_initialization PASSED [ 43%]
+tests/phase_3/test_ml_inference.py::TestSecureMLInferenceEngine::test_health_check_healthy_status PASSED [ 44%]
+tests/phase_3/test_ml_inference.py::TestSecureMLInferenceEngine::test_health_check_unhealthy_status PASSED [ 44%]
+tests/phase_3/test_ml_inference.py::TestSecureMLInferenceEngine::test_predict_anomaly_success FAILED [ 45%]
+tests/phase_3/test_ml_inference.py::TestSecureMLInferenceEngine::test_predict_anomaly_high_cpu FAILED [ 46%]
+tests/phase_3/test_ml_inference.py::TestSecureMLInferenceEngine::test_predict_anomaly_missing_metrics FAILED [ 47%]
+tests/phase_3/test_ml_inference.py::TestSecureMLInferenceEngine::test_predict_anomaly_invalid_metrics FAILED [ 48%]
+tests/phase_3/test_ml_inference.py::TestSecureMLInferenceEngine::test_get_model_info_success FAILED [ 49%]
+tests/phase_3/test_ml_inference.py::TestSecureMLInferenceEngine::test_get_model_info_no_model FAILED [ 50%]
+tests/phase_3/test_prometheus_metrics.py::TestPrometheusMetrics::test_metrics_endpoint_returns_prometheus_format PASSED [ 50%]
+tests/phase_3/test_prometheus_metrics.py::TestPrometheusMetrics::test_metrics_endpoint_contains_ml_metrics PASSED [ 51%]
+tests/phase_3/test_prometheus_metrics.py::TestPrometheusMetrics::test_ml_predict_success_counter PASSED [ 52%]
+tests/phase_3/test_prometheus_metrics.py::TestPrometheusMetrics::test_ml_predict_error_counter PASSED [ 53%]
+tests/phase_3/test_prometheus_metrics.py::TestPrometheusMetrics::test_metrics_endpoint_content_structure PASSED [ 54%]
+tests/phase_3/test_prometheus_metrics.py::TestPrometheusMetrics::test_metrics_endpoint_headers PASSED [ 55%]
+tests/phase_3/test_prometheus_metrics.py::TestPrometheusMetrics::test_metrics_endpoint_caching_disabled PASSED [ 55%]
+tests/phase_3/test_prometheus_metrics.py::TestPrometheusMetrics::test_metrics_generation_with_custom_metrics PASSED [ 56%]
+tests/phase_3/test_prometheus_metrics.py::TestPrometheusMetrics::test_metrics_endpoint_returns_valid_prometheus_format PASSED [ 57%]
+tests/phase_3/test_prometheus_metrics.py::TestPrometheusMetrics::test_metrics_endpoint_performance PASSED [ 58%]
+tests/phase_3/test_prometheus_metrics.py::TestPrometheusMetrics::test_metrics_endpoint_content_length PASSED [ 59%]
+tests/phase_3/test_prometheus_metrics.py::TestPrometheusMetrics::test_metrics_endpoint_utf8_encoding PASSED [ 60%]
+tests/phase_4/test_auto_remediation.py::TestRemediationEngine::test_engine_initialization PASSED [ 61%]
+tests/phase_4/test_auto_remediation.py::TestRemediationEngine::test_default_rules_creation PASSED [ 61%]
+tests/phase_4/test_auto_remediation.py::TestRemediationEngine::test_rule_priority_ordering PASSED [ 62%]
+tests/phase_4/test_auto_remediation.py::TestRemediationEngine::test_condition_evaluation PASSED [ 63%]
+tests/phase_4/test_auto_remediation.py::TestRemediationEngine::test_cooldown_checking PASSED [ 64%]
+tests/phase_4/test_auto_remediation.py::TestRemediationEngine::test_restart_service_action PASSED [ 65%]
+tests/phase_4/test_auto_remediation.py::TestRemediationEngine::test_clear_cache_action PASSED [ 66%]
+tests/phase_4/test_auto_remediation.py::TestRemediationEngine::test_send_alert_action PASSED [ 66%]
+tests/phase_4/test_auto_remediation.py::TestRemediationEngine::test_emergency_shutdown_action PASSED [ 67%]
+tests/phase_4/test_auto_remediation.py::TestRemediationEngine::test_process_metrics_with_ml_prediction PASSED [ 68%]
+tests/phase_4/test_auto_remediation.py::TestRemediationEngine::test_engine_enable_disable PASSED [ 69%]
+tests/phase_4/test_auto_remediation.py::TestRemediationEngine::test_manual_override PASSED [ 70%]
+tests/phase_4/test_auto_remediation.py::TestRemediationEngine::test_add_remove_rules PASSED [ 71%]
+tests/phase_4/test_auto_remediation.py::TestRemediationEngine::test_get_status PASSED [ 72%]
+tests/phase_4/test_auto_remediation.py::TestIntegrationService::test_integration_initialization PASSED [ 72%]
+tests/phase_4/test_auto_remediation.py::TestIntegrationService::test_collect_system_metrics PASSED [ 73%]
+tests/phase_4/test_auto_remediation.py::TestIntegrationService::test_simulated_metrics PASSED [ 74%]
+tests/phase_4/test_auto_remediation.py::TestIntegrationService::test_feature_preparation PASSED [ 75%]
+tests/phase_4/test_auto_remediation.py::TestIntegrationService::test_ml_prediction PASSED [ 76%]
+tests/phase_4/test_auto_remediation.py::TestIntegrationService::test_metrics_buffer_management PASSED [ 77%]
+tests/phase_4/test_auto_remediation.py::TestIntegrationService::test_get_status PASSED [ 77%]
+tests/phase_4/test_auto_remediation.py::TestIntegrationService::test_get_recent_metrics PASSED [ 78%]
+tests/phase_4/test_auto_remediation.py::TestIntegrationService::test_config_update PASSED [ 79%]
+tests/phase_4/test_auto_remediation.py::TestRemediationAPI::test_get_remediation_status FAILED [ 80%]
+tests/phase_4/test_auto_remediation.py::TestRemediationAPI::test_enable_remediation FAILED [ 81%]
+tests/phase_4/test_auto_remediation.py::TestRemediationAPI::test_disable_remediation FAILED [ 82%]
+tests/phase_4/test_auto_remediation.py::TestRemediationAPI::test_set_manual_override FAILED [ 83%]
+tests/phase_4/test_auto_remediation.py::TestRemediationAPI::test_get_rules FAILED [ 83%]
+tests/phase_4/test_auto_remediation.py::TestRemediationAPI::test_add_rule FAILED [ 84%]
+tests/phase_4/test_auto_remediation.py::TestRemediationAPI::test_remove_rule FAILED [ 85%]
+tests/phase_4/test_auto_remediation.py::TestRemediationAPI::test_get_action_history FAILED [ 86%]
+tests/phase_4/test_auto_remediation.py::TestRemediationAPI::test_test_remediation FAILED [ 87%]
+tests/phase_4/test_auto_remediation.py::TestRemediationAPI::test_get_remediation_metrics FAILED [ 88%]
+tests/phase_4/test_auto_remediation.py::TestIntegrationAPI::test_get_integration_status FAILED [ 88%]
+tests/phase_4/test_auto_remediation.py::TestIntegrationAPI::test_start_integration FAILED [ 89%]
+tests/phase_4/test_auto_remediation.py::TestIntegrationAPI::test_stop_integration FAILED [ 90%]
+tests/phase_4/test_auto_remediation.py::TestIntegrationAPI::test_get_recent_metrics FAILED [ 91%]
+tests/phase_4/test_auto_remediation.py::TestIntegrationAPI::test_trigger_manual_remediation FAILED [ 92%]
+tests/phase_4/test_auto_remediation.py::TestIntegrationAPI::test_get_integration_config FAILED [ 93%]
+tests/phase_4/test_auto_remediation.py::TestIntegrationAPI::test_update_integration_config FAILED [ 94%]
+tests/phase_4/test_auto_remediation.py::TestIntegrationAPI::test_test_integration FAILED [ 94%]
+tests/phase_4/test_auto_remediation.py::TestIntegrationAPI::test_get_integration_health FAILED [ 95%]
+tests/test_remediation.py::test_remediation_engine_initialization PASSED [ 96%]
+tests/test_remediation.py::test_remediation_engine_status PASSED         [ 97%]
+tests/test_remediation.py::test_remediation_rule_creation PASSED         [ 98%]
+tests/test_phase1_terraform.py::test_vpc_and_subnets_defined PASSED      [ 99%]
+tests/test_phase1_terraform.py::test_security_groups_hardened_ports PASSED [100%]
+
+============================= slowest 10 durations =============================
+2.08s call     tests/phase_4/test_auto_remediation.py::TestRemediationEngine::test_process_metrics_with_ml_prediction
+2.02s call     tests/phase_4/test_auto_remediation.py::TestRemediationEngine::test_restart_service_action
+2.02s call     tests/phase_4/test_auto_remediation.py::TestRemediationEngine::test_emergency_shutdown_action
+2.02s call     tests/phase_4/test_auto_remediation.py::TestRemediationEngine::test_get_status
+2.02s call     tests/phase_4/test_auto_remediation.py::TestRemediationEngine::test_rule_priority_ordering
+2.02s call     tests/test_remediation.py::test_remediation_engine_initialization
+2.02s call     tests/phase_4/test_auto_remediation.py::TestRemediationEngine::test_engine_enable_disable
+2.01s call     tests/phase_4/test_auto_remediation.py::TestRemediationEngine::test_clear_cache_action
+2.01s call     tests/phase_4/test_auto_remediation.py::TestRemediationEngine::test_default_rules_creation
+2.01s call     tests/phase_4/test_auto_remediation.py::TestRemediationEngine::test_cooldown_checking
+=========================== short test summary info ============================
+FAILED tests/phase_2/test_flask_app.py::TestFlaskAppEndpoints::test_status_endpoint
+FAILED tests/phase_2/test_flask_app.py::TestFlaskAppEndpoints::test_chat_endpoint_success
+FAILED tests/phase_2/test_flask_app.py::TestFlaskAppEndpoints::test_chat_endpoint_invalid_input
+FAILED tests/phase_2/test_flask_app.py::TestFlaskAppEndpoints::test_chat_endpoint_missing_query
+FAILED tests/phase_2/test_flask_app.py::TestFlaskAppEndpoints::test_metrics_endpoint
+FAILED tests/phase_2/test_flask_app.py::TestFlaskAppErrorHandling::test_chat_endpoint_service_error
+FAILED tests/phase_2/test_flask_app.py::TestFlaskAppErrorHandling::test_query_endpoint_invalid_json
+FAILED tests/phase_3/test_ml_inference.py::TestSecureMLInferenceEngine::test_predict_anomaly_success
+FAILED tests/phase_3/test_ml_inference.py::TestSecureMLInferenceEngine::test_predict_anomaly_high_cpu
+FAILED tests/phase_3/test_ml_inference.py::TestSecureMLInferenceEngine::test_predict_anomaly_missing_metrics
+FAILED tests/phase_3/test_ml_inference.py::TestSecureMLInferenceEngine::test_predict_anomaly_invalid_metrics
+FAILED tests/phase_3/test_ml_inference.py::TestSecureMLInferenceEngine::test_get_model_info_success
+FAILED tests/phase_3/test_ml_inference.py::TestSecureMLInferenceEngine::test_get_model_info_no_model
+FAILED tests/phase_4/test_auto_remediation.py::TestRemediationAPI::test_get_remediation_status
+FAILED tests/phase_4/test_auto_remediation.py::TestRemediationAPI::test_enable_remediation
+FAILED tests/phase_4/test_auto_remediation.py::TestRemediationAPI::test_disable_remediation
+FAILED tests/phase_4/test_auto_remediation.py::TestRemediationAPI::test_set_manual_override
+FAILED tests/phase_4/test_auto_remediation.py::TestRemediationAPI::test_get_rules
+FAILED tests/phase_4/test_auto_remediation.py::TestRemediationAPI::test_add_rule
+FAILED tests/phase_4/test_auto_remediation.py::TestRemediationAPI::test_remove_rule
+FAILED tests/phase_4/test_auto_remediation.py::TestRemediationAPI::test_get_action_history
+FAILED tests/phase_4/test_auto_remediation.py::TestRemediationAPI::test_test_remediation
+FAILED tests/phase_4/test_auto_remediation.py::TestRemediationAPI::test_get_remediation_metrics
+FAILED tests/phase_4/test_auto_remediation.py::TestIntegrationAPI::test_get_integration_status
+FAILED tests/phase_4/test_auto_remediation.py::TestIntegrationAPI::test_start_integration
+FAILED tests/phase_4/test_auto_remediation.py::TestIntegrationAPI::test_stop_integration
+FAILED tests/phase_4/test_auto_remediation.py::TestIntegrationAPI::test_get_recent_metrics
+FAILED tests/phase_4/test_auto_remediation.py::TestIntegrationAPI::test_trigger_manual_remediation
+FAILED tests/phase_4/test_auto_remediation.py::TestIntegrationAPI::test_get_integration_config
+FAILED tests/phase_4/test_auto_remediation.py::TestIntegrationAPI::test_update_integration_config
+FAILED tests/phase_4/test_auto_remediation.py::TestIntegrationAPI::test_test_integration
+FAILED tests/phase_4/test_auto_remediation.py::TestIntegrationAPI::test_get_integration_health
+======================== 32 failed, 86 passed in 46.01s ========================

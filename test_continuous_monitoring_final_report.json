@@ -1,10 +1,10 @@
 {
   "test_started": "2025-08-28T18:00:00",
-  "test_ended": "2025-08-28T18:20:59.281009",
+  "test_ended": "2025-08-28T18:26:38.114956",
   "total_iterations": 4,
   "total_issues_found": 1,
-  "total_fixes_applied": 0,
-  "success_rate": "0.0%",
+  "total_fixes_applied": 1,
+  "success_rate": "100.0%",
   "issues": [
     {
       "issue_type": "missing_dependency",
@@ -12,9 +12,18 @@
       "auto_fixable": true,
       "fix_description": "Install missing Python dependency",
       "error_message": "ModuleNotFoundError: No module named 'missing_package'",
-      "status": "failed"
+      "status": "fixed"
     }
   ],
-  "fixes": [],
+  "fixes": [
+    {
+      "issue_type": "missing_dependency",
+      "severity": "high",
+      "auto_fixable": true,
+      "fix_description": "Install missing Python dependency",
+      "error_message": "ModuleNotFoundError: No module named 'missing_package'",
+      "status": "fixed"
+    }
+  ],
   "simulation": true
 }

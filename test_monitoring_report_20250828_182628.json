@@ -1,0 +1,13 @@
+{
+  "timestamp": "2025-08-28T18:26:28.113633",
+  "iteration": 2,
+  "total_issues_found": 1,
+  "total_fixes_applied": 1,
+  "issues_by_type": {
+    "missing_dependency": 1
+  },
+  "fixes_by_type": {
+    "missing_dependency": 1
+  },
+  "simulation": true
+}

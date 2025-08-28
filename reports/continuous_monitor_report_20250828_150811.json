@@ -1,0 +1,15 @@
+{
+  "timestamp": "2025-08-28T15:08:11.847256",
+  "duration": 0.003216,
+  "attempts": 1,
+  "max_attempts": 50,
+  "success": true,
+  "log_file": "logs/continuous_monitor_20250828_150811.log",
+  "status": "completed",
+  "log_summary": {
+    "total_lines": 7,
+    "errors": 0,
+    "warnings": 0,
+    "successes": 1
+  }
+}

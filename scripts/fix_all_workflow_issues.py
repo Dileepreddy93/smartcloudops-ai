@@ -1,307 +1,469 @@
 #!/usr/bin/env python3
 """
-🚀 SmartCloudOps AI - Comprehensive Workflow Issue Fixer
-========================================================
+SmartCloudOps AI - Complete Workflow Issue Resolution System
+============================================================
 
-This script automatically fixes all common workflow issues identified in the test suite.
-It addresses dependency issues, environment variables, database connections, and more.
+This script continuously monitors GitHub Actions workflows and automatically fixes
+all issues until all workflows pass successfully. It runs in a loop until all
+workflow issues are resolved.
+
+Features:
+- Continuous workflow monitoring
+- Automatic issue detection and classification
+- Multi-stage fix application
+- Dependency management
+- Test execution and validation
+- Automatic commits and pushes
+- Comprehensive reporting
+- Retry logic with exponential backoff
 """
 
-import json
-import logging
 import os
-import subprocess
 import sys
+import json
 import time
-from datetime import datetime
+import logging
+import subprocess
+import requests
+from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+import yaml
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s", handlers=[logging.StreamHandler(sys.stdout)]
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('workflow_fix_complete.log'),
+        logging.StreamHandler(sys.stdout)
+    ]
 )
 logger = logging.getLogger(__name__)
 
-
-class WorkflowIssueFixer:
-    """Comprehensive workflow issue fixer"""
-
-    def __init__(self):
+class CompleteWorkflowFixer:
+    """Complete workflow issue resolution system."""
+    
+    def __init__(self, github_token: str = None, repo_owner: str = None, repo_name: str = None):
+        self.github_token = github_token or os.getenv("GITHUB_TOKEN")
+        self.repo_owner = repo_owner or os.getenv("GITHUB_REPOSITORY_OWNER", "your-username")
+        self.repo_name = repo_name or os.getenv("GITHUB_REPOSITORY_NAME", "smartcloudops-ai")
+        self.max_retries = 10
+        self.retry_delay = 60  # seconds
         self.fixes_applied = []
-        self.issues_fixed = 0
+        self.issues_resolved = []
         self.start_time = datetime.now()
-
-    def log_fix(self, issue: str, status: str):
-        """Log a fix attempt"""
-        logger.info(f"🔧 {issue}: {status}")
-        if status == "SUCCESS":
-            self.fixes_applied.append(issue)
-            self.issues_fixed += 1
-
-    def run_command(self, command: str, description: str) -> bool:
-        """Run a command and log the result"""
+        
+        if self.github_token:
+            self.headers = {
+                "Authorization": f"token {self.github_token}",
+                "Accept": "application/vnd.github.v3+json"
+            }
+            self.api_base = f"https://api.github.com/repos/{self.repo_owner}/{self.repo_name}"
+        else:
+            self.headers = None
+            self.api_base = None
+    
+    def get_workflow_status(self) -> Dict:
+        """Get current workflow status from GitHub API."""
+        if not self.api_base:
+            return {"status": "unknown", "runs": []}
+        
         try:
-            logger.info(f"🔧 {description}...")
-            result = subprocess.run(command, shell=True, capture_output=True, text=True)
-            if result.returncode == 0:
-                self.log_fix(description, "SUCCESS")
+            url = f"{self.api_base}/actions/runs"
+            params = {"per_page": 5}
+            response = requests.get(url, headers=self.headers, params=params)
+            response.raise_for_status()
+            
+            runs = response.json()["workflow_runs"]
+            return {
+                "status": "available",
+                "runs": runs,
+                "failed_count": len([r for r in runs if r.get("conclusion") == "failure"]),
+                "success_count": len([r for r in runs if r.get("conclusion") == "success"]),
+                "in_progress_count": len([r for r in runs if r.get("status") == "in_progress"])
+            }
+        except Exception as e:
+            logger.error(f"Failed to get workflow status: {e}")
+            return {"status": "error", "runs": []}
+    
+    def fix_dependencies(self) -> bool:
+        """Fix dependency-related issues."""
+        logger.info("🔧 Fixing dependency issues...")
+        
+        try:
+            # Update pip
+            subprocess.run(["python", "-m", "pip", "install", "--upgrade", "pip"], check=True)
+            
+            # Install Python dependencies
+            if os.path.exists("app/requirements.txt"):
+                subprocess.run(["pip", "install", "-r", "app/requirements.txt"], check=True)
+            
+            # Install additional development dependencies
+            dev_packages = [
+                "pytest", "pytest-cov", "pytest-mock", "pytest-flask",
+                "black", "flake8", "isort", "mypy", "bandit", "safety",
+                "requests", "pyyaml", "python-dotenv"
+            ]
+            
+            for package in dev_packages:
+                try:
+                    subprocess.run(["pip", "install", package], check=True)
+                except subprocess.CalledProcessError:
+                    logger.warning(f"Failed to install {package}")
+            
+            # Install Node.js dependencies
+            if os.path.exists("frontend/package.json"):
+                subprocess.run(["npm", "install", "--prefix", "frontend"], check=True)
+            
+            self.fixes_applied.append("dependencies")
+            logger.info("✅ Dependencies fixed")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to fix dependencies: {e}")
+            return False
+    
+    def fix_workflow_files(self) -> bool:
+        """Fix workflow YAML files."""
+        logger.info("🔧 Fixing workflow files...")
+        
+        try:
+            # Run the workflow fixer script
+            if os.path.exists("scripts/auto_workflow_fixer.py"):
+                subprocess.run([sys.executable, "scripts/auto_workflow_fixer.py"], check=True)
+                self.fixes_applied.append("workflow_files")
+                logger.info("✅ Workflow files fixed")
                 return True
             else:
-                logger.warning(f"⚠️ {description} failed: {result.stderr}")
-                self.log_fix(description, "FAILED")
+                logger.warning("Workflow fixer script not found")
                 return False
-        except Exception as e:
-            logger.error(f"❌ {description} error: {e}")
-            self.log_fix(description, "ERROR")
+                
+        except subprocess.CalledProcessError as e:
+            logger.error(f"❌ Failed to fix workflow files: {e}")
             return False
-
-    def fix_dependencies(self):
-        """Fix missing dependencies"""
-        logger.info("🔧 Fixing missing dependencies...")
-
-        # Install missing Python packages
-        missing_packages = ["spacy", "nltk", "structlog", "bandit", "ruff", "mypy"]
-
-        for package in missing_packages:
-            self.run_command(f"pip install {package} --break-system-packages", f"Install {package}")
-
-    def fix_environment_variables(self):
-        """Set up required environment variables"""
-        logger.info("🔧 Setting up environment variables...")
-
-        # Generate secure values for missing environment variables
-        import secrets
-
-        env_vars = {
-            "SECRET_KEY": secrets.token_urlsafe(64),
-            "ADMIN_API_KEY": f"sk-admin-{secrets.token_urlsafe(32)}",
-            "ML_API_KEY": f"sk-ml-{secrets.token_urlsafe(32)}",
-            "READONLY_API_KEY": f"sk-readonly-{secrets.token_urlsafe(32)}",
-            "API_KEY_SALT": secrets.token_urlsafe(16),
-            "DB_PASSWORD": secrets.token_urlsafe(16),
-            "JWT_SECRET_KEY": secrets.token_urlsafe(64),
-            "ADMIN_PASSWORD": secrets.token_urlsafe(16),
-        }
-
-        # Export environment variables
-        for key, value in env_vars.items():
-            os.environ[key] = value
-            logger.info(f"✅ Set {key}")
-
-        self.log_fix("Environment variables", "SUCCESS")
-
-    def fix_database_connection(self):
-        """Fix database connection issues"""
-        logger.info("🔧 Setting up database connection...")
-
-        # Create a simple SQLite database for testing
-        try:
-            import sqlite3
-
-            db_path = "test_database.db"
-            conn = sqlite3.connect(db_path)
-            conn.close()
-            logger.info(f"✅ Created test database: {db_path}")
-            self.log_fix("Database connection", "SUCCESS")
-        except Exception as e:
-            logger.warning(f"⚠️ Database setup failed: {e}")
-            self.log_fix("Database connection", "FAILED")
-
-    def fix_ml_model_issues(self):
-        """Fix ML model loading issues"""
-        logger.info("🔧 Fixing ML model issues...")
-
-        # Create ML models directory if it doesn't exist
-        ml_dir = Path("ml_models")
-        ml_dir.mkdir(exist_ok=True)
-
-        # Create a simple test model
-        try:
-            import pickle
-
-            import numpy as np
-            from sklearn.ensemble import IsolationForest
-
-            # Create a simple model
-            model = IsolationForest(random_state=42)
-            X = np.random.randn(100, 5)
-            model.fit(X)
-
-            # Save the model
-            model_path = ml_dir / "test_model.pkl"
-            with open(model_path, "wb") as f:
-                pickle.dump(model, f)
-
-            logger.info(f"✅ Created test ML model: {model_path}")
-            self.log_fix("ML model setup", "SUCCESS")
-        except Exception as e:
-            logger.warning(f"⚠️ ML model setup failed: {e}")
-            self.log_fix("ML model setup", "FAILED")
-
-    def fix_flask_app_issues(self):
-        """Fix Flask application issues"""
-        logger.info("🔧 Fixing Flask application issues...")
-
-        # Check if main.py has the correct structure
-        main_py_path = Path("app/main.py")
-        if main_py_path.exists():
-            content = main_py_path.read_text()
-            if "create_app" not in content:
-                # Add create_app function
-                create_app_code = '''
-def create_app():
-    """Create Flask application instance"""
-    from app.main_secure import app
-    return app
-
-if __name__ == "__main__":
-    app = create_app()
-    app.run(debug=True)
-'''
-                main_py_path.write_text(content + create_app_code)
-                logger.info("✅ Added create_app function to main.py")
-                self.log_fix("Flask app structure", "SUCCESS")
-            else:
-                logger.info("✅ Flask app structure already correct")
-                self.log_fix("Flask app structure", "SUCCESS")
-
-    def fix_test_issues(self):
-        """Fix test execution issues"""
-        logger.info("🔧 Fixing test execution issues...")
-
-        # Run pytest to check current status
-        result = self.run_command("python3 -m pytest tests/phase_1/ -v --tb=short", "Run Phase 1 tests")
-
-        if result:
-            self.log_fix("Test execution", "SUCCESS")
-        else:
-            self.log_fix("Test execution", "FAILED")
-
-    def fix_linting_issues(self):
-        """Fix code linting issues"""
-        logger.info("🔧 Fixing linting issues...")
-
-        # Run Black formatting
-        self.run_command("python3 -m black app/ tests/ scripts/ --line-length=120", "Black formatting")
-
-        # Run isort
-        self.run_command("python3 -m isort app/ tests/ scripts/ --profile=black", "Import sorting")
-
-        # Run autopep8
-        self.run_command(
-            "python3 -m autopep8 --in-place --aggressive --aggressive app/ tests/ scripts/", "Code style fixes"
-        )
-
-        self.log_fix("Code linting", "SUCCESS")
-
-    def fix_security_issues(self):
-        """Fix security-related issues"""
-        logger.info("🔧 Fixing security issues...")
-
-        # Run security checks
-        self.run_command("python3 -m bandit -r app/ -f json -o bandit_report.json", "Security scan")
-
-        self.log_fix("Security checks", "SUCCESS")
-
-    def create_monitoring_module(self):
-        """Create missing monitoring module"""
-        logger.info("🔧 Creating monitoring module...")
-
-        monitoring_dir = Path("monitoring")
-        monitoring_dir.mkdir(exist_ok=True)
-
-        monitoring_code = '''
-"""
-Monitoring module for SmartCloudOps AI
-"""
-
-import logging
-import time
-from datetime import datetime
-
-logger = logging.getLogger(__name__)
-
-class MonitoringService:
-    """Basic monitoring service"""
     
-    def __init__(self):
-        self.start_time = datetime.now()
-        logger.info("Monitoring service initialized")
+    def fix_test_environment(self) -> bool:
+        """Fix test environment and configuration."""
+        logger.info("🔧 Fixing test environment...")
+        
+        try:
+            # Create test environment file
+            test_env = {
+                "JWT_SECRET_KEY": "test-jwt-secret-key-64-characters-long-for-testing-purposes-only",
+                "ADMIN_API_KEY": "sk-admin-test-key-32-characters-long-for-testing",
+                "ML_API_KEY": "sk-ml-test-key-32-characters-long-for-testing-only",
+                "READONLY_API_KEY": "sk-readonly-test-key-32-chars-for-testing",
+                "API_KEY_SALT": "test-salt-16-chars",
+                "ADMIN_PASSWORD": "test-admin-password-16-chars",
+                "FLASK_ENV": "testing",
+                "FLASK_DEBUG": "False",
+                "DATABASE_URL": "sqlite:///test.db",
+                "REDIS_URL": "redis://localhost:6379/0"
+            }
+            
+            with open(".env.test", "w") as f:
+                for key, value in test_env.items():
+                    f.write(f"{key}={value}\n")
+            
+            # Create test directories
+            os.makedirs("logs", exist_ok=True)
+            os.makedirs("data", exist_ok=True)
+            os.makedirs("ml_models", exist_ok=True)
+            
+            self.fixes_applied.append("test_environment")
+            logger.info("✅ Test environment fixed")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to fix test environment: {e}")
+            return False
     
-    def health_check(self):
-        """Perform health check"""
-        return {
-            "status": "healthy",
-            "uptime": str(datetime.now() - self.start_time),
-            "timestamp": datetime.now().isoformat()
-        }
-'''
-
-        monitoring_file = monitoring_dir / "__init__.py"
-        monitoring_file.write_text(monitoring_code)
-
-        logger.info("✅ Created monitoring module")
-        self.log_fix("Monitoring module", "SUCCESS")
-
-    def run_comprehensive_fix(self):
-        """Run all fixes"""
-        logger.info("🚀 Starting comprehensive workflow issue fixing...")
-        logger.info("=" * 60)
-
-        # Apply all fixes
-        self.fix_dependencies()
-        self.fix_environment_variables()
-        self.fix_database_connection()
-        self.fix_ml_model_issues()
-        self.fix_flask_app_issues()
-        self.fix_test_issues()
-        self.fix_linting_issues()
-        self.fix_security_issues()
-        self.create_monitoring_module()
-
-        # Generate report
-        self.generate_report()
-
-        logger.info("=" * 60)
-        logger.info("🎉 Comprehensive workflow fixing completed!")
-
-    def generate_report(self):
-        """Generate a comprehensive report"""
+    def fix_code_quality(self) -> bool:
+        """Fix code quality issues."""
+        logger.info("🔧 Fixing code quality issues...")
+        
+        try:
+            # Python code formatting
+            if os.path.exists("app/"):
+                subprocess.run(["black", "app/", "--line-length", "127"], check=True)
+                subprocess.run(["isort", "app/"], check=True)
+            
+            # Frontend code formatting
+            if os.path.exists("frontend/"):
+                subprocess.run(["npm", "run", "lint:fix", "--prefix", "frontend"], check=True)
+            
+            self.fixes_applied.append("code_quality")
+            logger.info("✅ Code quality fixed")
+            return True
+            
+        except subprocess.CalledProcessError as e:
+            logger.warning(f"Code quality fix failed: {e}")
+            return False
+    
+    def run_tests(self) -> bool:
+        """Run tests to verify fixes."""
+        logger.info("🧪 Running tests...")
+        
+        try:
+            # Set test environment
+            os.environ.update({
+                "FLASK_ENV": "testing",
+                "FLASK_DEBUG": "False"
+            })
+            
+            # Run Python tests
+            test_commands = [
+                ["python", "-m", "pytest", "tests/phase_1/", "-v", "--tb=short"],
+                ["python", "-m", "pytest", "tests/phase_2/", "-v", "--tb=short"],
+                ["python", "-m", "pytest", "tests/test_security_fixes.py", "-v", "--tb=short"]
+            ]
+            
+            for cmd in test_commands:
+                try:
+                    result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+                    if result.returncode != 0:
+                        logger.warning(f"Test command failed: {' '.join(cmd)}")
+                        logger.warning(f"Output: {result.stdout}")
+                        logger.warning(f"Error: {result.stderr}")
+                        return False
+                except subprocess.TimeoutExpired:
+                    logger.warning(f"Test command timed out: {' '.join(cmd)}")
+                    return False
+            
+            # Run frontend tests
+            if os.path.exists("frontend/"):
+                try:
+                    subprocess.run(["npm", "test", "--prefix", "frontend", "--", "--watchAll=false"], 
+                                 check=True, timeout=300)
+                except subprocess.TimeoutExpired:
+                    logger.warning("Frontend tests timed out")
+                    return False
+            
+            logger.info("✅ All tests passed")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Tests failed: {e}")
+            return False
+    
+    def validate_workflows(self) -> bool:
+        """Validate workflow files."""
+        logger.info("✅ Validating workflows...")
+        
+        try:
+            workflow_dir = Path(".github/workflows")
+            if not workflow_dir.exists():
+                logger.error("No workflows directory found")
+                return False
+            
+            for workflow_file in workflow_dir.glob("*.yml"):
+                with open(workflow_file, 'r') as f:
+                    yaml.safe_load(f)
+            
+            logger.info("✅ All workflow files are valid")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Workflow validation failed: {e}")
+            return False
+    
+    def commit_and_push_fixes(self) -> bool:
+        """Commit and push all fixes."""
+        logger.info("📝 Committing and pushing fixes...")
+        
+        try:
+            # Add all changes
+            subprocess.run(["git", "add", "."], check=True)
+            
+            # Check if there are changes to commit
+            result = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True)
+            if not result.stdout.strip():
+                logger.info("No changes to commit")
+                return True
+            
+            # Commit changes
+            commit_message = f"🔧 Auto-fix: {', '.join(self.fixes_applied)} - {datetime.now().isoformat()}"
+            subprocess.run(["git", "commit", "-m", commit_message], check=True)
+            
+            # Push changes
+            subprocess.run(["git", "push"], check=True)
+            
+            logger.info("✅ Fixes committed and pushed")
+            return True
+            
+        except subprocess.CalledProcessError as e:
+            logger.error(f"❌ Git operation failed: {e}")
+            return False
+    
+    def wait_for_workflow_completion(self, timeout: int = 1800) -> bool:
+        """Wait for workflow completion."""
+        logger.info("⏳ Waiting for workflow completion...")
+        
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            status = self.get_workflow_status()
+            
+            if status["status"] == "available":
+                if status["failed_count"] == 0 and status["in_progress_count"] == 0:
+                    logger.info("✅ All workflows completed successfully")
+                    return True
+                elif status["failed_count"] > 0:
+                    logger.info(f"❌ {status['failed_count']} workflows failed")
+                    return False
+            
+            time.sleep(30)  # Wait 30 seconds before checking again
+        
+        logger.error("⏰ Timeout waiting for workflow completion")
+        return False
+    
+    def run_complete_fix_cycle(self) -> bool:
+        """Run a complete fix cycle."""
+        logger.info("🔄 Starting complete fix cycle...")
+        
+        # Step 1: Fix dependencies
+        if not self.fix_dependencies():
+            logger.error("❌ Failed to fix dependencies")
+            return False
+        
+        # Step 2: Fix workflow files
+        if not self.fix_workflow_files():
+            logger.error("❌ Failed to fix workflow files")
+            return False
+        
+        # Step 3: Fix test environment
+        if not self.fix_test_environment():
+            logger.error("❌ Failed to fix test environment")
+            return False
+        
+        # Step 4: Fix code quality
+        self.fix_code_quality()  # Non-critical, continue even if it fails
+        
+        # Step 5: Validate workflows
+        if not self.validate_workflows():
+            logger.error("❌ Workflow validation failed")
+            return False
+        
+        # Step 6: Run tests
+        if not self.run_tests():
+            logger.error("❌ Tests failed")
+            return False
+        
+        # Step 7: Commit and push fixes
+        if not self.commit_and_push_fixes():
+            logger.error("❌ Failed to commit and push fixes")
+            return False
+        
+        logger.info("✅ Complete fix cycle finished")
+        return True
+    
+    def monitor_and_fix_until_success(self) -> bool:
+        """Monitor workflows and fix issues until all pass."""
+        logger.info("🚀 Starting complete workflow issue resolution...")
+        
+        retry_count = 0
+        while retry_count < self.max_retries:
+            logger.info(f"🔄 Attempt {retry_count + 1}/{self.max_retries}")
+            
+            # Check current workflow status
+            status = self.get_workflow_status()
+            
+            if status["status"] == "available":
+                if status["failed_count"] == 0:
+                    logger.info("🎉 All workflows are passing!")
+                    return True
+                
+                logger.info(f"❌ Found {status['failed_count']} failed workflows")
+                
+                # Run complete fix cycle
+                if self.run_complete_fix_cycle():
+                    # Wait for new workflow to complete
+                    logger.info("⏳ Waiting for new workflow to complete...")
+                    time.sleep(60)  # Wait for workflow to start
+                    
+                    if self.wait_for_workflow_completion():
+                        logger.info("🎉 All workflows are now passing!")
+                        return True
+                    else:
+                        logger.info("❌ New workflow failed, retrying...")
+                else:
+                    logger.error("❌ Fix cycle failed")
+            
+            # Wait before next retry
+            delay = self.retry_delay * (2 ** retry_count)  # Exponential backoff
+            logger.info(f"⏳ Waiting {delay} seconds before next attempt...")
+            time.sleep(delay)
+            retry_count += 1
+        
+        logger.error(f"❌ Failed to fix all workflows after {self.max_retries} attempts")
+        return False
+    
+    def generate_final_report(self, success: bool) -> Dict:
+        """Generate final report."""
         end_time = datetime.now()
         duration = end_time - self.start_time
-
+        
         report = {
             "timestamp": end_time.isoformat(),
+            "success": success,
             "duration_seconds": duration.total_seconds(),
-            "issues_fixed": self.issues_fixed,
             "fixes_applied": self.fixes_applied,
-            "success_rate": (
-                len([f for f in self.fixes_applied if "SUCCESS" in f]) / len(self.fixes_applied)
-                if self.fixes_applied
-                else 0
-            ),
+            "issues_resolved": self.issues_resolved,
+            "retry_count": len(self.fixes_applied),
+            "repo": f"{self.repo_owner}/{self.repo_name}",
+            "recommendations": []
         }
-
-        # Save report
-        report_file = f"workflow_fix_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        with open(report_file, "w") as f:
-            json.dump(report, f, indent=2)
-
-        logger.info(f"📄 Report saved to: {report_file}")
-
-        # Print summary
-        logger.info("📊 FIX SUMMARY:")
-        logger.info(f"   Duration: {duration}")
-        logger.info(f"   Issues Fixed: {self.issues_fixed}")
-        logger.info(f"   Fixes Applied: {len(self.fixes_applied)}")
-        logger.info(f"   Success Rate: {report['success_rate']:.1%}")
-
+        
+        if success:
+            report["recommendations"].append("All workflow issues have been resolved")
+            report["recommendations"].append("Monitor workflows for any new issues")
+        else:
+            report["recommendations"].append("Manual intervention may be required")
+            report["recommendations"].append("Review failed workflows for specific issues")
+        
+        return report
 
 def main():
-    """Main function"""
-    fixer = WorkflowIssueFixer()
-    fixer.run_comprehensive_fix()
-
+    """Main entry point."""
+    logger.info("🚀 SmartCloudOps AI - Complete Workflow Issue Resolution")
+    logger.info("=" * 60)
+    
+    # Initialize fixer
+    fixer = CompleteWorkflowFixer()
+    
+    # Run complete monitoring and fixing
+    success = fixer.monitor_and_fix_until_success()
+    
+    # Generate final report
+    report = fixer.generate_final_report(success)
+    
+    # Save report
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    report_file = f"workflow_fix_complete_report_{timestamp}.json"
+    
+    with open(report_file, 'w') as f:
+        json.dump(report, f, indent=2, default=str)
+    
+    # Print summary
+    print("\n" + "="*60)
+    print("🚀 WORKFLOW ISSUE RESOLUTION COMPLETE")
+    print("="*60)
+    print(f"📅 Timestamp: {report['timestamp']}")
+    print(f"✅ Success: {report['success']}")
+    print(f"⏱️  Duration: {report['duration_seconds']:.1f} seconds")
+    print(f"🔄 Fixes Applied: {len(report['fixes_applied'])}")
+    print(f"🔧 Fixes: {', '.join(report['fixes_applied'])}")
+    print("\n💡 Recommendations:")
+    for rec in report['recommendations']:
+        print(f"   • {rec}")
+    print("="*60)
+    
+    if success:
+        logger.info("🎉 All workflow issues have been resolved!")
+        sys.exit(0)
+    else:
+        logger.error("❌ Failed to resolve all workflow issues")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

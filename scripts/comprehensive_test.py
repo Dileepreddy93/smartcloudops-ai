@@ -13,10 +13,14 @@ Tests all major components of the SmartCloudOps AI platform:
 """
 
 import sys
+import time
 import requests
 import subprocess
-from pathlib import Path
+
 from datetime import datetime
+from pathlib import Path
+
+
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -25,9 +29,9 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 def print_header(title):
     """Print a formatted header."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"🧪 {title}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
 
 def print_success(message):
@@ -50,9 +54,9 @@ def test_core_utilities():
     print_header("Testing Core Utilities")
 
     try:
+        from app.main import create_app
         from app.utils.response import make_response
         from app.utils.validation import require_json_keys, sanitize_string
-        from app.main import create_app
 
         # Create Flask app context
         app = create_app()
@@ -135,12 +139,8 @@ def test_ml_engine():
             print_success("ML prediction working")
         except Exception as pred_error:
             # Handle case where models are not loaded (expected in test environment)
-            if "not properly initialized" in str(
-                pred_error
-            ) or "No valid model files" in str(pred_error):
-                print_info(
-                    "ML prediction skipped - models not loaded (expected in test environment)"
-                )
+            if "not properly initialized" in str(pred_error) or "No valid model files" in str(pred_error):
+                print_info("ML prediction skipped - models not loaded (expected in test environment)")
                 return True  # Consider this a success in test environment
             else:
                 raise pred_error
@@ -246,9 +246,7 @@ def test_terraform():
 
     try:
         # Check if Terraform is installed
-        result = subprocess.run(
-            ["terraform", "--version"], capture_output=True, text=True, timeout=10
-        )
+        result = subprocess.run(["terraform", "--version"], capture_output=True, text=True, timeout=10)
         assert result.returncode == 0
         print_success("Terraform is installed")
 
@@ -416,9 +414,7 @@ def main():
         print_success("🎉 All tests passed! SmartCloudOps AI is ready for use.")
         return 0
     else:
-        print_error(
-            f"⚠️  {total - passed} tests failed. Please review the issues above."
-        )
+        print_error(f"⚠️  {total - passed} tests failed. Please review the issues above.")
         return 1
 
 

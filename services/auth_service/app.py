@@ -6,6 +6,8 @@ Authentication Service - SmartCloudOps AI
 Microservice for handling authentication and authorization.
 """
 
+
+
 import os
 import time
 import jwt

@@ -7,6 +7,8 @@ This file redirects to the secure main application.
 For production use, use app/main_secure.py directly.
 """
 
+
+
 import os
 import sys
 from pathlib import Path

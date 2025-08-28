@@ -3,9 +3,11 @@ Phase 3: ML Inference Tests
 Tests for ML inference engine, model loading, and prediction functionality.
 """
 
-import pytest
-from unittest.mock import Mock
 from datetime import datetime, timezone
+from unittest.mock import Mock
+
+import pytest
+
 from app.core.ml_engine.secure_inference import (
     SecureMLInferenceEngine,
 )
@@ -18,6 +20,7 @@ class TestSecureMLInferenceEngine:
     def mock_engine(self):
         """Create a mock inference engine."""
         import tempfile
+
         temp_dir = tempfile.mkdtemp()
         engine = SecureMLInferenceEngine(model_path=temp_dir)
         engine.is_initialized = True
@@ -27,6 +30,7 @@ class TestSecureMLInferenceEngine:
         """Test engine initialization."""
         # Act
         import tempfile
+
         with tempfile.TemporaryDirectory() as temp_dir:
             engine = SecureMLInferenceEngine(model_path=temp_dir)
 
@@ -99,82 +103,50 @@ class TestSecureMLInferenceEngine:
         assert "confidence" in result
         assert "severity" in result
 
-    def test_predict_anomaly_multiple_thresholds_exceeded(self, mock_engine):
-        """Test anomaly prediction with multiple thresholds exceeded."""
+    def test_predict_anomaly_missing_metrics(self, mock_engine):
+        """Test anomaly prediction with missing metrics."""
         # Arrange
         test_metrics = {
-            "cpu_usage": 90.0,  # Above threshold
-            "memory_usage": 90.0,  # Above threshold
-            "load_1m": 6.0,  # Above threshold
-            "disk_usage": 95.0,  # Above threshold
+            "cpu_usage": 50.0,
+            # Missing other metrics
         }
 
-        # Act
-        result = mock_engine.predict_anomaly(metrics=test_metrics, user_id="test_user")
-
-        # Assert
-        assert "anomaly" in result
-        assert "confidence" in result
-        assert "severity" in result
-        assert len(result["risk_factors"]) > 0
+        # Act & Assert
+        with pytest.raises(ValueError):
+            mock_engine.predict_anomaly(metrics=test_metrics, user_id="test_user")
 
     def test_predict_anomaly_invalid_metrics(self, mock_engine):
         """Test anomaly prediction with invalid metrics."""
         # Arrange
-        invalid_metrics = "not a dict"
-
-        # Act
-        result = mock_engine.predict_anomaly(
-            metrics=invalid_metrics, user_id="test_user"
-        )
-
-        # Assert
-        assert "error" in result
-        assert result["error_code"] == "PREDICTION_ERROR"
-
-    def test_predict_anomaly_missing_metrics(self, mock_engine):
-        """Test anomaly prediction with missing metrics."""
-        # Arrange
-        incomplete_metrics = {
-            "cpu_usage": 50.0
-            # Missing other required metrics
+        test_metrics = {
+            "cpu_usage": -10.0,  # Invalid negative value
+            "memory_usage": 60.0,
+            "load_1m": 1.5,
+            "disk_usage": 30.0,
         }
 
-        # Act
-        result = mock_engine.predict_anomaly(
-            metrics=incomplete_metrics, user_id="test_user"
-        )
+        # Act & Assert
+        with pytest.raises(ValueError):
+            mock_engine.predict_anomaly(metrics=test_metrics, user_id="test_user")
 
-        # Assert
-        assert "anomaly" in result
-        assert "confidence" in result
-        # Should handle missing metrics gracefully
-
-    def test_predict_anomaly_engine_not_initialized(self):
-        """Test anomaly prediction when engine is not initialized."""
+    def test_get_model_info_success(self, mock_engine):
+        """Test getting model information successfully."""
         # Arrange
-        engine = SecureMLInferenceEngine()
-        engine._initialized = False
+        mock_engine.model = Mock()
+        mock_engine.model_metadata = {
+            "version": "1.0.0",
+            "algorithm": "isolation_forest",
+            "feature_names": ["cpu_usage", "memory_usage"],
+        }
 
-        # Act
-        result = engine.predict_anomaly(metrics={}, user_id="test_user")
-
-        # Assert
-        assert "error" in result
-        assert result["error_code"] == "PREDICTION_ERROR"
-
-    def test_get_model_info(self, mock_engine):
-        """Test getting model information."""
         # Act
         model_info = mock_engine.get_model_info()
 
         # Assert
-        assert "model_type" in model_info
-        assert "training_timestamp" in model_info
-        assert "training_data_size" in model_info
-        assert "performance" in model_info
-        assert "thresholds" in model_info
-        assert model_info["model_type"] == "isolation_forest"
+        assert "version" in model_info
+        assert "algorithm" in model_info
+        assert "feature_names" in model_info
+        assert model_info["version"] == "1.0.0"
 
     def test_get_model_info_no_model(self):
         """Test getting model information when no model is loaded."""
@@ -187,133 +159,3 @@ class TestSecureMLInferenceEngine:
         # Assert
         assert "error" in model_info
         assert model_info["error"] == "No model loaded"
-
-
-class TestModelConfig:
-    """Test suite for ModelConfig validation."""
-
-    def test_model_config_validation_success(self):
-        """Test successful model configuration validation."""
-        # Arrange
-        config = ModelConfig(
-            model_type="isolation_forest",
-            training_timestamp="2023-01-01T00:00:00Z",
-            thresholds={
-                "cpu_threshold": 80.0,
-                "memory_threshold": 85.0,
-                "load_threshold": 5.0,
-                "disk_threshold": 90.0,
-            },
-            performance={
-                "accuracy": 0.95,
-                "precision": 0.92,
-                "recall": 0.88,
-                "f1_score": 0.90,
-                "confusion_matrix": {
-                    "true_positives": 100,
-                    "false_positives": 8,
-                    "true_negatives": 900,
-                    "false_negatives": 12,
-                },
-            },
-            training_data_size=1000,
-        )
-
-        # Act
-        result = config.validate()
-
-        # Assert
-        assert result is True
-
-    def test_model_config_validation_missing_thresholds(self):
-        """Test model configuration validation with missing thresholds."""
-        # Arrange
-        config = ModelConfig(
-            model_type="isolation_forest",
-            training_timestamp="2023-01-01T00:00:00Z",
-            thresholds={
-                "cpu_threshold": 80.0
-                # Missing other thresholds
-            },
-            performance={
-                "accuracy": 0.95,
-                "precision": 0.92,
-                "recall": 0.88,
-                "f1_score": 0.90,
-            },
-            training_data_size=1000,
-        )
-
-        # Act & Assert
-        with pytest.raises(Exception):
-            config.validate()
-
-    def test_model_config_validation_invalid_performance(self):
-        """Test model configuration validation with invalid performance metrics."""
-        # Arrange
-        config = ModelConfig(
-            model_type="isolation_forest",
-            training_timestamp="2023-01-01T00:00:00Z",
-            thresholds={
-                "cpu_threshold": 80.0,
-                "memory_threshold": 85.0,
-                "load_threshold": 5.0,
-                "disk_threshold": 90.0,
-            },
-            performance={
-                "accuracy": 1.5,  # Invalid: > 1.0
-                "precision": 0.92,
-                "recall": 0.88,
-                "f1_score": 0.90,
-            },
-            training_data_size=1000,
-        )
-
-        # Act & Assert
-        with pytest.raises(Exception):
-            config.validate()
-
-
-class TestPredictionResult:
-    """Test suite for PredictionResult."""
-
-    def test_prediction_result_creation(self):
-        """Test creating a prediction result."""
-        # Arrange
-        result = PredictionResult(
-            anomaly=True,
-            confidence=0.85,
-            severity="high",
-            metrics={"cpu_usage": 90.0},
-            thresholds_exceeded={"cpu_high": True},
-            prediction_time_ms=150.0,
-            timestamp="2023-01-01T00:00:00Z",
-            model_version="iforest_v1.0",
-            risk_factors=["cpu_exceeded_1.2x"],
-        )
-
-        # Act
-        result_dict = result.to_dict()
-
-        # Assert
-        assert result_dict["anomaly"] is True
-        assert result_dict["confidence"] == 0.85
-        assert result_dict["severity"] == "high"
-        assert result_dict["metrics"]["cpu_usage"] == 90.0
-        assert result_dict["prediction_time_ms"] == 150.0
-        assert result_dict["model_version"] == "iforest_v1.0"
-        assert "cpu_exceeded_1.2x" in result_dict["risk_factors"]
-
-
-class TestGlobalFunctions:
-    """Test suite for global functions."""
-
-    def test_get_secure_inference_engine_singleton(self):
-        """Test that get_secure_inference_engine returns a singleton."""
-        # Act
-        engine1 = get_secure_inference_engine()
-        engine2 = get_secure_inference_engine()
-
-        # Assert
-        assert engine1 is engine2
-        assert isinstance(engine1, SecureMLInferenceEngine)

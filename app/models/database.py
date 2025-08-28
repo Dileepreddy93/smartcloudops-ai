@@ -6,17 +6,19 @@ SmartCloudOps AI - Database Models
 SQLAlchemy models for production database.
 """
 
+
 import os
+import time
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import (JSON, Boolean, Column, DateTime, Float, Integer,
-                        String, Text, create_engine)
+from sqlalchemy import JSON, Boolean, Column, DateTime, Float, Integer, String, Text, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import QueuePool
 
 Base = declarative_base()
+
 
 class User(Base):
     """User model for authentication and authorization."""
@@ -32,6 +34,7 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+
 class APIKey(Base):
     """API key model for secure API access."""
     __tablename__ = "api_keys"
@@ -45,6 +48,7 @@ class APIKey(Base):
     expires_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     last_used_at = Column(DateTime, nullable=True)
+
 
 class MLModel(Base):
     """ML model metadata and performance tracking."""
@@ -67,6 +71,7 @@ class MLModel(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+
 class Prediction(Base):
     """ML prediction history and results."""
     __tablename__ = "predictions"
@@ -79,6 +84,7 @@ class Prediction(Base):
     anomaly_score = Column(Float, nullable=True)
     processing_time = Column(Float, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
 
 class RemediationAction(Base):
     """Auto-remediation action history."""
@@ -95,6 +101,7 @@ class RemediationAction(Base):
     triggered_by = Column(String(50), nullable=True)  # "manual", "automatic", "ml"
     created_at = Column(DateTime, default=datetime.utcnow)
     completed_at = Column(DateTime, nullable=True)
+
 
 class SystemMetric(Base):
     """System metrics for monitoring and analysis."""
@@ -115,6 +122,7 @@ class SystemMetric(Base):
     active_connections = Column(Integer, nullable=True)
     source = Column(String(50), nullable=False, default="system")  # "system", "prometheus", "custom"
 
+
 class ChatOpsCommand(Base):
     """ChatOps command history and results."""
     __tablename__ = "chatops_commands"
@@ -133,6 +141,7 @@ class ChatOpsCommand(Base):
     processing_time = Column(Float, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+
 class AuditLog(Base):
     """Audit log for security and compliance."""
     __tablename__ = "audit_logs"
@@ -149,32 +158,35 @@ class AuditLog(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 # Database connection and session management
+
+
 def get_database_url() -> str:
     """Get database URL from environment variables."""
     db_type = os.getenv("DATABASE_TYPE", "postgresql")
-    
+
     if db_type == "postgresql":
         host = os.getenv("DATABASE_HOST", "localhost")
         port = os.getenv("DATABASE_PORT", "5432")
         name = os.getenv("DATABASE_NAME", "smartcloudops")
         user = os.getenv("DATABASE_USER", "smartcloudops_admin")
         password = os.getenv("DATABASE_PASSWORD", "")
-        
+
         if password:
             return f"postgresql://{user}:{password}@{host}:{port}/{name}"
         else:
             return f"postgresql://{user}@{host}:{port}/{name}"
-    
+
     elif db_type == "sqlite":
         return "sqlite:///smartcloudops.db"
-    
+
     else:
         raise ValueError(f"Unsupported database type: {db_type}")
+
 
 def create_database_engine():
     """Create SQLAlchemy engine with proper configuration."""
     database_url = get_database_url()
-    
+
     engine_kwargs = {
         "poolclass": QueuePool,
         "pool_size": 10,
@@ -182,14 +194,15 @@ def create_database_engine():
         "pool_pre_ping": True,
         "pool_recycle": 3600,
     }
-    
+
     # Add SSL configuration for PostgreSQL
     if database_url.startswith("postgresql"):
         engine_kwargs["connect_args"] = {
             "sslmode": "require" if os.getenv("DATABASE_SSL_MODE") == "require" else "prefer"
         }
-    
+
     return create_engine(database_url, **engine_kwargs)
+
 
 def get_database_session() -> Session:
     """Get database session."""
@@ -197,10 +210,12 @@ def get_database_session() -> Session:
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     return SessionLocal()
 
+
 def init_database():
     """Initialize database tables."""
     engine = create_database_engine()
     Base.metadata.create_all(bind=engine)
+
 
 def close_database_session(session: Session):
     """Close database session."""

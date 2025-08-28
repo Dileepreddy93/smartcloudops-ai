@@ -12,10 +12,15 @@ Comprehensive monitoring solution including:
 - Custom business metrics
 """
 
+
+
+
+
 import os
+import logging
 import time
 import json
-import logging
+import requests
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict
@@ -25,7 +30,7 @@ from prometheus_client import (
     generate_latest, CONTENT_TYPE_LATEST,
     CollectorRegistry, push_to_gateway
 )
-import requests
+
 from flask import Flask, Response
 
 # Configure logging

@@ -5,6 +5,7 @@ Tests for Flask app creation, configuration, and core functionality.
 
 import pytest
 from flask import Flask
+
 from app.main_secure import app
 from app.services.chatops_service import chat
 
@@ -90,7 +91,9 @@ class TestFlaskAppEndpoints:
         monkeypatch.setattr(chatops_service, "chat", lambda q: "Mocked response")
 
         # Act
-        response = client.post("/chat", json={"message": "test query"}, headers={"X-API-Key": "sk-ml-test-key-12345678901234567890"})
+        response = client.post(
+            "/chat", json={"message": "test query"}, headers={"X-API-Key": "sk-ml-test-key-12345678901234567890"}
+        )
 
         # Assert
         assert response.status_code == 200
@@ -100,7 +103,9 @@ class TestFlaskAppEndpoints:
     def test_chat_endpoint_invalid_input(self, client):
         """Test the chat endpoint with invalid input."""
         # Act
-        response = client.post("/chat", json={"invalid": "data"}, headers={"X-API-Key": "sk-ml-test-key-12345678901234567890"})
+        response = client.post(
+            "/chat", json={"invalid": "data"}, headers={"X-API-Key": "sk-ml-test-key-12345678901234567890"}
+        )
 
         # Assert
         assert response.status_code == 400
@@ -155,7 +160,9 @@ class TestFlaskAppErrorHandling:
         )
 
         # Act
-        response = client.post("/chat", json={"message": "test query"}, headers={"X-API-Key": "sk-ml-test-key-12345678901234567890"})
+        response = client.post(
+            "/chat", json={"message": "test query"}, headers={"X-API-Key": "sk-ml-test-key-12345678901234567890"}
+        )
 
         # Assert
         assert response.status_code == 400
@@ -166,9 +173,7 @@ class TestFlaskAppErrorHandling:
     def test_query_endpoint_invalid_json(self, client):
         """Test query endpoint handles invalid JSON gracefully."""
         # Act
-        response = client.post(
-            "/query", data="invalid json", content_type="application/json"
-        )
+        response = client.post("/query", data="invalid json", content_type="application/json")
 
         # Assert
         assert response.status_code == 400

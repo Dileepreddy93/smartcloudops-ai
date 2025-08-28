@@ -7,19 +7,26 @@ Production-ready inference service for anomaly detection models.
 Integrates with Flask app for real-time predictions.
 """
 
-import logging
+
+
+
+
 import os
-import threading
+import logging
 import time
+import requests
+import threading
+import boto3
+import joblib
 from collections import deque
 from datetime import datetime
 from typing import Dict, Optional, Tuple
 
-import boto3
-import joblib
+
+
 import numpy as np
 import pandas as pd
-import requests
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -39,9 +46,7 @@ class ProductionModelRegistry:
             candidates = []
             for prefix in prefixes:
                 try:
-                    response = self.s3_client.list_objects_v2(
-                        Bucket=self.s3_bucket, Prefix=prefix
-                    )
+                    response = self.s3_client.list_objects_v2(Bucket=self.s3_bucket, Prefix=prefix)
                     if "Contents" in response:
                         for obj in response["Contents"]:
                             if obj["Key"].endswith("_model.pkl"):
@@ -60,9 +65,7 @@ class ProductionModelRegistry:
             logger.error(f"Error getting latest model: {e}")
             return "models/anomaly_model.pkl"
 
-    def load_model_from_s3(
-        self, model_key: str, scaler_key: str
-    ) -> Tuple[object, object]:
+    def load_model_from_s3(self, model_key: str, scaler_key: str) -> Tuple[object, object]:
         """Load model and scaler from S3."""
         try:
             # Download model
@@ -95,9 +98,7 @@ class ModelPerformanceMonitor:
         self.prediction_times = deque(maxlen=window_size)
         self.lock = threading.Lock()
 
-    def track_prediction(
-        self, features: Dict, prediction: int, confidence: float, prediction_time: float
-    ):
+    def track_prediction(self, features: Dict, prediction: int, confidence: float, prediction_time: float):
         """Track a prediction for monitoring."""
         with self.lock:
             self.predictions.append(
@@ -119,9 +120,7 @@ class ModelPerformanceMonitor:
             recent_predictions = list(self.predictions)[-100:]  # Last 100 predictions
             recent_times = list(self.prediction_times)[-100:]
 
-            anomaly_rate = sum(
-                1 for p in recent_predictions if p["prediction"] == 1
-            ) / len(recent_predictions)
+            anomaly_rate = sum(1 for p in recent_predictions if p["prediction"] == 1) / len(recent_predictions)
             avg_confidence = np.mean([p["confidence"] for p in recent_predictions])
             avg_prediction_time = np.mean(recent_times) if recent_times else 0
 
@@ -187,9 +186,7 @@ class ProductionInferenceEngine:
             if self.model_registry.s3_bucket:
                 model_key = self.model_registry.get_latest_model_version()
                 scaler_key = model_key.replace("_model.pkl", "_scaler.pkl")
-                model, scaler = self.model_registry.load_model_from_s3(
-                    model_key, scaler_key
-                )
+                model, scaler = self.model_registry.load_model_from_s3(model_key, scaler_key)
                 if model and scaler:
                     self.model = model
                     self.scaler = scaler
@@ -253,15 +250,11 @@ class ProductionInferenceEngine:
         }
 
         if self.model_loaded_at:
-            health["model_age_seconds"] = (
-                datetime.now() - self.model_loaded_at
-            ).seconds
+            health["model_age_seconds"] = (datetime.now() - self.model_loaded_at).seconds
 
         # Test Prometheus connection
         try:
-            response = requests.get(
-                f"{self.prometheus_url}/api/v1/status/config", timeout=5
-            )
+            response = requests.get(f"{self.prometheus_url}/api/v1/status/config", timeout=5)
             health["prometheus_connection"] = response.status_code == 200
         except Exception:
             pass
@@ -383,9 +376,7 @@ class ProductionInferenceEngine:
             df["cpu_memory_ratio"] = df["cpu_usage"] / (df["memory_usage"] + 1e-6)
             df["io_ratio"] = df["disk_io"] / (df["network_io"] + 1e-6)
             df["load_indicator"] = (df["cpu_usage"] + df["memory_usage"]) / 2
-            df["performance_indicator"] = df["response_time"] / (
-                df["load_indicator"] + 1e-6
-            )
+            df["performance_indicator"] = df["response_time"] / (df["load_indicator"] + 1e-6)
 
             # Fill any missing columns with zeros (for production robustness)
             expected_features = [
@@ -437,16 +428,10 @@ class ProductionInferenceEngine:
                 "metrics": metrics,
                 "prediction_time_ms": prediction_time * 1000,
                 "timestamp": datetime.now().isoformat(),
-                "model_age_seconds": (
-                    (datetime.now() - self.model_loaded_at).seconds
-                    if self.model_loaded_at
-                    else 0
-                ),
+                "model_age_seconds": ((datetime.now() - self.model_loaded_at).seconds if self.model_loaded_at else 0),
             }
 
-            logger.info(
-                f"🔍 Prediction: {'🚨 ANOMALY' if is_anomaly else '✅ NORMAL'} (confidence: {confidence:.3f})"
-            )
+            logger.info(f"🔍 Prediction: {'🚨 ANOMALY' if is_anomaly else '✅ NORMAL'} (confidence: {confidence:.3f})")
             return result
 
         except Exception as e:

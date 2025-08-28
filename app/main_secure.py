@@ -14,9 +14,11 @@ Production-ready Flask application with enterprise-grade security:
 Version: 3.2.0 Security Hardened
 """
 
+
+
+
+
 import logging
-import os
-import sys
 import time
 import traceback
 import uuid
@@ -29,14 +31,27 @@ from flask import Flask, g, jsonify, request
 from werkzeug.exceptions import RequestEntityTooLarge
 
 # Import our secure modules
-from app.auth_secure import (get_current_user, get_request_id,
-                             get_security_stats, require_admin,
-                             require_api_key, require_ml_access)
-from app.secure_api import (ErrorCode, HealthCheckDTO, MLPredictionDTO,
-                            SecurityError, StatusDTO, ValidationError,
-                            build_error_response, build_success_response,
-                            sanitize_input, validate_ml_metrics,
-                            validate_request_data)
+from app.auth_secure import (
+    get_current_user,
+    get_request_id,
+    get_security_stats,
+    require_admin,
+    require_api_key,
+    require_ml_access,
+)
+from app.secure_api import (
+    ErrorCode,
+    HealthCheckDTO,
+    MLPredictionDTO,
+    SecurityError,
+    StatusDTO,
+    ValidationError,
+    build_error_response,
+    build_success_response,
+    sanitize_input,
+    validate_ml_metrics,
+    validate_request_data,
+)
 
 # Import application modules
 try:
@@ -252,7 +267,9 @@ def apply_security_headers(response):
 
     # Log response
     duration = (datetime.now(timezone.utc) - getattr(g, "start_time", datetime.now(timezone.utc))).total_seconds()
-    logger.info(f"RESPONSE: {response.status_code} - Duration: {duration:.3f}s - ID: {getattr(g, 'request_id', 'unknown')}")
+    logger.info(
+        f"RESPONSE: {response.status_code} - Duration: {duration:.3f}s - ID: {getattr(g, 'request_id', 'unknown')}"
+    )
 
     return response
 
@@ -523,7 +540,9 @@ def ml_predict():
         (sanitize_input(data.get("model_version", "latest"), max_length=50) if data.get("model_version") else "latest")
 
         user = get_current_user()
-        logger.info(f"ML prediction request from user: {user.get('user_id', 'unknown')} - Metrics: {list(metrics.keys())}")
+        logger.info(
+            f"ML prediction request from user: {user.get('user_id', 'unknown')} - Metrics: {list(metrics.keys())}"
+        )
 
         # Check ML engine availability
         if not ml_engine:

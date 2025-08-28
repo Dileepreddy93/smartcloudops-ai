@@ -10,6 +10,7 @@ Demonstrates the key functionality of the SmartCloudOps AI platform:
 - API endpoints
 """
 
+
 import sys
 from pathlib import Path
 
@@ -20,9 +21,9 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 def print_header(title):
     """Print a formatted header."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"🎯 {title}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
 
 def demo_nlp_chatops():

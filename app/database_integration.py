@@ -7,8 +7,11 @@ Provides database access layer for Flask application.
 Integrates SQLite/PostgreSQL database with application logic.
 """
 
-import logging
+
+
 import sys
+import logging
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
@@ -72,8 +75,8 @@ class DatabaseService:
                     """
                     SELECT timestamp, source, cpu_usage, memory_usage, disk_usage,
                            response_time, is_anomaly, anomaly_score
-                    FROM metrics 
-                    ORDER BY timestamp DESC 
+                    FROM metrics
+                    ORDER BY timestamp DESC
                     LIMIT ?
                 """,
                     (limit,),
@@ -95,11 +98,11 @@ class DatabaseService:
                 cursor = conn.cursor()
                 cursor.execute(
                     """
-                    SELECT timestamp, source, cpu_usage, memory_usage, 
+                    SELECT timestamp, source, cpu_usage, memory_usage,
                            anomaly_score, response_time
-                    FROM metrics 
-                    WHERE is_anomaly = 1 
-                    ORDER BY timestamp DESC 
+                    FROM metrics
+                    WHERE is_anomaly = 1
+                    ORDER BY timestamp DESC
                     LIMIT ?
                 """,
                     (limit,),
@@ -214,7 +217,7 @@ class DatabaseService:
                 # Get summary statistics
                 cursor.execute(
                     """
-                    SELECT 
+                    SELECT
                         COUNT(*) as total_metrics,
                         AVG(cpu_usage) as avg_cpu,
                         MAX(cpu_usage) as max_cpu,

@@ -6,25 +6,30 @@ SmartCloudOps AI - Secure ML Inference Engine
 Production-ready ML inference engine with proper security and validation.
 """
 
-import hashlib
-import json
-import logging
 import os
 import sys
+import logging
+import time
+import json
+import joblib
+from app.utils.validation import validate_ml_metrics
+from app.utils.response import build_error_response, build_success_response
+
+
+
+
+
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
-import joblib
+
 import numpy as np
 import pandas as pd
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
-
-from app.utils.response import build_error_response, build_success_response
-from app.utils.validation import validate_ml_metrics
 
 
 class SecureMLInferenceEngine:
@@ -238,7 +243,9 @@ class SecureMLInferenceEngine:
             }
 
             # Log prediction
-            self.logger.info(f"ML prediction: anomaly={is_anomaly}, score={anomaly_score:.4f}, confidence={confidence:.2f}")
+            self.logger.info(
+                f"ML prediction: anomaly={is_anomaly}, score={anomaly_score:.4f}, confidence={confidence:.2f}"
+            )
 
             return result
 

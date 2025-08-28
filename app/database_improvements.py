@@ -11,13 +11,16 @@ Features:
 - Connection health monitoring
 """
 
-import logging
+
+
 import os
+import logging
+import psycopg2
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
-import psycopg2
+
 import redis
 from psycopg2.extras import RealDictCursor
 from redis.exceptions import RedisError
@@ -72,7 +75,12 @@ class ProductionDatabaseService:
         """Initialize database and Redis connections with proper error handling."""
         try:
             # Initialize SQLAlchemy engine with connection pooling
-            database_url = f"postgresql://{self.config.username}:{self.config.password}@{self.config.host}:{self.config.port}/{self.config.database}"
+            database_url = f"postgresql://{
+                self.config.username}:{
+                self.config.password}@{
+                self.config.host}:{
+                self.config.port}/{
+                    self.config.database}"
 
             self.engine = create_engine(
                 database_url,
@@ -191,14 +199,14 @@ class ProductionDatabaseService:
                 result = session.execute(
                     text(
                         """
-                        SELECT 
+                        SELECT
                             timestamp,
                             cpu_usage,
                             memory_usage,
                             disk_usage,
                             network_io
-                        FROM system_metrics 
-                        ORDER BY timestamp DESC 
+                        FROM system_metrics
+                        ORDER BY timestamp DESC
                         LIMIT :limit
                     """
                     ),
@@ -231,7 +239,7 @@ class ProductionDatabaseService:
                     session.execute(
                         text(
                             """
-                            INSERT INTO system_metrics 
+                            INSERT INTO system_metrics
                             (timestamp, cpu_usage, memory_usage, disk_usage, network_io)
                             VALUES (:timestamp, :cpu_usage, :memory_usage, :disk_usage, :network_io)
                         """

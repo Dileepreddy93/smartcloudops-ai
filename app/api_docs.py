@@ -50,7 +50,9 @@ def create_swagger_spec():
                     "responses": {
                         "200": {
                             "description": "System health information",
-                            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/HealthResponse"}}},
+                            "content": {
+                                "application/json": {"schema": {"$ref": "#/components/schemas/HealthResponse"}}
+                            },
                         },
                         "500": {
                             "description": "Internal server error",
@@ -67,12 +69,16 @@ def create_swagger_spec():
                     "security": [{"ApiKeyAuth": []}],
                     "requestBody": {
                         "required": True,
-                        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MLPredictionRequest"}}},
+                        "content": {
+                            "application/json": {"schema": {"$ref": "#/components/schemas/MLPredictionRequest"}}
+                        },
                     },
                     "responses": {
                         "200": {
                             "description": "ML prediction result",
-                            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MLPredictionResponse"}}},
+                            "content": {
+                                "application/json": {"schema": {"$ref": "#/components/schemas/MLPredictionResponse"}}
+                            },
                         },
                         "400": {
                             "description": "Invalid request",
@@ -93,7 +99,9 @@ def create_swagger_spec():
                     "responses": {
                         "200": {
                             "description": "ML service health",
-                            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MLHealthResponse"}}},
+                            "content": {
+                                "application/json": {"schema": {"$ref": "#/components/schemas/MLHealthResponse"}}
+                            },
                         }
                     },
                 }
@@ -111,7 +119,9 @@ def create_swagger_spec():
                     "responses": {
                         "200": {
                             "description": "ChatOps response",
-                            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ChatOpsResponse"}}},
+                            "content": {
+                                "application/json": {"schema": {"$ref": "#/components/schemas/ChatOpsResponse"}}
+                            },
                         },
                         "400": {
                             "description": "Invalid request",
@@ -129,7 +139,9 @@ def create_swagger_spec():
                     "responses": {
                         "200": {
                             "description": "System metrics",
-                            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MetricsResponse"}}},
+                            "content": {
+                                "application/json": {"schema": {"$ref": "#/components/schemas/MetricsResponse"}}
+                            },
                         }
                     },
                 }
@@ -142,12 +154,16 @@ def create_swagger_spec():
                     "security": [{"ApiKeyAuth": []}],
                     "requestBody": {
                         "required": True,
-                        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RemediationRequest"}}},
+                        "content": {
+                            "application/json": {"schema": {"$ref": "#/components/schemas/RemediationRequest"}}
+                        },
                     },
                     "responses": {
                         "200": {
                             "description": "Remediation result",
-                            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RemediationResponse"}}},
+                            "content": {
+                                "application/json": {"schema": {"$ref": "#/components/schemas/RemediationResponse"}}
+                            },
                         }
                     },
                 }

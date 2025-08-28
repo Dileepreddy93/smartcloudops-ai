@@ -3,8 +3,9 @@ Phase 1: Terraform Infrastructure Tests
 Tests for VPC, subnets, security groups, and core infrastructure components.
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 
 class TestTerraformInfrastructure:
@@ -53,9 +54,7 @@ class TestTerraformInfrastructure:
 
         # Act & Assert: Check each port is properly configured
         for port, service in expected_ports.items():
-            assert (
-                f"from_port   = {port}" in terraform_content
-            ), f"Port {port} ({service}) not found"
+            assert f"from_port   = {port}" in terraform_content, f"Port {port} ({service}) not found"
 
     def test_internet_gateway_configuration(self, terraform_content):
         """Test Internet Gateway configuration."""
@@ -73,12 +72,12 @@ class TestTerraformInfrastructure:
     def test_ec2_instances_configuration(self, terraform_content):
         """Test EC2 instances are configured correctly."""
         # Check for production-ready instance types (not free tier)
-        assert 'instance_type          = var.monitoring_instance_type' in terraform_content
-        assert 'instance_type          = var.application_instance_type' in terraform_content
-        
+        assert "instance_type          = var.monitoring_instance_type" in terraform_content
+        assert "instance_type          = var.application_instance_type" in terraform_content
+
         # Check for proper variable definitions
-        assert 'monitoring_instance_type' in terraform_content
-        assert 'application_instance_type' in terraform_content
+        assert "monitoring_instance_type" in terraform_content
+        assert "application_instance_type" in terraform_content
 
     def test_s3_buckets_configuration(self, terraform_content):
         """Test S3 buckets configuration."""
@@ -86,10 +85,7 @@ class TestTerraformInfrastructure:
         assert 'resource "aws_s3_bucket" "ml_models"' in terraform_content
         assert 'resource "aws_s3_bucket" "logs"' in terraform_content
         assert 'resource "aws_s3_bucket_versioning"' in terraform_content
-        assert (
-            'resource "aws_s3_bucket_server_side_encryption_configuration"'
-            in terraform_content
-        )
+        assert 'resource "aws_s3_bucket_server_side_encryption_configuration"' in terraform_content
 
     def test_iam_roles_and_policies(self, terraform_content):
         """Test IAM roles and policies configuration."""
@@ -118,7 +114,4 @@ class TestTerraformInfrastructure:
         assert 'dynamic "ingress"' in terraform_content  # Dynamic security groups
         assert "allowed_ssh_cidrs" in terraform_content  # Restricted SSH access
         assert "admin_ip_cidr" in terraform_content  # Admin access control
-        assert (
-            'description = "SSH access from authorized networks only"'
-            in terraform_content
-        )
+        assert 'description = "SSH access from authorized networks only"' in terraform_content

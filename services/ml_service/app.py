@@ -7,10 +7,14 @@ Microservice for machine learning operations including anomaly detection,
 model management, and A/B testing.
 """
 
+
+
+
+
 import os
 import time
 import json
-import pickle
+import joblib
 import numpy as np
 import pandas as pd
 import structlog
@@ -25,7 +29,7 @@ from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTEN
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import f1_score, precision_score, recall_score
-import joblib
+
 
 # Configure structured logging
 structlog.configure(

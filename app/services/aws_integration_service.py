@@ -6,13 +6,17 @@ AWS integration service for executing DevOps actions based on NLP commands.
 Provides secure and controlled access to AWS services.
 """
 
-import json
+
+
+
 import logging
 import time
+import json
+import boto3
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
 
-import boto3
+
 from botocore.exceptions import NoCredentialsError
 
 # Configure logging
@@ -149,15 +153,16 @@ class AWSIntegrationService:
                     e
                     for e in self.execution_history[-10:]
                     if e.get("action") == "deploy"
-                    and (datetime.utcnow() - datetime.fromisoformat(e.get("timestamp", "2020-01-01T00:00:00"))).total_seconds()
+                    and (
+                        datetime.utcnow() - datetime.fromisoformat(e.get("timestamp", "2020-01-01T00:00:00"))
+                    ).total_seconds()
                     < self.safety_limits["cooldown_period_minutes"] * 60
                 ]
 
                 if recent_deployments:
                     return {
-                        "safe": False,
-                        "reason": f"Deployment blocked: cooldown period of {self.safety_limits['cooldown_period_minutes']} minutes not met",
-                    }
+                        "safe": False, "reason": f"Deployment blocked: cooldown period of {
+                            self.safety_limits['cooldown_period_minutes']} minutes not met", }
 
             return {"safe": True}
 
@@ -425,7 +430,9 @@ class AWSIntegrationService:
                 "total_checks": len(compliance_results),
                 "compliant": compliant_count,
                 "non_compliant": non_compliant_count,
-                "compliance_rate": (round(compliant_count / len(compliance_results) * 100, 2) if compliance_results else 0),
+                "compliance_rate": (
+                    round(compliant_count / len(compliance_results) * 100, 2) if compliance_results else 0
+                ),
                 "status": "check_completed",
             }
 

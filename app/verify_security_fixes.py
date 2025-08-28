@@ -6,9 +6,10 @@ SmartCloudOps AI - Security Fixes Verification
 This script verifies that all security fixes have been properly implemented.
 """
 
+
 import os
 import re
-import sys
+
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -174,7 +175,7 @@ def main():
     print("-" * 30)
 
     # Environment variables
-    print(f"Environment Variables:")
+    print("Environment Variables:")
     print(f"  ✅ Valid: {len(env_results['valid'])}")
     print(f"  ⚠️ Weak: {len(env_results['weak'])}")
     print(f"  ❌ Missing: {len(env_results['missing'])}")
@@ -185,25 +186,25 @@ def main():
         print(f"    Weak: {', '.join(env_results['weak'])}")
 
     # Hardcoded secrets
-    print(f"\nHardcoded Secrets:")
+    print("\nHardcoded Secrets:")
     print(f"  ❌ Found: {len(hardcoded_secrets)}")
     if hardcoded_secrets:
         for secret in hardcoded_secrets:
             print(f"    {secret['file']}:{secret['line']} - {secret['pattern']}")
 
     # Authentication service
-    print(f"\nAuthentication Service:")
+    print("\nAuthentication Service:")
     print(f"  {auth_results['status']}: {auth_results['message']}")
 
     # File permissions
-    print(f"\nFile Permissions:")
+    print("\nFile Permissions:")
     print(f"  ❌ Issues: {len(permission_issues)}")
     if permission_issues:
         for issue in permission_issues:
             print(f"    {issue['file']}: {issue['issue']}")
 
     # Security headers
-    print(f"\nSecurity Headers:")
+    print("\nSecurity Headers:")
     print(f"  {header_results['status']}: {header_results['message']}")
 
     # Overall assessment

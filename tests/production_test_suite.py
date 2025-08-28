@@ -22,9 +22,6 @@ from app.main_secure import app
 from app.database_improvements import get_db_service
 
 
-
-
-
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from typing import Any, Dict, List

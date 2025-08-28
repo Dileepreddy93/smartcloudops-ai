@@ -2,7 +2,6 @@
 """Simple ML Trainer"""
 
 
-
 import os
 import time
 import json

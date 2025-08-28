@@ -13,9 +13,6 @@ Production-ready Flask application with:
 """
 
 
-
-
-
 import os
 import time
 from contextlib import contextmanager

@@ -8,7 +8,6 @@ Integrates SQLite/PostgreSQL database with application logic.
 """
 
 
-
 import sys
 import logging
 import time

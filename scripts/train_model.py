@@ -7,8 +7,6 @@ import pickle
 import argparse
 
 
-
-
 def main(save_path: str | None = None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--save_path", default=save_path, help="Path to save model")

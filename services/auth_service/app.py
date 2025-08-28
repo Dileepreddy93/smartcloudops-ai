@@ -7,7 +7,6 @@ Microservice for handling authentication and authorization.
 """
 
 
-
 import os
 import time
 import jwt

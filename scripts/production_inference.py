@@ -8,9 +8,6 @@ Integrates with Flask app for real-time predictions.
 """
 
 
-
-
-
 import os
 import logging
 import time
@@ -21,7 +18,6 @@ import joblib
 from collections import deque
 from datetime import datetime
 from typing import Dict, Optional, Tuple
-
 
 
 import numpy as np

@@ -7,12 +7,10 @@ Demonstrate the fixed security vulnerabilities with actual API tests.
 """
 
 
-
 import os
 import time
 import requests
 from datetime import datetime
-
 
 
 # Server configuration

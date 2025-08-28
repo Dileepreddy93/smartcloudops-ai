@@ -10,7 +10,6 @@ SQLAlchemy models for production database.
 import os
 import time
 from datetime import datetime
-from typing import Optional
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, Float, Integer, String, Text, create_engine
 from sqlalchemy.ext.declarative import declarative_base

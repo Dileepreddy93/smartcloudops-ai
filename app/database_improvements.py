@@ -12,7 +12,6 @@ Features:
 """
 
 
-
 import os
 import logging
 import psycopg2

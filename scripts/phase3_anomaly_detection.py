@@ -12,9 +12,6 @@ Storage: S3 bucket for model persistence
 """
 
 
-
-
-
 import os
 import sys
 import logging
@@ -25,7 +22,6 @@ import boto3
 import joblib
 import warnings
 from datetime import datetime, timedelta
-
 
 
 import matplotlib.pyplot as plt

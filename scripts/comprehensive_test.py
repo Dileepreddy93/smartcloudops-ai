@@ -21,7 +21,6 @@ from datetime import datetime
 from pathlib import Path
 
 
-
 # Add project root to path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))

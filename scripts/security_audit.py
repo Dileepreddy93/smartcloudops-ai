@@ -7,8 +7,6 @@ This script performs a complete security audit and fixes all identified vulnerab
 """
 
 
-
-
 import os
 import time
 import json

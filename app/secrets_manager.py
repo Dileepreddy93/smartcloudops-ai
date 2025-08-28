@@ -7,8 +7,6 @@ Secure secrets management using environment variables and AWS Secrets Manager.
 """
 
 
-
-
 import os
 import logging
 import json

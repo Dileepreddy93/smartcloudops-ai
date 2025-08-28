@@ -11,7 +11,6 @@ import sys
 from app.services.auth_service import AuthenticationService
 
 
-
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 

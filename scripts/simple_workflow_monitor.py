@@ -15,7 +15,6 @@ import subprocess
 from pathlib import Path
 
 
-
 # Configuration
 REPO_OWNER = "Dileepreddy93"
 REPO_NAME = "smartcloudops-ai"

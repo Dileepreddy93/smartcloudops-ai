@@ -8,9 +8,6 @@ This script tests the critical components and provides a summary report.
 """
 
 
-
-
-
 import os
 import sys
 import time

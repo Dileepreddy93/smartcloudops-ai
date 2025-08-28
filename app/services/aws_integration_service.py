@@ -7,8 +7,6 @@ Provides secure and controlled access to AWS services.
 """
 
 
-
-
 import logging
 import time
 import json

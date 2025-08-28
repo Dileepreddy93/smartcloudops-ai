@@ -6,6 +6,7 @@ SmartCloudOps AI - Secure ML Inference Engine
 Production-ready ML inference engine with proper security and validation.
 """
 
+from typing import Union
 import os
 import sys
 import logging
@@ -14,9 +15,6 @@ import json
 import joblib
 from app.utils.validation import validate_ml_metrics
 from app.utils.response import build_error_response, build_success_response
-
-
-
 
 
 from datetime import datetime, timezone

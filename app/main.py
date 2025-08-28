@@ -8,7 +8,6 @@ For production use, use app/main_secure.py directly.
 """
 
 
-
 import os
 import sys
 from pathlib import Path

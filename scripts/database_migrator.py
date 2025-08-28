@@ -8,13 +8,10 @@ Handles concurrent users and provides backup/restore capabilities.
 """
 
 
-
 import os
 import logging
 import psycopg2
 import sqlite3
-
-
 
 
 class DatabaseMigrator:

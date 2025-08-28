@@ -3,7 +3,6 @@ Phase 3: ML Inference Tests
 Tests for ML inference engine, model loading, and prediction functionality.
 """
 
-from datetime import datetime, timezone
 from unittest.mock import Mock
 
 import pytest

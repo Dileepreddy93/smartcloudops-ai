@@ -1,6 +1,3 @@
-import json
-from __future__ import annotations
-
 from typing import Any, Dict
 
 from flask import Blueprint, request

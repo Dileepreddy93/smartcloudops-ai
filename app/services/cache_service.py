@@ -7,8 +7,6 @@ Caching service with Redis support and in-memory fallback.
 """
 
 
-
-
 import logging
 import time
 import json

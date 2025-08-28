@@ -8,8 +8,6 @@ Replaces hardcoded values with environment-aware configuration.
 """
 
 
-
-
 import os
 import logging
 import json

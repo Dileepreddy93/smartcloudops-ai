@@ -1,84 +1,83 @@
 name: SmartCloudOps AI - Minimal CI/CD Pipeline
-
-on:
+true:
   push:
-    branches: [ main, develop ]
+    branches:
+    - main
+    - develop
   pull_request:
-    branches: [ main, develop ]
-
+    branches:
+    - main
+    - develop
 jobs:
   test:
     name: Test Application
     runs-on: ubuntu-latest
-    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-        cache: 'pip'
-        
+        cache: pip
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
+      run: 'python -m pip install --upgrade pip
+
         pip install -r app/requirements.txt
-        
+
+        '
     - name: Run basic tests
-      run: |
-        echo "🧪 Running basic tests..."
-        cd app
-        python -c "from main import create_app; print('✅ App import successful')"
-        cd ../scripts
-        python simple_real_data_collector.py
-        python simple_real_ml_trainer.py
-        echo "✅ Basic tests completed"
-        
+      run: "echo \"\U0001F9EA Running basic tests...\"\ncd app\npython -c \"from main\
+        \ import create_app; print('\u2705 App import successful')\"\ncd ../scripts\n\
+        python simple_real_data_collector.py\npython simple_real_ml_trainer.py\necho\
+        \ \"\u2705 Basic tests completed\"\n"
     - name: Run code quality checks
-      run: |
-        echo "🔍 Running code quality checks..."
-        pip install black ruff
-        black --check app/ scripts/ || echo "⚠️ Black check failed but continuing..."
-        ruff check app/ scripts/ || echo "⚠️ Ruff check failed but continuing..."
-        echo "✅ Code quality checks completed"
-        
+      run: "echo \"\U0001F50D Running code quality checks...\"\npip install black\
+        \ ruff\nblack --check app/ scripts/ || echo \"\u26A0\uFE0F Black check failed\
+        \ but continuing...\"\nruff check app/ scripts/ || echo \"\u26A0\uFE0F Ruff\
+        \ check failed but continuing...\"\necho \"\u2705 Code quality checks completed\"\
+        \n"
     - name: Run security scan
-      run: |
-        echo "🔒 Running security scan..."
-        pip install bandit safety
-        bandit -r app/ -f json -o bandit-report.json || echo "⚠️ Bandit scan failed but continuing..."
-        safety check --json > safety-report.json || echo "⚠️ Safety check failed but continuing..."
-        echo "✅ Security scan completed"
-        
+      run: "echo \"\U0001F512 Running security scan...\"\npip install bandit safety\n\
+        bandit -r app/ -f json -o bandit-report.json || echo \"\u26A0\uFE0F Bandit\
+        \ scan failed but continuing...\"\nsafety check --json > safety-report.json\
+        \ || echo \"\u26A0\uFE0F Safety check failed but continuing...\"\necho \"\u2705\
+        \ Security scan completed\"\n"
     - name: Upload artifacts
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: test-results
-        path: |
-          bandit-report.json
-          safety-report.json
-        retention-days: 7
+        path: 'bandit-report.json
 
+          safety-report.json
+
+          '
+        retention-days: 7
   notify:
     name: Notify Results
     runs-on: ubuntu-latest
     needs: test
     if: always()
-    
     steps:
     - name: Notify on success
       if: needs.test.result == 'success'
-      run: |
-        echo "🎉 CI/CD Pipeline completed successfully!"
-        echo "✅ All tests passed"
-        echo "✅ Code quality checks passed"
-        echo "✅ Security scan completed"
-        
+      run: "echo \"\U0001F389 CI/CD Pipeline completed successfully!\"\necho \"\u2705\
+        \ All tests passed\"\necho \"\u2705 Code quality checks passed\"\necho \"\u2705\
+        \ Security scan completed\"\n"
     - name: Notify on failure
       if: needs.test.result == 'failure'
-      run: |
-        echo "❌ CI/CD Pipeline failed"
-        echo "💡 Check the test job logs for details"
+      run: "echo \"\u274C CI/CD Pipeline failed\"\necho \"\U0001F4A1 Check the test\
+        \ job logs for details\"\n"
+'on':
+  push:
+    branches:
+    - main
+    - develop
+  pull_request:
+    branches:
+    - main
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write

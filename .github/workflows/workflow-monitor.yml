@@ -122,21 +122,20 @@ jobs:
             const reportData = JSON.parse(fs.readFileSync(latestReport, 'utf8'));
             
             const issueTitle = `🚨 Workflow Monitoring: Persistent Issues Detected`;
-            const issueBody = `
-## Workflow Monitoring Alert
+            const issueBody = `## Workflow Monitoring Alert
 
-**Timestamp:** ${reportData.timestamp}
-**Total Issues:** ${reportData.total_issues || 0}
-**Fixed Issues:** ${reportData.fixed_issues || 0}
-**Remaining Issues:** ${reportData.remaining_issues || 0}
+**Timestamp:** \${reportData.timestamp}
+**Total Issues:** \${reportData.total_issues || 0}
+**Fixed Issues:** \${reportData.fixed_issues || 0}
+**Remaining Issues:** \${reportData.remaining_issues || 0}
 
 ### Issues by Severity:
-${Object.entries(reportData.issues_by_severity || {}).map(([severity, count]) => 
-  `- **${severity.toUpperCase()}:** ${count}`
-).join('\n')}
+\${Object.entries(reportData.issues_by_severity || {}).map(([severity, count]) => 
+  \`- **\${severity.toUpperCase()}:** \${count}\`
+).join('\\n')}
 
 ### Recommendations:
-${(reportData.recommendations || []).map(rec => `- ${rec}`).join('\n')}
+\${(reportData.recommendations || []).map(rec => \`- \${rec}\`).join('\\n')}
 
 ### Next Steps:
 1. Review the attached monitoring reports
@@ -145,8 +144,7 @@ ${(reportData.recommendations || []).map(rec => `- ${rec}`).join('\n')}
 4. Update dependencies if needed
 
 ---
-*This issue was automatically created by the Workflow Monitor & Auto-Fix system.*
-            `;
+*This issue was automatically created by the Workflow Monitor & Auto-Fix system.*`;
             
             // Check if issue already exists
             const existingIssues = await github.rest.issues.listForRepo({

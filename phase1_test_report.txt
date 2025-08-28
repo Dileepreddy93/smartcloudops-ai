@@ -1,0 +1,37 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.3, pytest-8.4.1, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pytest.ini
+collecting ... collected 25 items
+
+tests/phase_1/test_core_utilities.py::TestResponseUtilities::test_timestamp_in_response PASSED [  4%]
+tests/phase_1/test_core_utilities.py::TestResponseUtilities::test_success_response PASSED [  8%]
+tests/phase_1/test_core_utilities.py::TestResponseUtilities::test_error_response PASSED [ 12%]
+tests/phase_1/test_core_utilities.py::TestResponseUtilities::test_success_response_with_metadata PASSED [ 16%]
+tests/phase_1/test_core_utilities.py::TestValidationUtilities::test_validate_user_input_valid_input PASSED [ 20%]
+tests/phase_1/test_core_utilities.py::TestValidationUtilities::test_validate_user_input_missing_keys PASSED [ 24%]
+tests/phase_1/test_core_utilities.py::TestValidationUtilities::test_validate_user_input_invalid_input_type PASSED [ 28%]
+tests/phase_1/test_core_utilities.py::TestValidationUtilities::test_sanitize_string_normal_input PASSED [ 32%]
+tests/phase_1/test_core_utilities.py::TestValidationUtilities::test_sanitize_string_truncation PASSED [ 36%]
+tests/phase_1/test_core_utilities.py::TestValidationUtilities::test_sanitize_string_non_string_input PASSED [ 40%]
+tests/phase_1/test_core_utilities.py::TestValidationUtilities::test_sanitize_string_empty_input PASSED [ 44%]
+tests/phase_1/test_core_utilities.py::TestValidationUtilities::test_sanitize_string_default_max_length PASSED [ 48%]
+tests/phase_1/test_terraform_infrastructure.py::TestTerraformInfrastructure::test_vpc_configuration PASSED [ 52%]
+tests/phase_1/test_terraform_infrastructure.py::TestTerraformInfrastructure::test_public_subnets_configuration PASSED [ 56%]
+tests/phase_1/test_terraform_infrastructure.py::TestTerraformInfrastructure::test_security_groups_hardened_ports PASSED [ 60%]
+tests/phase_1/test_terraform_infrastructure.py::TestTerraformInfrastructure::test_internet_gateway_configuration PASSED [ 64%]
+tests/phase_1/test_terraform_infrastructure.py::TestTerraformInfrastructure::test_route_table_configuration PASSED [ 68%]
+tests/phase_1/test_terraform_infrastructure.py::TestTerraformInfrastructure::test_ec2_instances_configuration PASSED [ 72%]
+tests/phase_1/test_terraform_infrastructure.py::TestTerraformInfrastructure::test_s3_buckets_configuration PASSED [ 76%]
+tests/phase_1/test_terraform_infrastructure.py::TestTerraformInfrastructure::test_iam_roles_and_policies PASSED [ 80%]
+tests/phase_1/test_terraform_infrastructure.py::TestTerraformInfrastructure::test_cloudwatch_log_groups PASSED [ 84%]
+tests/phase_1/test_terraform_infrastructure.py::TestTerraformInfrastructure::test_terraform_version_and_providers PASSED [ 88%]
+tests/phase_1/test_terraform_infrastructure.py::TestTerraformInfrastructure::test_security_hardening_features PASSED [ 92%]
+tests/test_phase1_terraform.py::test_vpc_and_subnets_defined PASSED      [ 96%]
+tests/test_phase1_terraform.py::test_security_groups_hardened_ports PASSED [100%]
+
+============================= slowest 10 durations =============================
+
+(10 durations < 0.005s hidden.  Use -vv to show these durations.)
+============================== 25 passed in 0.09s ==============================

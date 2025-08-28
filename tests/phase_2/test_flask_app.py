@@ -75,14 +75,14 @@ class TestFlaskAppEndpoints:
         # Act
         response = client.get(
             "/status",
-            headers={"X-API-Key": "sk-readonly-test-key-12345678901234567890"},
+            headers={"X-API-Key": "sk-readonly-6UQRaBNbZmpHK0w7DiHHkWEKcxBM8mVvL0nEVhK0NJg"},
         )
 
         # Assert
         assert response.status_code == 200
         data = response.get_json()
         # Endpoint returns success status with data
-        assert data.get("status") == "success"
+        assert data.get("success") == True
         if "data" in data:
             assert "status" in data["data"]
 
@@ -97,13 +97,14 @@ class TestFlaskAppEndpoints:
         response = client.post(
             "/chat",
             json={"message": "test query"},
-            headers={"X-API-Key": "sk-ml-test-key-12345678901234567890"},
+            headers={"X-API-Key": "sk-ml-djQbhpVgmOZOf4k3zETbXtHeL64rcQIfgqhIdVoqOy8"},
         )
 
         # Assert
         assert response.status_code == 200
         data = response.get_json()
-        assert "response" in data
+        assert data.get("success") == True
+        assert "response" in data.get("data", {})
 
     def test_chat_endpoint_invalid_input(self, client):
         """Test the chat endpoint with invalid input."""
@@ -111,7 +112,7 @@ class TestFlaskAppEndpoints:
         response = client.post(
             "/chat",
             json={"invalid": "data"},
-            headers={"X-API-Key": "sk-ml-test-key-12345678901234567890"},
+            headers={"X-API-Key": "sk-ml-djQbhpVgmOZOf4k3zETbXtHeL64rcQIfgqhIdVoqOy8"},
         )
 
         # Assert
@@ -123,7 +124,7 @@ class TestFlaskAppEndpoints:
         response = client.post(
             "/chat",
             json={},
-            headers={"X-API-Key": "sk-ml-test-key-12345678901234567890"},
+            headers={"X-API-Key": "sk-ml-djQbhpVgmOZOf4k3zETbXtHeL64rcQIfgqhIdVoqOy8"},
         )
 
         # Assert
@@ -174,7 +175,7 @@ class TestFlaskAppErrorHandling:
         response = client.post(
             "/chat",
             json={"message": "test query"},
-            headers={"X-API-Key": "sk-ml-test-key-12345678901234567890"},
+            headers={"X-API-Key": "sk-ml-djQbhpVgmOZOf4k3zETbXtHeL64rcQIfgqhIdVoqOy8"},
         )
 
         # Assert

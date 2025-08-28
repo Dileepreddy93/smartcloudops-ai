@@ -64,6 +64,13 @@ try:
     import os
     import sys
 
+    # Load environment variables from .env file
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+    except ImportError:
+        pass  # dotenv not available, continue without it
+
     # Use relative path for scripts directory
     scripts_path = os.path.join(os.path.dirname(__file__), "../scripts")
     sys.path.append(os.path.abspath(scripts_path))

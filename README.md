@@ -1,3 +1,4 @@
+![Build](https://img.shields.io/badge/Build-failing-red)
 # 🚀 SmartCloudOps AI - Production-Ready Platform
 
 A comprehensive, production-hardened backend application for intelligent cloud operations with ML-powered anomaly detection, auto-remediation, and real-time monitoring.

@@ -9,6 +9,7 @@ Handles automated remediation actions based on ML predictions and system metrics
 
 
 import logging
+import os
 import subprocess
 import threading
 import time

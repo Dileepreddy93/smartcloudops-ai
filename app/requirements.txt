@@ -62,7 +62,7 @@ flake8==6.1.0
 mypy==1.7.1
 pylint==3.0.3
 bandit==1.7.5
-safety==2.3.5
+safety>=2.4.0
 
 # Security Scanning
 # trivy is a standalone binary, not a Python package

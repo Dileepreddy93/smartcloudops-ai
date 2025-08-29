@@ -122,7 +122,9 @@ class AuthenticationService(BaseService):
 
         self.logger.info("Authentication service initialized with secure configuration")
 
-    def generate_jwt_token(self, user_id: str, role: str, permissions: List[str]) -> str:
+    def generate_jwt_token(
+        self, user_id: str, role: str, permissions: List[str]
+    ) -> str:
         """Generate a JWT token for authenticated user."""
         payload = {
             "user_id": user_id,
@@ -137,7 +139,9 @@ class AuthenticationService(BaseService):
     def verify_jwt_token(self, token: str) -> Optional[Dict]:
         """Verify and decode JWT token."""
         try:
-            payload = jwt.decode(token, self.jwt_secret, algorithms=[self.jwt_algorithm])
+            payload = jwt.decode(
+                token, self.jwt_secret, algorithms=[self.jwt_algorithm]
+            )
             return payload
         except jwt.ExpiredSignatureError:
             self.logger.warning("JWT token expired")
@@ -162,7 +166,9 @@ class AuthenticationService(BaseService):
         if username in self.users:
             user = self.users[username]
             if check_password_hash(user["password_hash"], password):
-                self.log_operation("user_login", {"username": username, "success": True})
+                self.log_operation(
+                    "user_login", {"username": username, "success": True}
+                )
                 return {
                     "user_id": username,
                     "role": user["role"],
@@ -172,11 +178,15 @@ class AuthenticationService(BaseService):
         self.log_operation("user_login", {"username": username, "success": False})
         return None
 
-    def has_permission(self, user_permissions: List[str], required_permissions: List[str]) -> bool:
+    def has_permission(
+        self, user_permissions: List[str], required_permissions: List[str]
+    ) -> bool:
         """Check if user has required permissions."""
         return any(perm in user_permissions for perm in required_permissions)
 
-    def create_user(self, username: str, password: str, role: str, permissions: List[str]) -> bool:
+    def create_user(
+        self, username: str, password: str, role: str, permissions: List[str]
+    ) -> bool:
         """Create a new user."""
         if username in self.users:
             return False
@@ -254,7 +264,11 @@ class AuthenticationService(BaseService):
                     "key_id": key_id,
                     "role": key_info["role"],
                     "permissions": key_info["permissions"],
-                    "key_preview": (key_info["key"][:10] + "..." if len(key_info["key"]) > 10 else key_info["key"]),
+                    "key_preview": (
+                        key_info["key"][:10] + "..."
+                        if len(key_info["key"]) > 10
+                        else key_info["key"]
+                    ),
                 }
             )
         return keys

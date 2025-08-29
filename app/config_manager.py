@@ -95,22 +95,36 @@ class EnvironmentConfigManager:
         # Security Configuration
         self.security.secret_key = os.getenv("SECRET_KEY", self._generate_secret_key())
         self.security.api_key_expiry_days = int(os.getenv("API_KEY_EXPIRY_DAYS", "30"))
-        self.security.rate_limit_per_minute = int(os.getenv("RATE_LIMIT_PER_MINUTE", "60"))
-        self.security.rate_limit_per_hour = int(os.getenv("RATE_LIMIT_PER_HOUR", "1000"))
+        self.security.rate_limit_per_minute = int(
+            os.getenv("RATE_LIMIT_PER_MINUTE", "60")
+        )
+        self.security.rate_limit_per_hour = int(
+            os.getenv("RATE_LIMIT_PER_HOUR", "1000")
+        )
         self.security.max_login_attempts = int(os.getenv("MAX_LOGIN_ATTEMPTS", "5"))
-        self.security.session_timeout_minutes = int(os.getenv("SESSION_TIMEOUT_MINUTES", "30"))
+        self.security.session_timeout_minutes = int(
+            os.getenv("SESSION_TIMEOUT_MINUTES", "30")
+        )
 
         # ML Configuration
         self.ml.model_path = os.getenv("ML_MODEL_PATH", "ml_models")
         self.ml.min_f1_score = float(os.getenv("ML_MIN_F1_SCORE", "0.7"))
-        self.ml.prediction_timeout_seconds = int(os.getenv("ML_PREDICTION_TIMEOUT", "5"))
+        self.ml.prediction_timeout_seconds = int(
+            os.getenv("ML_PREDICTION_TIMEOUT", "5")
+        )
         self.ml.max_batch_size = int(os.getenv("ML_MAX_BATCH_SIZE", "100"))
-        self.ml.enable_real_data = os.getenv("ML_ENABLE_REAL_DATA", "true").lower() == "true"
+        self.ml.enable_real_data = (
+            os.getenv("ML_ENABLE_REAL_DATA", "true").lower() == "true"
+        )
 
         # Monitoring Configuration - Environment Aware
         self._configure_monitoring_endpoints()
-        self.monitoring.enable_metrics = os.getenv("ENABLE_METRICS", "true").lower() == "true"
-        self.monitoring.enable_health_checks = os.getenv("ENABLE_HEALTH_CHECKS", "true").lower() == "true"
+        self.monitoring.enable_metrics = (
+            os.getenv("ENABLE_METRICS", "true").lower() == "true"
+        )
+        self.monitoring.enable_health_checks = (
+            os.getenv("ENABLE_HEALTH_CHECKS", "true").lower() == "true"
+        )
         self.monitoring.log_level = os.getenv("LOG_LEVEL", "INFO")
 
         # Load environment-specific configuration file if exists
@@ -126,17 +140,25 @@ class EnvironmentConfigManager:
             self.monitoring.prometheus_endpoint = os.getenv(
                 "PROMETHEUS_ENDPOINT", "https://prometheus.smartcloudops.ai"
             )
-            self.monitoring.grafana_endpoint = os.getenv("GRAFANA_ENDPOINT", "https://grafana.smartcloudops.ai")
+            self.monitoring.grafana_endpoint = os.getenv(
+                "GRAFANA_ENDPOINT", "https://grafana.smartcloudops.ai"
+            )
         elif self.environment == "staging":
             # Staging endpoints
             self.monitoring.prometheus_endpoint = os.getenv(
                 "PROMETHEUS_ENDPOINT", "https://prometheus-staging.smartcloudops.ai"
             )
-            self.monitoring.grafana_endpoint = os.getenv("GRAFANA_ENDPOINT", "https://grafana-staging.smartcloudops.ai")
+            self.monitoring.grafana_endpoint = os.getenv(
+                "GRAFANA_ENDPOINT", "https://grafana-staging.smartcloudops.ai"
+            )
         else:
             # Development endpoints (localhost)
-            self.monitoring.prometheus_endpoint = os.getenv("PROMETHEUS_ENDPOINT", "http://localhost:9090")
-            self.monitoring.grafana_endpoint = os.getenv("GRAFANA_ENDPOINT", "http://localhost:3000")
+            self.monitoring.prometheus_endpoint = os.getenv(
+                "PROMETHEUS_ENDPOINT", "http://localhost:9090"
+            )
+            self.monitoring.grafana_endpoint = os.getenv(
+                "GRAFANA_ENDPOINT", "http://localhost:3000"
+            )
 
     def _load_from_file(self, config_file: Path):
         """Load configuration from JSON file"""
@@ -346,9 +368,13 @@ class EnvironmentConfigManager:
         print("\n🔧 SmartCloudOps AI Configuration Summary")
         print("=" * 50)
         print(f"Environment: {self.environment}")
-        print(f"Database: {self.database.type} at {self.database.host}:{self.database.port}")
+        print(
+            f"Database: {self.database.type} at {self.database.host}:{self.database.port}"
+        )
         print(f"Security: Rate limit {self.security.rate_limit_per_minute}/min")
-        print(f"ML Engine: Min F1 {self.ml.min_f1_score}, Timeout {self.ml.prediction_timeout_seconds}s")
+        print(
+            f"ML Engine: Min F1 {self.ml.min_f1_score}, Timeout {self.ml.prediction_timeout_seconds}s"
+        )
         print(f"Monitoring: {self.monitoring.prometheus_endpoint}")
         print(f"Log Level: {self.monitoring.log_level}")
         print("")
@@ -370,15 +396,21 @@ def main():
     """CLI for configuration management"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="SmartCloudOps AI Configuration Manager")
+    parser = argparse.ArgumentParser(
+        description="SmartCloudOps AI Configuration Manager"
+    )
     parser.add_argument(
         "--environment",
         "-e",
         default="development",
         help="Environment (development, staging, production)",
     )
-    parser.add_argument("--save-templates", action="store_true", help="Save configuration templates")
-    parser.add_argument("--validate", action="store_true", help="Validate current configuration")
+    parser.add_argument(
+        "--save-templates", action="store_true", help="Save configuration templates"
+    )
+    parser.add_argument(
+        "--validate", action="store_true", help="Validate current configuration"
+    )
 
     args = parser.parse_args()
 

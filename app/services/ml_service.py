@@ -17,7 +17,8 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import IsolationForest, RandomForestClassifier
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+from sklearn.metrics import (accuracy_score, f1_score, precision_score,
+                             recall_score)
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import RobustScaler, StandardScaler
@@ -78,7 +79,9 @@ class MLModelManager:
             logger.error(f"❌ Failed to load model from {model_path}: {e}")
             raise
 
-    def save_model(self, model: Any, scaler: Optional[Any] = None, metadata: Optional[Dict] = None) -> str:
+    def save_model(
+        self, model: Any, scaler: Optional[Any] = None, metadata: Optional[Dict] = None
+    ) -> str:
         """Save model with metadata."""
         try:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -113,8 +116,12 @@ class MLModelManager:
         return {
             "version": self.model_version,
             "metadata": self.model_metadata,
-            "model_type": (type(self.current_model).__name__ if self.current_model else None),
-            "scaler_type": (type(self.current_scaler).__name__ if self.current_scaler else None),
+            "model_type": (
+                type(self.current_model).__name__ if self.current_model else None
+            ),
+            "scaler_type": (
+                type(self.current_scaler).__name__ if self.current_scaler else None
+            ),
             "created_at": self.model_metadata.get("created_at"),
             "performance": self.model_metadata.get("performance", {}),
         }
@@ -124,7 +131,9 @@ class MLModelManager:
         return {
             "status": "healthy" if self.current_model else "unhealthy",
             "model_loaded": self.current_model is not None,
-            "model_type": (type(self.current_model).__name__ if self.current_model else None),
+            "model_type": (
+                type(self.current_model).__name__ if self.current_model else None
+            ),
             "version": self.model_version,
             "last_updated": self.model_metadata.get("created_at"),
         }
@@ -199,11 +208,15 @@ class MLService:
             y = data["is_anomaly"] if "is_anomaly" in data.columns else None
 
             # Split data for validation
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=0.2, random_state=42, stratify=y
+            )
 
             # Create and train model pipeline
             scaler = RobustScaler()
-            model = IsolationForest(contamination=0.1, random_state=42, n_estimators=100, max_samples="auto")
+            model = IsolationForest(
+                contamination=0.1, random_state=42, n_estimators=100, max_samples="auto"
+            )
 
             # Fit scaler and model
             X_train_scaled = scaler.fit_transform(X_train)
@@ -220,13 +233,17 @@ class MLService:
             # Calculate metrics
             performance_metrics = {
                 "accuracy": accuracy_score(y_test, binary_predictions),
-                "precision": precision_score(y_test, binary_predictions, zero_division=0),
+                "precision": precision_score(
+                    y_test, binary_predictions, zero_division=0
+                ),
                 "recall": recall_score(y_test, binary_predictions, zero_division=0),
                 "f1_score": f1_score(y_test, binary_predictions, zero_division=0),
             }
 
             # Cross-validation
-            cv_scores = cross_val_score(model, X_train_scaled, y_train, cv=5, scoring="f1")
+            cv_scores = cross_val_score(
+                model, X_train_scaled, y_train, cv=5, scoring="f1"
+            )
             performance_metrics["cv_f1_mean"] = cv_scores.mean()
             performance_metrics["cv_f1_std"] = cv_scores.std()
 
@@ -241,7 +258,9 @@ class MLService:
 
             model_path = self.model_manager.save_model(model, scaler, metadata)
 
-            logger.info(f"✅ Model trained successfully. F1 Score: {performance_metrics['f1_score']:.3f}")
+            logger.info(
+                f"✅ Model trained successfully. F1 Score: {performance_metrics['f1_score']:.3f}"
+            )
 
             return {
                 "model_path": model_path,
@@ -269,12 +288,16 @@ class MLService:
 
             # Scale features
             if self.model_manager.current_scaler:
-                features_scaled = self.model_manager.current_scaler.transform(features_array)
+                features_scaled = self.model_manager.current_scaler.transform(
+                    features_array
+                )
             else:
                 features_scaled = features_array
 
             # Make prediction
-            anomaly_score = self.model_manager.current_model.decision_function(features_scaled)[0]
+            anomaly_score = self.model_manager.current_model.decision_function(
+                features_scaled
+            )[0]
             is_anomaly = anomaly_score < self.anomaly_threshold
 
             # Calculate confidence based on distance from threshold

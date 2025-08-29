@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "@edjl/github-mcp": "^1.0.7",
+    "@modelcontextprotocol/server-filesystem": "^2025.8.21",
+    "@modelcontextprotocol/server-github": "^2025.4.8",
+    "mini-github-mcp": "^1.0.5"
+  }
+}

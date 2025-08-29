@@ -19,23 +19,16 @@ from contextlib import contextmanager
 from datetime import datetime
 
 import structlog
-
-# Import security components
-from auth_secure import (
-    get_current_user,
-    get_request_id,
-    require_admin,
-    require_api_key,
-    require_ml_access,
-)
-
-# Import production components
-from database_improvements import get_db_service
 from flask import Flask, g, jsonify, request
-from ml_production_pipeline import get_ml_pipeline
+from monitoring.production_monitoring import get_monitoring
 from werkzeug.exceptions import HTTPException
 
-from monitoring.production_monitoring import get_monitoring
+# Import security components
+from auth_secure import (get_current_user, get_request_id, require_admin,
+                         require_api_key, require_ml_access)
+# Import production components
+from database_improvements import get_db_service
+from ml_production_pipeline import get_ml_pipeline
 
 # Configure structured logging
 structlog.configure(
@@ -124,7 +117,9 @@ def create_production_app():
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
-        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["Strict-Transport-Security"] = (
+            "max-age=31536000; includeSubDomains"
+        )
         response.headers["X-Request-ID"] = g.request_id
 
         return response
@@ -133,7 +128,9 @@ def create_production_app():
     @app.errorhandler(Exception)
     def handle_exception(e):
         # Record error metrics
-        monitoring.metrics.record_error(error_type=type(e).__name__, component="flask_app")
+        monitoring.metrics.record_error(
+            error_type=type(e).__name__, component="flask_app"
+        )
 
         # Log error
         logger.error(
@@ -170,7 +167,9 @@ def create_production_app():
             )
         else:
             return (
-                jsonify({"error": str(e), "status_code": 500, "request_id": g.request_id}),
+                jsonify(
+                    {"error": str(e), "status_code": 500, "request_id": g.request_id}
+                ),
                 500,
             )
 
@@ -266,7 +265,9 @@ def create_production_app():
 
             if not data or "metrics" not in data:
                 return (
-                    jsonify({"error": "Missing metrics data", "request_id": g.request_id}),
+                    jsonify(
+                        {"error": "Missing metrics data", "request_id": g.request_id}
+                    ),
                     400,
                 )
 
@@ -343,7 +344,9 @@ def create_production_app():
                 exc_info=True,
             )
 
-            monitoring.metrics.record_error(error_type="ml_prediction_error", component="ml_pipeline")
+            monitoring.metrics.record_error(
+                error_type="ml_prediction_error", component="ml_pipeline"
+            )
 
             return (
                 jsonify({"error": "Prediction failed", "request_id": g.request_id}),
@@ -362,7 +365,9 @@ def create_production_app():
 
             metrics = db_service.get_metrics(limit=limit)
 
-            return jsonify({"metrics": metrics, "count": len(metrics), "request_id": g.request_id})
+            return jsonify(
+                {"metrics": metrics, "count": len(metrics), "request_id": g.request_id}
+            )
 
         except Exception as e:
             logger.error(
@@ -373,7 +378,9 @@ def create_production_app():
             )
 
             return (
-                jsonify({"error": "Failed to retrieve metrics", "request_id": g.request_id}),
+                jsonify(
+                    {"error": "Failed to retrieve metrics", "request_id": g.request_id}
+                ),
                 500,
             )
 
@@ -410,7 +417,9 @@ def create_production_app():
             )
 
             return (
-                jsonify({"error": "Failed to get admin status", "request_id": g.request_id}),
+                jsonify(
+                    {"error": "Failed to get admin status", "request_id": g.request_id}
+                ),
                 500,
             )
 
@@ -434,7 +443,9 @@ def create_production_app():
                 request_id=g.request_id,
             )
 
-            return jsonify({"message": "Model training initiated", "request_id": g.request_id})
+            return jsonify(
+                {"message": "Model training initiated", "request_id": g.request_id}
+            )
 
         except Exception as e:
             logger.error(

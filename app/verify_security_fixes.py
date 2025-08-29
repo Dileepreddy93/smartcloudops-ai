@@ -34,7 +34,10 @@ def verify_environment_variables() -> Dict[str, Any]:
             results["missing"].append(var)
         elif len(value) < 32:
             results["weak"].append(f"{var} (length: {len(value)})")
-        elif any(pattern in value.lower() for pattern in ["demo", "test", "default", "password", "123"]):
+        elif any(
+            pattern in value.lower()
+            for pattern in ["demo", "test", "default", "password", "123"]
+        ):
             results["weak"].append(f"{var} (contains insecure pattern)")
         else:
             results["valid"].append(var)
@@ -60,7 +63,10 @@ def verify_hardcoded_secrets() -> List[Dict[str, Any]]:
     found_secrets = []
 
     for file_path in project_root.rglob("*.py"):
-        if any(skip_dir in str(file_path) for skip_dir in [".venv", "venv", "__pycache__", ".git"]):
+        if any(
+            skip_dir in str(file_path)
+            for skip_dir in [".venv", "venv", "__pycache__", ".git"]
+        ):
             continue
 
         try:

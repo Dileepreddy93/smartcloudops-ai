@@ -40,6 +40,7 @@ class AWSSecretsProvider(SecretProvider):
         self.available = False
         try:
             import boto3
+
             self.client = boto3.client("secretsmanager")
             self.available = True
             logging.info("✅ AWS Secrets Manager provider initialized")
@@ -58,12 +59,12 @@ class AWSSecretsProvider(SecretProvider):
         try:
             response = self.client.get_secret_value(SecretId=key)
             secret_data = json.loads(response["SecretString"])
-            
+
             # Handle both direct values and nested structures
             if isinstance(secret_data, dict):
                 return secret_data.get("value") or secret_data.get(key.split("/")[-1])
             return secret_data
-            
+
         except self.client.exceptions.ResourceNotFoundException:
             logging.debug(f"Secret {key} not found in AWS Secrets Manager")
             return None
@@ -161,10 +162,12 @@ class SecureConfigManager:
             else:
                 logging.info("ℹ️ No .env file found, using environment variables only")
 
-    def get_secret(self, key: str, required: bool = False, secret_key: str = None) -> Optional[str]:
+    def get_secret(
+        self, key: str, required: bool = False, secret_key: str = None
+    ) -> Optional[str]:
         """
         Get secret from configured providers with fallback chain.
-        
+
         Args:
             key: Environment variable key
             required: Raise error if not found
@@ -182,7 +185,9 @@ class SecureConfigManager:
         for provider in self.providers:
             value = provider.get_secret(key)
             if value:
-                logging.debug(f"Secret '{key}' retrieved from {provider.__class__.__name__}")
+                logging.debug(
+                    f"Secret '{key}' retrieved from {provider.__class__.__name__}"
+                )
                 return value
 
         if required:
@@ -209,7 +214,9 @@ class SecureConfigManager:
                 missing_secrets.append(env_key)
 
         if missing_secrets:
-            raise ValueError(f"Production deployment blocked - missing required secrets: {missing_secrets}")
+            raise ValueError(
+                f"Production deployment blocked - missing required secrets: {missing_secrets}"
+            )
 
         logging.info("✅ All production secrets validated")
 
@@ -221,13 +228,13 @@ config_manager = SecureConfigManager()
 @dataclass
 class DatabaseConfig:
     """Database configuration with validation."""
-    
+
     url: str
     pool_size: int = 10
     max_overflow: int = 20
     pool_timeout: int = 30
     pool_recycle: int = 3600
-    
+
     def __post_init__(self):
         if not self.url:
             raise ValueError("Database URL is required")
@@ -240,13 +247,13 @@ class DatabaseConfig:
 @dataclass
 class RedisConfig:
     """Redis configuration with validation."""
-    
+
     url: str
     max_connections: int = 10
     socket_timeout: int = 5
     socket_connect_timeout: int = 5
     retry_on_timeout: bool = True
-    
+
     def __post_init__(self):
         if not self.url:
             raise ValueError("Redis URL is required")
@@ -257,17 +264,17 @@ class RedisConfig:
 @dataclass
 class SecurityConfig:
     """Security configuration with environment-specific validation."""
-    
+
     secret_key: str
     cors_origins: List[str]
     ssl_cert_path: Optional[str] = None
     ssl_key_path: Optional[str] = None
     rate_limit: str = "500/hour"
-    
+
     def __post_init__(self):
         if len(self.secret_key) < 32:
             raise ValueError("Secret key must be at least 32 characters")
-        
+
         # Validate CORS origins format
         for origin in self.cors_origins:
             if not origin.startswith(("http://", "https://")):
@@ -277,73 +284,84 @@ class SecurityConfig:
 class UnifiedConfig:
     """
     Immutable, validated configuration with secure secret handling.
-    
+
     This class ensures:
     1. No secrets are logged or exposed
     2. Production requires proper secret sources
     3. Configuration is validated on initialization
     4. Environment-specific security rules are enforced
     """
-    
+
     def __init__(self, config_manager: SecureConfigManager):
         self.environment = config_manager.environment
         self.debug = self._get_debug_setting(config_manager)
         self.config_manager = config_manager
-        
+
         # Validate production requirements first
         if self.environment == "production":
             config_manager.validate_production_secrets()
-        
+
         # Security configuration
         self.security = self._build_security_config(config_manager)
-        
+
         # Database configuration
         self.database = self._build_database_config(config_manager)
-        
+
         # Redis configuration
         self.redis = self._build_redis_config(config_manager)
-        
+
         # Logging configuration
         self.log_level = config_manager.get_secret("LOG_LEVEL") or "INFO"
-        
+
         # Final security validation
         self._validate_security_rules()
-        
+
         logging.info(f"✅ Unified configuration initialized for {self.environment}")
-    
+
     def _get_debug_setting(self, config_manager: SecureConfigManager) -> bool:
         """Get debug setting with environment-specific validation."""
         debug_str = config_manager.get_secret("DEBUG", required=False) or "false"
         debug = debug_str.lower() == "true"
-        
+
         # Security rule: Never allow debug in production
         if self.environment == "production" and debug:
             raise ValueError("DEBUG mode is forbidden in production environment")
-        
+
         return debug
-    
-    def _build_security_config(self, config_manager: SecureConfigManager) -> SecurityConfig:
+
+    def _build_security_config(
+        self, config_manager: SecureConfigManager
+    ) -> SecurityConfig:
         """Build security configuration with environment-specific rules."""
         # Get secret key
         secret_key = config_manager.get_secret(
-            "SECRET_KEY", 
+            "SECRET_KEY",
             required=True,
-            secret_key=("smartcloudops/app/secret-key" if self.environment == "production" else None)
+            secret_key=(
+                "smartcloudops/app/secret-key"
+                if self.environment == "production"
+                else None
+            ),
         )
-        
+
         # Get CORS origins
-        cors_origins_str = config_manager.get_secret("CORS_ORIGINS") or self._get_default_cors_origins()
+        cors_origins_str = (
+            config_manager.get_secret("CORS_ORIGINS")
+            or self._get_default_cors_origins()
+        )
         cors_origins = [origin.strip() for origin in cors_origins_str.split(",")]
-        
+
         # SSL configuration for production
         ssl_cert_path = None
         ssl_key_path = None
         if self.environment == "production":
             ssl_cert_path = config_manager.get_secret("SSL_CERT_PATH")
             ssl_key_path = config_manager.get_secret("SSL_KEY_PATH")
-        
-        rate_limit = config_manager.get_secret("RATE_LIMIT") or self._get_default_rate_limit()
-        
+
+        rate_limit = (
+            config_manager.get_secret("RATE_LIMIT") or self._get_default_rate_limit()
+        )
+
         return SecurityConfig(
             secret_key=secret_key,
             cors_origins=cors_origins,
@@ -351,20 +369,26 @@ class UnifiedConfig:
             ssl_key_path=ssl_key_path,
             rate_limit=rate_limit,
         )
-    
-    def _build_database_config(self, config_manager: SecureConfigManager) -> DatabaseConfig:
+
+    def _build_database_config(
+        self, config_manager: SecureConfigManager
+    ) -> DatabaseConfig:
         """Build database configuration with environment-specific defaults."""
         database_url = config_manager.get_secret(
-            "DATABASE_URL", 
+            "DATABASE_URL",
             required=True,
-            secret_key=("smartcloudops/database/url" if self.environment == "production" else None)
+            secret_key=(
+                "smartcloudops/database/url"
+                if self.environment == "production"
+                else None
+            ),
         )
-        
+
         pool_size = int(config_manager.get_secret("DB_POOL_SIZE") or "10")
         max_overflow = int(config_manager.get_secret("DB_MAX_OVERFLOW") or "20")
         pool_timeout = int(config_manager.get_secret("DB_POOL_TIMEOUT") or "30")
         pool_recycle = int(config_manager.get_secret("DB_POOL_RECYCLE") or "3600")
-        
+
         return DatabaseConfig(
             url=database_url,
             pool_size=pool_size,
@@ -372,20 +396,29 @@ class UnifiedConfig:
             pool_timeout=pool_timeout,
             pool_recycle=pool_recycle,
         )
-    
+
     def _build_redis_config(self, config_manager: SecureConfigManager) -> RedisConfig:
         """Build Redis configuration with environment-specific defaults."""
         redis_url = config_manager.get_secret(
-            "REDIS_URL", 
+            "REDIS_URL",
             required=True,
-            secret_key=("smartcloudops/redis/url" if self.environment == "production" else None)
+            secret_key=(
+                "smartcloudops/redis/url" if self.environment == "production" else None
+            ),
         )
-        
-        max_connections = int(config_manager.get_secret("REDIS_MAX_CONNECTIONS") or "10")
+
+        max_connections = int(
+            config_manager.get_secret("REDIS_MAX_CONNECTIONS") or "10"
+        )
         socket_timeout = int(config_manager.get_secret("REDIS_SOCKET_TIMEOUT") or "5")
-        socket_connect_timeout = int(config_manager.get_secret("REDIS_SOCKET_CONNECT_TIMEOUT") or "5")
-        retry_on_timeout = config_manager.get_secret("REDIS_RETRY_ON_TIMEOUT", required=False) != "false"
-        
+        socket_connect_timeout = int(
+            config_manager.get_secret("REDIS_SOCKET_CONNECT_TIMEOUT") or "5"
+        )
+        retry_on_timeout = (
+            config_manager.get_secret("REDIS_RETRY_ON_TIMEOUT", required=False)
+            != "false"
+        )
+
         return RedisConfig(
             url=redis_url,
             max_connections=max_connections,
@@ -393,7 +426,7 @@ class UnifiedConfig:
             socket_connect_timeout=socket_connect_timeout,
             retry_on_timeout=retry_on_timeout,
         )
-    
+
     def _get_default_cors_origins(self) -> str:
         """Get environment-specific CORS origins."""
         if self.environment == "production":
@@ -402,7 +435,7 @@ class UnifiedConfig:
             return "http://localhost:3000,http://localhost:5000"
         else:
             return "http://localhost:3000,http://localhost:5000"
-    
+
     def _get_default_rate_limit(self) -> str:
         """Get environment-specific rate limits."""
         if self.environment == "production":
@@ -411,25 +444,27 @@ class UnifiedConfig:
             return "500/hour"
         else:
             return "100/hour"
-    
+
     def _validate_security_rules(self):
         """Validate environment-specific security rules."""
         if self.environment == "production":
             # Production security validations
             if not self.database.url.startswith(("postgresql://", "mysql://")):
                 raise ValueError("Production database must use PostgreSQL or MySQL")
-            
+
             if not self.redis.url.startswith("rediss://"):
                 raise ValueError("Production Redis must use SSL")
-            
-            if not all(origin.startswith("https://") for origin in self.security.cors_origins):
+
+            if not all(
+                origin.startswith("https://") for origin in self.security.cors_origins
+            ):
                 raise ValueError("Production CORS origins must use HTTPS")
-    
+
     @property
     def secret_key(self) -> str:
         """Access secret key (for Flask configuration)."""
         return self.security.secret_key
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """
         Convert config to dictionary for logging/debugging.
@@ -438,8 +473,14 @@ class UnifiedConfig:
         return {
             "environment": self.environment,
             "debug": self.debug,
-            "database_url": self.database.url.split("@")[-1] if "@" in self.database.url else "configured",
-            "redis_url": self.redis.url.split("@")[-1] if "@" in self.redis.url else "configured",
+            "database_url": (
+                self.database.url.split("@")[-1]
+                if "@" in self.database.url
+                else "configured"
+            ),
+            "redis_url": (
+                self.redis.url.split("@")[-1] if "@" in self.redis.url else "configured"
+            ),
             "log_level": self.log_level,
             "cors_origins_count": len(self.security.cors_origins),
             "ssl_enabled": bool(self.security.ssl_cert_path),
@@ -449,22 +490,22 @@ class UnifiedConfig:
 # Global unified configuration instance
 try:
     config = UnifiedConfig(config_manager)
-    
+
     # Configure logging with secure settings
     logging.basicConfig(
         level=getattr(logging, config.log_level.upper()),
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
-    
+
     logger = logging.getLogger(__name__)
     logger.info(f"✅ Unified configuration loaded: {config.to_dict()}")
-    
+
 except Exception as e:
     # Fallback configuration for emergencies
     logger = logging.getLogger(__name__)
     logger.error(f"❌ Failed to load unified configuration: {e}")
     logger.error("🚨 Using emergency fallback configuration")
-    
+
     class EmergencyConfig:
         def __init__(self):
             self.environment = "emergency"
@@ -474,11 +515,10 @@ except Exception as e:
             self.database = DatabaseConfig(url="sqlite:///emergency.db")
             self.redis = RedisConfig(url="redis://localhost:6379/0")
             self.security = SecurityConfig(
-                secret_key=secrets.token_hex(32),
-                cors_origins=["http://localhost:3000"]
+                secret_key=secrets.token_hex(32), cors_origins=["http://localhost:3000"]
             )
-        
+
         def to_dict(self):
             return {"environment": "emergency", "status": "fallback_mode"}
-    
+
     config = EmergencyConfig()

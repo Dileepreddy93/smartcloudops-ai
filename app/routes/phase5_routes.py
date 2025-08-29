@@ -67,7 +67,9 @@ def process_chatops_command():
         # Execute action if confidence is high enough
         execution_result = None
         if nlp_result["confidence"] > 0.7:
-            execution_result = aws_integration_service.execute_action(nlp_result["action_plan"])
+            execution_result = aws_integration_service.execute_action(
+                nlp_result["action_plan"]
+            )
 
         return jsonify(
             {

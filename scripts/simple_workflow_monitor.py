@@ -1,439 +1,186 @@
 #!/usr/bin/env python3
 """
-Simple GitHub Workflow Monitor
-=============================
+Simple Workflow Monitor - GitHub Actions Status Checker
+=====================================================
 
-A simplified workflow monitor that works with publicly available GitHub API data.
+A simple script to monitor GitHub Actions workflow status and report pass/fail results.
 """
 
+import json
 import subprocess
 import sys
-import time
-from pathlib import Path
+from datetime import datetime
+from typing import List, Dict
 
-import requests
+def run_gh_command(cmd: List[str]) -> Dict:
+    """Run a GitHub CLI command and return JSON result."""
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        return json.loads(result.stdout)
+    except subprocess.CalledProcessError as e:
+        print(f"Error running command {' '.join(cmd)}: {e}")
+        return {}
+    except json.JSONDecodeError as e:
+        print(f"Error parsing JSON from command {' '.join(cmd)}: {e}")
+        return {}
 
-# Configuration
-REPO_OWNER = "Dileepreddy93"
-REPO_NAME = "smartcloudops-ai"
-GITHUB_API_BASE = "https://api.github.com"
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+def get_workflow_runs(owner: str, repo: str, limit: int = 20) -> List[Dict]:
+    """Get recent workflow runs."""
+    cmd = [
+        "gh", "api", 
+        f"repos/{owner}/{repo}/actions/runs",
+        "--jq", f".workflow_runs[0:{limit}]"
+    ]
+    result = run_gh_command(cmd)
+    return result if isinstance(result, list) else []
 
+def get_workflow_status_summary(runs: List[Dict]) -> Dict:
+    """Generate a summary of workflow status."""
+    summary = {
+        "total_runs": len(runs),
+        "successful": 0,
+        "failed": 0,
+        "in_progress": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "failed_workflows": [],
+        "recent_successes": []
+    }
+    
+    for run in runs:
+        conclusion = run.get("conclusion", "unknown")
+        status = run.get("status", "unknown")
+        name = run.get("name", "Unknown Workflow")
+        run_number = run.get("run_number", 0)
+        created_at = run.get("created_at", "")
+        
+        if status == "in_progress":
+            summary["in_progress"] += 1
+        elif conclusion == "success":
+            summary["successful"] += 1
+            summary["recent_successes"].append({
+                "name": name,
+                "run_number": run_number,
+                "created_at": created_at
+            })
+        elif conclusion == "failure":
+            summary["failed"] += 1
+            summary["failed_workflows"].append({
+                "name": name,
+                "run_number": run_number,
+                "created_at": created_at,
+                "url": run.get("html_url", "")
+            })
+        elif conclusion == "cancelled":
+            summary["cancelled"] += 1
+        elif conclusion == "skipped":
+            summary["skipped"] += 1
+    
+    return summary
 
-class SimpleWorkflowMonitor:
-    """Simple workflow monitor with basic auto-fixing capabilities."""
+def get_workflow_logs(run_id: str) -> str:
+    """Get logs for a specific workflow run."""
+    try:
+        result = subprocess.run([
+            "gh", "run", "view", run_id, "--log"
+        ], capture_output=True, text=True, check=True)
+        return result.stdout
+    except subprocess.CalledProcessError:
+        return "Unable to retrieve logs"
 
-    def __init__(self):
-        self.session = requests.Session()
-        self.session.headers.update(
-            {
-                "User-Agent": "SmartCloudOps-Workflow-Monitor/1.0",
-                "Accept": "application/vnd.github.v3+json",
-            }
-        )
-        self.fixes_applied = []
+def analyze_failure_patterns(logs: str) -> List[str]:
+    """Analyze logs for common failure patterns."""
+    patterns = []
+    
+    if "npm ERR!" in logs:
+        patterns.append("npm dependency error")
+    if "ModuleNotFoundError" in logs:
+        patterns.append("Python import error")
+    if "FAILED" in logs and "test" in logs.lower():
+        patterns.append("Test failure")
+    if "error:" in logs and "lint" in logs.lower():
+        patterns.append("Linting error")
+    if "failed to build" in logs:
+        patterns.append("Docker build error")
+    if "timeout" in logs.lower():
+        patterns.append("Timeout error")
+    if "permission denied" in logs.lower():
+        patterns.append("Permission error")
+    if "out of memory" in logs.lower():
+        patterns.append("Memory error")
+    
+    return patterns
 
-    def get_workflow_runs(self, per_page=5):
-        """Get recent workflow runs."""
-        url = f"{GITHUB_API_BASE}/repos/{REPO_OWNER}/{REPO_NAME}/actions/runs"
-        params = {"per_page": per_page}
-
-        try:
-            response = self.session.get(url, params=params)
-            response.raise_for_status()
-            return response.json()["workflow_runs"]
-        except requests.RequestException as e:
-            print(f"❌ Error fetching workflow runs: {e}")
-            return []
-
-    def get_workflow_jobs(self, run_id):
-        """Get jobs for a specific workflow run."""
-        url = f"{GITHUB_API_BASE}/repos/{REPO_OWNER}/{REPO_NAME}/actions/runs/{run_id}/jobs"
-
-        try:
-            response = self.session.get(url)
-            response.raise_for_status()
-            return response.json()["jobs"]
-        except requests.RequestException as e:
-            print(f"❌ Error fetching jobs for run {run_id}: {e}")
-            return []
-
-    def check_local_issues(self):
-        """Check for common local issues that might cause workflow failures."""
-        issues = []
-
-        print("🔍 Checking for common local issues...")
-
-        # Check Black formatting
-        try:
-            result = subprocess.run(
-                ["black", "--check", "--diff", "app/", "scripts/", "tests/"],
-                capture_output=True,
-                text=True,
-                cwd=PROJECT_ROOT,
-            )
-
-            if result.returncode != 0:
-                issues.append(
-                    {
-                        "type": "black_formatting",
-                        "description": "Code formatting issues detected",
-                        "fix": "run_black_formatting",
-                    }
-                )
-                print("❌ Black formatting issues found")
-            else:
-                print("✅ Black formatting is correct")
-        except Exception as e:
-            print(f"⚠️ Could not check Black formatting: {e}")
-
-        # Check Ruff linting
-        try:
-            result = subprocess.run(
-                ["ruff", "check", "app/", "scripts/", "tests/"],
-                capture_output=True,
-                text=True,
-                cwd=PROJECT_ROOT,
-            )
-
-            if result.returncode != 0:
-                issues.append(
-                    {
-                        "type": "ruff_linting",
-                        "description": "Linting errors detected",
-                        "fix": "run_ruff_fixes",
-                    }
-                )
-                print("❌ Ruff linting issues found")
-            else:
-                print("✅ Ruff linting is correct")
-        except Exception as e:
-            print(f"⚠️ Could not check Ruff linting: {e}")
-
-        # Check MyPy type checking
-        try:
-            result = subprocess.run(
-                ["mypy", "app/", "scripts/", "tests/"],
-                capture_output=True,
-                text=True,
-                cwd=PROJECT_ROOT,
-            )
-
-            if result.returncode != 0:
-                issues.append(
-                    {
-                        "type": "mypy_errors",
-                        "description": "Type checking errors detected",
-                        "fix": "run_mypy_fixes",
-                    }
-                )
-                print("❌ MyPy type checking issues found")
-            else:
-                print("✅ MyPy type checking is correct")
-        except Exception as e:
-            print(f"⚠️ Could not check MyPy: {e}")
-
-        # Check Bandit security
-        try:
-            result = subprocess.run(
-                ["bandit", "-r", "app/", "-f", "json", "--severity-level", "high"],
-                capture_output=True,
-                text=True,
-                cwd=PROJECT_ROOT,
-            )
-
-            if result.returncode != 0:
-                issues.append(
-                    {
-                        "type": "bandit_security",
-                        "description": "Security issues detected",
-                        "fix": "run_bandit_fixes",
-                    }
-                )
-                print("❌ Bandit security issues found")
-            else:
-                print("✅ No high-severity security issues found")
-        except Exception as e:
-            print(f"⚠️ Could not check Bandit: {e}")
-
-        # Check pytest
-        try:
-            result = subprocess.run(
-                ["python", "-m", "pytest", "tests/", "--tb=short"],
-                capture_output=True,
-                text=True,
-                cwd=PROJECT_ROOT,
-            )
-
-            if result.returncode != 0:
-                issues.append(
-                    {
-                        "type": "test_failures",
-                        "description": "Test failures detected",
-                        "fix": "run_test_fixes",
-                    }
-                )
-                print("❌ Test failures found")
-            else:
-                print("✅ All tests passing")
-        except Exception as e:
-            print(f"⚠️ Could not run tests: {e}")
-
-        return issues
-
-    def run_black_formatting(self):
-        """Fix Black formatting issues."""
-        try:
-            print("🔧 Running Black formatting fixes...")
-            result = subprocess.run(
-                ["black", "app/", "scripts/", "tests/"],
-                capture_output=True,
-                text=True,
-                cwd=PROJECT_ROOT,
-            )
-
-            if result.returncode == 0:
-                print("✅ Black formatting applied successfully")
-                return True
-            else:
-                print(f"❌ Black formatting failed: {result.stderr}")
-                return False
-        except Exception as e:
-            print(f"❌ Error running Black: {e}")
-            return False
-
-    def run_ruff_fixes(self):
-        """Fix Ruff linting issues."""
-        try:
-            print("🔧 Running Ruff auto-fixes...")
-            result = subprocess.run(
-                [
-                    "ruff",
-                    "check",
-                    "app/",
-                    "scripts/",
-                    "tests/",
-                    "--fix",
-                    "--unsafe-fixes",
-                ],
-                capture_output=True,
-                text=True,
-                cwd=PROJECT_ROOT,
-            )
-
-            if result.returncode == 0:
-                print("✅ Ruff fixes applied successfully")
-                return True
-            else:
-                print(f"❌ Ruff fixes failed: {result.stderr}")
-                return False
-        except Exception as e:
-            print(f"❌ Error running Ruff: {e}")
-            return False
-
-    def run_mypy_fixes(self):
-        """Fix MyPy type checking issues."""
-        try:
-            print("🔧 Installing MyPy dependencies...")
-            result = subprocess.run(
-                ["pip", "install", "types-requests", "types-PyYAML"],
-                capture_output=True,
-                text=True,
-                cwd=PROJECT_ROOT,
-            )
-
-            if result.returncode == 0:
-                print("✅ MyPy dependencies installed")
-                return True
-            else:
-                print(f"❌ MyPy dependency installation failed: {result.stderr}")
-                return False
-        except Exception as e:
-            print(f"❌ Error running MyPy fixes: {e}")
-            return False
-
-    def run_bandit_fixes(self):
-        """Fix Bandit security issues."""
-        try:
-            print("🔧 Checking Bandit security issues...")
-            result = subprocess.run(
-                ["bandit", "-r", "app/", "-f", "json", "--severity-level", "high"],
-                capture_output=True,
-                text=True,
-                cwd=PROJECT_ROOT,
-            )
-
-            if result.returncode == 0:
-                print("✅ No high-severity security issues found")
-                return True
-            else:
-                print("⚠️ High-severity security issues found - manual review needed")
-                return False
-        except Exception as e:
-            print(f"❌ Error running Bandit: {e}")
-            return False
-
-    def run_test_fixes(self):
-        """Fix test failures."""
-        try:
-            print("🔧 Running tests to identify issues...")
-            result = subprocess.run(
-                ["python", "-m", "pytest", "tests/", "-v", "--tb=short"],
-                capture_output=True,
-                text=True,
-                cwd=PROJECT_ROOT,
-            )
-
-            if result.returncode == 0:
-                print("✅ All tests passing")
-                return True
-            else:
-                print(f"❌ Tests still failing: {result.stdout}")
-                return False
-        except Exception as e:
-            print(f"❌ Error running tests: {e}")
-            return False
-
-    def commit_and_push_fixes(self):
-        """Commit and push fixes."""
-        try:
-            print("🔧 Committing and pushing fixes...")
-
-            # Add all changes
-            result = subprocess.run(["git", "add", "."], capture_output=True, text=True, cwd=PROJECT_ROOT)
-
-            if result.returncode != 0:
-                print(f"❌ Git add failed: {result.stderr}")
-                return False
-
-            # Commit changes
-            commit_message = f"🔧 AUTO-FIX: {', '.join(self.fixes_applied)}"
-            result = subprocess.run(
-                ["git", "commit", "-m", commit_message],
-                capture_output=True,
-                text=True,
-                cwd=PROJECT_ROOT,
-            )
-
-            if result.returncode != 0:
-                print(f"❌ Git commit failed: {result.stderr}")
-                return False
-
-            # Push changes
-            result = subprocess.run(
-                ["git", "push", "origin", "main"],
-                capture_output=True,
-                text=True,
-                cwd=PROJECT_ROOT,
-            )
-
-            if result.returncode == 0:
-                print("✅ Fixes committed and pushed successfully")
-                return True
-            else:
-                print(f"❌ Git push failed: {result.stderr}")
-                return False
-
-        except Exception as e:
-            print(f"❌ Error committing fixes: {e}")
-            return False
-
-    def monitor_and_fix(self):
-        """Main monitoring and fixing function."""
-        print("🚀 Starting simple workflow monitoring and fixing...")
-        print("=" * 60)
-
-        # Check current workflow status
-        print("📊 Checking current workflow status...")
-        runs = self.get_workflow_runs(3)
-
-        if runs:
-            print(f"📊 Found {len(runs)} recent workflow runs:")
-            for run in runs:
-                status = (
-                    "✅ SUCCESS"
-                    if run["conclusion"] == "success"
-                    else "❌ FAILED" if run["conclusion"] == "failure" else "🔄 RUNNING"
-                )
-                print(f"   • {run['name']}: {status}")
-
-        # Check for local issues
-        print("\n🔍 Checking for local issues that might cause failures...")
-        issues = self.check_local_issues()
-
-        if issues:
-            print(f"\n❌ Found {len(issues)} local issue(s) to fix:")
-            for issue in issues:
-                print(f"   • {issue['description']}")
-
-            print("\n🔧 Applying fixes...")
-            fixes_needed = False
-
-            for issue in issues:
-                print(f"\n🔧 Fixing: {issue['description']}")
-                fix_method = getattr(self, issue["fix"])
-                if fix_method():
-                    self.fixes_applied.append(issue["type"])
-                    fixes_needed = True
-                else:
-                    print(f"❌ Failed to fix: {issue['description']}")
-
-            if fixes_needed:
-                print("\n🔧 Committing fixes...")
-                if self.commit_and_push_fixes():
-                    print("✅ Fixes applied successfully!")
-                    print("🔄 A new workflow run should start automatically...")
-                else:
-                    print("❌ Failed to commit fixes")
-            else:
-                print("❌ No fixes were successfully applied")
-        else:
-            print("✅ No local issues found!")
-            print("💡 If workflows are still failing, the issue might be:")
-            print("   • Environment-specific (GitHub Actions vs local)")
-            print("   • Dependency version mismatches")
-            print("   • Configuration differences")
-            print("   • Network or API issues")
-
-        # Generate summary
-        print("\n" + "=" * 60)
-        print("📊 MONITORING SUMMARY")
-        print("=" * 60)
-        print(f"✅ Fixes Applied: {len(self.fixes_applied)}")
-        print(f"❌ Issues Found: {len(issues)}")
-
-        if self.fixes_applied:
-            print("\n🔧 Fixes Applied:")
-            for fix in self.fixes_applied:
-                print(f"   • {fix}")
-
-        print("\n💡 Next steps:")
-        print("   • Wait for new workflow run to complete")
-        print("   • Check status: ./scripts/quick_status.sh")
-        print("   • Monitor continuously: python scripts/simple_workflow_monitor.py monitor")
-
+def print_status_report(summary: Dict):
+    """Print a formatted status report."""
+    print("\n" + "="*60)
+    print("🚀 GITHUB ACTIONS WORKFLOW STATUS REPORT")
+    print("="*60)
+    print(f"📊 Total Runs Analyzed: {summary['total_runs']}")
+    print(f"✅ Successful: {summary['successful']}")
+    print(f"❌ Failed: {summary['failed']}")
+    print(f"🔄 In Progress: {summary['in_progress']}")
+    print(f"⏹️  Cancelled: {summary['cancelled']}")
+    print(f"⏭️  Skipped: {summary['skipped']}")
+    
+    if summary['failed_workflows']:
+        print(f"\n❌ FAILED WORKFLOWS ({len(summary['failed_workflows'])}):")
+        print("-" * 40)
+        for workflow in summary['failed_workflows'][:5]:  # Show last 5 failures
+            print(f"• {workflow['name']} (Run #{workflow['run_number']})")
+            print(f"  Created: {workflow['created_at']}")
+            print(f"  URL: {workflow['url']}")
+            print()
+    
+    if summary['recent_successes']:
+        print(f"✅ RECENT SUCCESSES ({len(summary['recent_successes'])}):")
+        print("-" * 40)
+        for workflow in summary['recent_successes'][:3]:  # Show last 3 successes
+            print(f"• {workflow['name']} (Run #{workflow['run_number']})")
+            print(f"  Created: {workflow['created_at']}")
+            print()
+    
+    # Overall status
+    if summary['failed'] == 0:
+        print("🎉 ALL WORKFLOWS ARE PASSING! ✅")
+    else:
+        print(f"⚠️  {summary['failed']} WORKFLOW(S) NEED ATTENTION ❌")
+    
+    print("="*60)
 
 def main():
-    """Main entry point."""
-    if len(sys.argv) > 1 and sys.argv[1] == "monitor":
-        # Continuous monitoring mode
-        monitor = SimpleWorkflowMonitor()
-        while True:
-            try:
-                monitor.monitor_and_fix()
-                print("\n🔄 Waiting 5 minutes before next check...")
-                time.sleep(300)
-            except KeyboardInterrupt:
-                print("\n⏹️ Monitoring stopped by user")
-                break
-            except Exception as e:
-                print(f"❌ Monitoring error: {e}")
-                time.sleep(60)
-    else:
-        # Single run mode
-        monitor = SimpleWorkflowMonitor()
-        monitor.monitor_and_fix()
-
+    """Main function to monitor workflows."""
+    # Configuration
+    owner = "Dileepreddy93"
+    repo = "smartcloudops-ai"
+    limit = 20
+    
+    print(f"🔍 Monitoring workflows for {owner}/{repo}")
+    print(f"⏰ Report generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    
+    # Get workflow runs
+    print("\n📋 Fetching recent workflow runs...")
+    runs = get_workflow_runs(owner, repo, limit)
+    
+    if not runs:
+        print("❌ No workflow runs found or unable to fetch data")
+        sys.exit(1)
+    
+    # Generate summary
+    summary = get_workflow_status_summary(runs)
+    
+    # Print report
+    print_status_report(summary)
+    
+    # If there are failures, offer to analyze them
+    if summary['failed_workflows']:
+        print("\n🔍 Would you like to analyze specific failed workflows?")
+        print("Run this script with --analyze <run_id> to get detailed logs")
+        
+        # Show the most recent failure
+        latest_failure = summary['failed_workflows'][0]
+        print(f"\n📋 Latest failure: {latest_failure['name']} (Run #{latest_failure['run_number']})")
+        print(f"🔗 URL: {latest_failure['url']}")
 
 if __name__ == "__main__":
     main()

@@ -1,12 +1,18 @@
 from typing import Any, Dict
 
 from flask import Blueprint, request
-from prometheus_client import Counter
+from prometheus_client import Counter, REGISTRY
 
 from app.core.ml_engine.secure_inference import SecureMLInferenceEngine
 from app.utils.response import error_response, success_response
 
 bp = Blueprint("ml", __name__)
+
+# Clear any existing metrics to avoid duplication
+try:
+    REGISTRY.unregister(REGISTRY._names_to_collectors.get("ml_prediction_requests_total"))
+except (KeyError, ValueError):
+    pass
 
 ML_PREDICTION_REQUESTS = Counter(
     "ml_prediction_requests_total",

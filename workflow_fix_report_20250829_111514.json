@@ -1,0 +1,76 @@
+{
+  "timestamp": "2025-08-29T11:15:14.954522",
+  "total_issues": 7,
+  "applied_fixes": 7,
+  "remaining_issues": 0,
+  "issues_by_severity": {
+    "critical": 6,
+    "medium": 1
+  },
+  "issues_by_type": {
+    "missing_triggers": 6,
+    "missing_permissions": 1
+  },
+  "applied_fixes_details": [
+    {
+      "file": ".github/workflows/infra.yml",
+      "type": "missing_triggers",
+      "severity": "critical",
+      "message": "Workflow missing 'on' triggers",
+      "fixable": true,
+      "fix": "<function WorkflowFixer._check_missing_fields.<locals>.<lambda> at 0x75c1c6107c40>"
+    },
+    {
+      "file": ".github/workflows/ci-cd-minimal.yml",
+      "type": "missing_triggers",
+      "severity": "critical",
+      "message": "Workflow missing 'on' triggers",
+      "fixable": true,
+      "fix": "<function WorkflowFixer._check_missing_fields.<locals>.<lambda> at 0x75c1c6107e20>"
+    },
+    {
+      "file": ".github/workflows/workflow-monitor.yml",
+      "type": "missing_triggers",
+      "severity": "critical",
+      "message": "Workflow missing 'on' triggers",
+      "fixable": true,
+      "fix": "<function WorkflowFixer._check_missing_fields.<locals>.<lambda> at 0x75c1c6107ec0>"
+    },
+    {
+      "file": ".github/workflows/workflow-monitor.yml",
+      "type": "missing_permissions",
+      "severity": "medium",
+      "message": "Missing explicit permissions configuration",
+      "fixable": true,
+      "fix": "<function WorkflowFixer._check_security_issues.<locals>.<lambda> at 0x75c1c6107ba0>"
+    },
+    {
+      "file": ".github/workflows/test-simple.yml",
+      "type": "missing_triggers",
+      "severity": "critical",
+      "message": "Workflow missing 'on' triggers",
+      "fixable": true,
+      "fix": "<function WorkflowFixer._check_missing_fields.<locals>.<lambda> at 0x75c1c6107b00>"
+    },
+    {
+      "file": ".github/workflows/code-quality.yml",
+      "type": "missing_triggers",
+      "severity": "critical",
+      "message": "Workflow missing 'on' triggers",
+      "fixable": true,
+      "fix": "<function WorkflowFixer._check_missing_fields.<locals>.<lambda> at 0x75c1c613c040>"
+    },
+    {
+      "file": ".github/workflows/ci-cd.yml",
+      "type": "missing_triggers",
+      "severity": "critical",
+      "message": "Workflow missing 'on' triggers",
+      "fixable": true,
+      "fix": "<function WorkflowFixer._check_missing_fields.<locals>.<lambda> at 0x75c1c613c0e0>"
+    }
+  ],
+  "recommendations": [
+    "Address critical issues manually",
+    "Test workflows after applied fixes"
+  ]
+}

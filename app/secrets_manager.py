@@ -30,7 +30,9 @@ class SecretsManager:
                 self.secrets_client = boto3.client("secretsmanager")
                 logger.info("✅ AWS Secrets Manager client initialized")
             except NoCredentialsError:
-                logger.warning("⚠️ AWS credentials not found, falling back to environment variables")
+                logger.warning(
+                    "⚠️ AWS credentials not found, falling back to environment variables"
+                )
                 self.use_aws_secrets_manager = False
             except Exception as e:
                 logger.warning(f"⚠️ Failed to initialize AWS Secrets Manager: {e}")
@@ -85,7 +87,9 @@ class SecretsManager:
                 return response.get("SecretBinary")
             except ClientError as e:
                 if e.response["Error"]["Code"] == "ResourceNotFoundException":
-                    logger.warning(f"Secret {secret_name} not found in AWS Secrets Manager")
+                    logger.warning(
+                        f"Secret {secret_name} not found in AWS Secrets Manager"
+                    )
                 else:
                     logger.error(f"Error retrieving secret {secret_name}: {e}")
             except Exception as e:
@@ -94,7 +98,9 @@ class SecretsManager:
         # Fallback to environment variables
         return self.secrets.get(secret_name)
 
-    def set_secret(self, secret_name: str, secret_value: str, description: str = "") -> bool:
+    def set_secret(
+        self, secret_name: str, secret_value: str, description: str = ""
+    ) -> bool:
         """Set a secret value in AWS Secrets Manager."""
         if not self.use_aws_secrets_manager:
             logger.warning("AWS Secrets Manager not available, cannot set secret")
@@ -120,7 +126,9 @@ class SecretsManager:
             if e.response["Error"]["Code"] == "ResourceExistsException":
                 # Update existing secret
                 try:
-                    self.secrets_client.update_secret(SecretId=secret_name, SecretString=json.dumps(secret_data))
+                    self.secrets_client.update_secret(
+                        SecretId=secret_name, SecretString=json.dumps(secret_data)
+                    )
                     logger.info(f"✅ Secret {secret_name} updated successfully")
                     return True
                 except Exception as update_error:
@@ -152,7 +160,9 @@ class SecretsManager:
             return False
 
         try:
-            self.secrets_client.delete_secret(SecretId=secret_name, ForceDeleteWithoutRecovery=True)
+            self.secrets_client.delete_secret(
+                SecretId=secret_name, ForceDeleteWithoutRecovery=True
+            )
             logger.info(f"✅ Secret {secret_name} deleted successfully")
             return True
         except Exception as e:
@@ -176,9 +186,11 @@ class SecretsManager:
     def get_api_keys(self) -> Dict[str, str]:
         """Get all API keys."""
         return {
-            "admin": self.get_secret("admin_api_key") or self.secrets.get("admin_api_key"),
+            "admin": self.get_secret("admin_api_key")
+            or self.secrets.get("admin_api_key"),
             "ml": self.get_secret("ml_api_key") or self.secrets.get("ml_api_key"),
-            "readonly": self.get_secret("readonly_api_key") or self.secrets.get("readonly_api_key"),
+            "readonly": self.get_secret("readonly_api_key")
+            or self.secrets.get("readonly_api_key"),
         }
 
     def validate_api_key(self, api_key: str) -> Optional[Dict[str, Any]]:

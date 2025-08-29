@@ -24,6 +24,7 @@ from utils.response import build_error_response, build_success_response
 try:
     from celery import Celery, Task
     from celery.utils.log import get_task_logger
+
     CELERY_AVAILABLE = True
 except ImportError:
     CELERY_AVAILABLE = False
@@ -34,8 +35,8 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from cache_service import cache_service
-from database_integration import db_service
 from config import config
+from database_integration import db_service
 
 logger = logging.getLogger(__name__)
 
@@ -76,10 +77,17 @@ else:
     celery_app = None
 
 
-class SmartCloudOpsTask(Task):
-    """Base task class with error handling and logging."""
+if celery_app is not None:
+    class SmartCloudOpsTask(Task):
+        """Base task class with error handling and logging."""
 
-    abstract = True
+        abstract = True
+else:
+    # Fallback class when Celery is not available
+    class SmartCloudOpsTask:
+        """Fallback task class when Celery is not available."""
+        
+        abstract = True
 
     def on_success(self, retval, task_id, args, kwargs):
         """Handle successful task completion."""
@@ -128,9 +136,7 @@ class SmartCloudOpsTask(Task):
         )
 
 
-@celery_app.task(base=SmartCloudOpsTask, bind=True, max_retries=3)
 def train_ml_model(
-    self,
     model_type: str = "anomaly_detection",
     training_data_path: Optional[str] = None,
     hyperparameters: Optional[Dict[str, Any]] = None,
@@ -151,13 +157,15 @@ def train_ml_model(
 
         # Import ML engine here to avoid circular imports
         try:
-            from app.core.ml_engine.secure_inference import SecureMLInferenceEngine
+            from app.core.ml_engine.secure_inference import \
+                SecureMLInferenceEngine
+
             ml_engine = SecureMLInferenceEngine()
         except ImportError:
             # Fallback to basic training simulation
             logger.warning("ML engine not available, simulating training")
             time.sleep(5)  # Simulate training time
-            
+
             training_result = {
                 "model_type": model_type,
                 "accuracy": 0.85,
@@ -171,7 +179,9 @@ def train_ml_model(
                 ml_engine.set_hyperparameters(hyperparameters)
 
             # Train model
-            training_result = ml_engine._train_model(model_type=model_type, data_path=training_data_path)
+            training_result = ml_engine._train_model(
+                model_type=model_type, data_path=training_data_path
+            )
 
         # Cache training results
         cache_service.set(
@@ -189,7 +199,7 @@ def train_ml_model(
                         "model_name": f"{model_type}_model",
                         "accuracy": training_result.get("accuracy", 0.0),
                         "training_time": training_result.get("training_time", 0.0),
-                    }
+                    },
                 )
             except Exception as e:
                 logger.warning(f"Failed to store training result in database: {e}")
@@ -198,7 +208,7 @@ def train_ml_model(
         return {
             "status": "success",
             "data": training_result,
-            "message": f"ML model {model_type} trained successfully"
+            "message": f"ML model {model_type} trained successfully",
         }
 
     except Exception as exc:
@@ -206,8 +216,9 @@ def train_ml_model(
         raise self.retry(countdown=60, exc=exc)
 
 
-@celery_app.task(base=SmartCloudOpsTask, bind=True, max_retries=3)
-def process_metrics_data(self, metrics_data: List[Dict[str, Any]], operation: str = "analyze") -> Dict[str, Any]:
+def process_metrics_data(
+    metrics_data: List[Dict[str, Any]], operation: str = "analyze"
+) -> Dict[str, Any]:
     """
     Process metrics data in background.
 
@@ -232,7 +243,9 @@ def process_metrics_data(self, metrics_data: List[Dict[str, Any]], operation: st
 
         # Initialize ML engine for anomaly detection
         try:
-            from app.core.ml_engine.secure_inference import SecureMLInferenceEngine
+            from app.core.ml_engine.secure_inference import \
+                SecureMLInferenceEngine
+
             ml_engine = SecureMLInferenceEngine()
         except ImportError:
             logger.warning("ML engine not available, skipping anomaly detection")
@@ -241,7 +254,9 @@ def process_metrics_data(self, metrics_data: List[Dict[str, Any]], operation: st
         for metric in metrics_data:
             try:
                 # Validate metric data
-                if not all(key in metric for key in ["cpu_usage", "memory_usage", "timestamp"]):
+                if not all(
+                    key in metric for key in ["cpu_usage", "memory_usage", "timestamp"]
+                ):
                     continue
 
                 # Detect anomalies if ML engine is available
@@ -269,11 +284,13 @@ def process_metrics_data(self, metrics_data: List[Dict[str, Any]], operation: st
             ttl=3600,
         )
 
-        logger.info(f"Metrics processing completed: {results['processed_count']} processed")
+        logger.info(
+            f"Metrics processing completed: {results['processed_count']} processed"
+        )
         return {
             "status": "success",
             "data": results,
-            "message": f"Processed {results['processed_count']} metrics"
+            "message": f"Processed {results['processed_count']} metrics",
         }
 
     except Exception as exc:
@@ -281,8 +298,7 @@ def process_metrics_data(self, metrics_data: List[Dict[str, Any]], operation: st
         raise self.retry(countdown=30, exc=exc)
 
 
-@celery_app.task(base=SmartCloudOpsTask, bind=True, max_retries=2)
-def system_maintenance(self, maintenance_type: str = "cleanup") -> Dict[str, Any]:
+def system_maintenance(maintenance_type: str = "cleanup") -> Dict[str, Any]:
     """
     Perform system maintenance tasks.
 
@@ -305,7 +321,9 @@ def system_maintenance(self, maintenance_type: str = "cleanup") -> Dict[str, Any
         if maintenance_type == "cleanup":
             # Clean up old cache entries
             deleted_count = cache_service.clear("smartcloudops:old:*")
-            results["completed_tasks"].append(f"Cleaned {deleted_count} old cache entries")
+            results["completed_tasks"].append(
+                f"Cleaned {deleted_count} old cache entries"
+            )
 
             # Clean up old logs
             log_cleanup_result = cleanup_old_logs()
@@ -338,7 +356,7 @@ def system_maintenance(self, maintenance_type: str = "cleanup") -> Dict[str, Any
         return {
             "status": "success",
             "data": results,
-            "message": f"System maintenance {maintenance_type} completed"
+            "message": f"System maintenance {maintenance_type} completed",
         }
 
     except Exception as exc:
@@ -346,9 +364,7 @@ def system_maintenance(self, maintenance_type: str = "cleanup") -> Dict[str, Any
         raise self.retry(countdown=300, exc=exc)
 
 
-@celery_app.task(base=SmartCloudOpsTask, bind=True, max_retries=3)
 def send_notifications(
-    self,
     notification_type: str,
     recipients: List[str],
     message: str,
@@ -367,7 +383,9 @@ def send_notifications(
         Notification results
     """
     try:
-        logger.info(f"Sending {notification_type} notification to {len(recipients)} recipients")
+        logger.info(
+            f"Sending {notification_type} notification to {len(recipients)} recipients"
+        )
 
         results = {
             "notification_type": notification_type,
@@ -384,7 +402,9 @@ def send_notifications(
                     results["sent_count"] += 1
                 except Exception as e:
                     results["failed_count"] += 1
-                    results["errors"].append(f"Failed to send email to {recipient}: {e}")
+                    results["errors"].append(
+                        f"Failed to send email to {recipient}: {e}"
+                    )
 
         elif notification_type == "slack":
             try:
@@ -401,7 +421,9 @@ def send_notifications(
                     results["sent_count"] += 1
                 except Exception as e:
                     results["failed_count"] += 1
-                    results["errors"].append(f"Failed to send webhook to {webhook_url}: {e}")
+                    results["errors"].append(
+                        f"Failed to send webhook to {webhook_url}: {e}"
+                    )
 
         # Cache notification results
         cache_service.set(
@@ -410,11 +432,13 @@ def send_notifications(
             ttl=3600,
         )
 
-        logger.info(f"Notification sent: {results['sent_count']} successful, {results['failed_count']} failed")
+        logger.info(
+            f"Notification sent: {results['sent_count']} successful, {results['failed_count']} failed"
+        )
         return {
             "status": "success",
             "data": results,
-            "message": f"Sent {results['sent_count']} notifications"
+            "message": f"Sent {results['sent_count']} notifications",
         }
 
     except Exception as exc:
@@ -422,8 +446,7 @@ def send_notifications(
         raise self.retry(countdown=60, exc=exc)
 
 
-@celery_app.task(base=SmartCloudOpsTask, bind=True, max_retries=2)
-def update_system_metrics(self) -> Dict[str, Any]:
+def update_system_metrics() -> Dict[str, Any]:
     """
     Update system metrics in background.
 
@@ -448,7 +471,9 @@ def update_system_metrics(self) -> Dict[str, Any]:
 
         # Check for anomalies
         try:
-            from app.core.ml_engine.secure_inference import SecureMLInferenceEngine
+            from app.core.ml_engine.secure_inference import \
+                SecureMLInferenceEngine
+
             ml_engine = SecureMLInferenceEngine()
             anomaly_result = ml_engine.predict(metrics)
 
@@ -468,7 +493,11 @@ def update_system_metrics(self) -> Dict[str, Any]:
             "status": "success",
             "data": {
                 "metrics_updated": True,
-                "anomaly_detected": anomaly_result.get("is_anomaly", False) if 'anomaly_result' in locals() else False,
+                "anomaly_detected": (
+                    anomaly_result.get("is_anomaly", False)
+                    if "anomaly_result" in locals()
+                    else False
+                ),
             },
             "message": "System metrics updated",
         }
@@ -507,11 +536,14 @@ def backup_ml_models() -> str:
             return "No ML models directory found"
 
         # Create backup directory
-        backup_dir = Path("backups") / datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        backup_dir = Path("backups") / datetime.now(timezone.utc).strftime(
+            "%Y%m%d_%H%M%S"
+        )
         backup_dir.mkdir(parents=True, exist_ok=True)
 
         # Copy models
         import shutil
+
         shutil.copytree(ml_models_dir, backup_dir / "ml_models")
 
         return f"ML models backed up to {backup_dir}"
@@ -523,13 +555,16 @@ def backup_configuration() -> str:
     """Backup configuration files."""
     try:
         config_files = [".env", "config.py", "requirements.txt"]
-        backup_dir = Path("backups") / datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        backup_dir = Path("backups") / datetime.now(timezone.utc).strftime(
+            "%Y%m%d_%H%M%S"
+        )
         backup_dir.mkdir(parents=True, exist_ok=True)
 
         copied_count = 0
         for config_file in config_files:
             if Path(config_file).exists():
                 import shutil
+
                 shutil.copy2(config_file, backup_dir)
                 copied_count += 1
 
@@ -599,6 +634,7 @@ def check_ml_service_health() -> bool:
     """Check ML service health."""
     try:
         from app.core.ml_engine.secure_inference import SecureMLInferenceEngine
+
         ml_engine = SecureMLInferenceEngine()
         health = ml_engine.health_check()
         return health.get("status") == "healthy"
@@ -610,6 +646,7 @@ def check_disk_space() -> bool:
     """Check disk space."""
     try:
         import psutil
+
         usage = psutil.disk_usage("/")
         return usage.percent < 90
     except Exception:
@@ -620,25 +657,32 @@ def check_memory_usage() -> bool:
     """Check memory usage."""
     try:
         import psutil
+
         memory = psutil.virtual_memory()
         return memory.percent < 90
     except Exception:
         return False
 
 
-def send_email_notification(recipient: str, message: str, data: Optional[Dict[str, Any]] = None):
+def send_email_notification(
+    recipient: str, message: str, data: Optional[Dict[str, Any]] = None
+):
     """Send email notification."""
     # Implement email sending logic
     logger.info(f"Email notification sent to {recipient}")
 
 
-def send_slack_notification(webhook_urls: List[str], message: str, data: Optional[Dict[str, Any]] = None):
+def send_slack_notification(
+    webhook_urls: List[str], message: str, data: Optional[Dict[str, Any]] = None
+):
     """Send Slack notification."""
     # Implement Slack webhook sending logic
     logger.info(f"Slack notification sent to {len(webhook_urls)} webhooks")
 
 
-def send_webhook_notification(webhook_url: str, message: str, data: Optional[Dict[str, Any]] = None):
+def send_webhook_notification(
+    webhook_url: str, message: str, data: Optional[Dict[str, Any]] = None
+):
     """Send webhook notification."""
     # Implement webhook sending logic
     logger.info(f"Webhook notification sent to {webhook_url}")
@@ -657,7 +701,10 @@ def schedule_periodic_tasks():
     # Schedule system maintenance daily at 2 AM
     system_maintenance.apply_async(
         kwargs={"maintenance_type": "cleanup"},
-        eta=datetime.now(timezone.utc).replace(hour=2, minute=0, second=0, microsecond=0) + timedelta(days=1),
+        eta=datetime.now(timezone.utc).replace(
+            hour=2, minute=0, second=0, microsecond=0
+        )
+        + timedelta(days=1),
     )
 
 

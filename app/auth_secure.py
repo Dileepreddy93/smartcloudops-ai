@@ -174,7 +174,9 @@ class SecureAPIKeyAuth:
             )
         return hashlib.sha256((api_key + salt).encode()).hexdigest()
 
-    def validate_api_key(self, api_key: str, required_permission: str = "read") -> Tuple[bool, Optional[Dict], str]:
+    def validate_api_key(
+        self, api_key: str, required_permission: str = "read"
+    ) -> Tuple[bool, Optional[Dict], str]:
         """
         Validate API key with comprehensive security checks.
 
@@ -238,7 +240,10 @@ class SecureAPIKeyAuth:
                     return False, None, "API key has been deactivated"
 
                 # Check key expiration
-                if key_info.expires_at and datetime.now(timezone.utc) > key_info.expires_at:
+                if (
+                    key_info.expires_at
+                    and datetime.now(timezone.utc) > key_info.expires_at
+                ):
                     self._log_auth_attempt(
                         api_key,
                         client_ip,
@@ -301,7 +306,9 @@ class SecureAPIKeyAuth:
                 self._record_request(key_hash)
 
                 # Log successful authentication
-                self._log_auth_attempt(api_key, client_ip, user_agent, endpoint, required_permission, True)
+                self._log_auth_attempt(
+                    api_key, client_ip, user_agent, endpoint, required_permission, True
+                )
 
                 # Build user info for Flask context
                 user_info = {
@@ -318,7 +325,9 @@ class SecureAPIKeyAuth:
         except Exception as e:
             logger.error(f"CRITICAL: Authentication system error: {e}")
             # Fail-secure: deny access on any internal error
-            self._log_auth_attempt(api_key, client_ip, user_agent, endpoint, required_permission, False)
+            self._log_auth_attempt(
+                api_key, client_ip, user_agent, endpoint, required_permission, False
+            )
             return False, None, "Authentication service temporarily unavailable"
 
     def _get_client_ip(self) -> str:
@@ -344,7 +353,9 @@ class SecureAPIKeyAuth:
 
         # Clean old blocked attempts
         self.blocked_ips[ip_address] = [
-            timestamp for timestamp in self.blocked_ips[ip_address] if timestamp > cutoff_time
+            timestamp
+            for timestamp in self.blocked_ips[ip_address]
+            if timestamp > cutoff_time
         ]
 
         return len(self.blocked_ips[ip_address]) >= self.max_auth_attempts_per_ip
@@ -361,7 +372,11 @@ class SecureAPIKeyAuth:
         hour_cutoff = current_time - timedelta(hours=1)
         minute_cutoff = current_time - timedelta(minutes=1)
 
-        self.rate_limits[key_hash] = [timestamp for timestamp in self.rate_limits[key_hash] if timestamp > hour_cutoff]
+        self.rate_limits[key_hash] = [
+            timestamp
+            for timestamp in self.rate_limits[key_hash]
+            if timestamp > hour_cutoff
+        ]
 
         # Check hourly limit
         hourly_requests = len(self.rate_limits[key_hash])
@@ -369,7 +384,13 @@ class SecureAPIKeyAuth:
             return True
 
         # Check per-minute limit
-        minute_requests = len([timestamp for timestamp in self.rate_limits[key_hash] if timestamp > minute_cutoff])
+        minute_requests = len(
+            [
+                timestamp
+                for timestamp in self.rate_limits[key_hash]
+                if timestamp > minute_cutoff
+            ]
+        )
         if minute_requests >= key_info.rate_limit_per_minute:
             return True
 
@@ -415,9 +436,13 @@ class SecureAPIKeyAuth:
 
         # Log to standard logger
         if success:
-            logger.info(f"AUTH SUCCESS: {attempt.api_key_prefix} from {ip_address} to {endpoint}")
+            logger.info(
+                f"AUTH SUCCESS: {attempt.api_key_prefix} from {ip_address} to {endpoint}"
+            )
         else:
-            logger.warning(f"AUTH FAILURE: {attempt.api_key_prefix} from {ip_address} to {endpoint}")
+            logger.warning(
+                f"AUTH FAILURE: {attempt.api_key_prefix} from {ip_address} to {endpoint}"
+            )
 
         # Keep only recent attempts (last 1000)
         if len(self.auth_attempts) > 1000:
@@ -433,7 +458,11 @@ class SecureAPIKeyAuth:
         current_time = datetime.now(timezone.utc)
         recent_cutoff = current_time - timedelta(hours=24)
 
-        recent_attempts = [attempt for attempt in self.auth_attempts if attempt.timestamp > recent_cutoff]
+        recent_attempts = [
+            attempt
+            for attempt in self.auth_attempts
+            if attempt.timestamp > recent_cutoff
+        ]
 
         successful_attempts = [a for a in recent_attempts if a.success]
         failed_attempts = [a for a in recent_attempts if not a.success]
@@ -445,7 +474,11 @@ class SecureAPIKeyAuth:
             "successful_attempts_24h": len(successful_attempts),
             "failed_attempts_24h": len(failed_attempts),
             "blocked_ips": len(self.blocked_ips),
-            "success_rate": (len(successful_attempts) / len(recent_attempts) * 100 if recent_attempts else 0),
+            "success_rate": (
+                len(successful_attempts) / len(recent_attempts) * 100
+                if recent_attempts
+                else 0
+            ),
         }
 
 
@@ -473,7 +506,9 @@ def require_api_key(permission: str = "read"):
                 api_key = request.headers.get("X-API-Key")
 
                 if not api_key:
-                    logger.warning(f"Missing API key for {request.endpoint} from {request.remote_addr}")
+                    logger.warning(
+                        f"Missing API key for {request.endpoint} from {request.remote_addr}"
+                    )
                     return (
                         jsonify(
                             {
@@ -487,10 +522,14 @@ def require_api_key(permission: str = "read"):
                     )
 
                 # Validate API key with comprehensive security checks
-                is_valid, user_info, error_message = auth.validate_api_key(api_key, permission)
+                is_valid, user_info, error_message = auth.validate_api_key(
+                    api_key, permission
+                )
 
                 if not is_valid:
-                    logger.warning(f"Authentication failed for {request.endpoint}: {error_message}")
+                    logger.warning(
+                        f"Authentication failed for {request.endpoint}: {error_message}"
+                    )
 
                     # Determine appropriate error code
                     if "rate limit" in error_message.lower():
@@ -584,5 +623,7 @@ def get_security_stats() -> Dict:
 
 def get_recent_auth_attempts(limit: int = 100) -> List[Dict]:
     """Get recent authentication attempts for security monitoring"""
-    recent_attempts = sorted(auth.auth_attempts, key=lambda x: x.timestamp, reverse=True)[:limit]
+    recent_attempts = sorted(
+        auth.auth_attempts, key=lambda x: x.timestamp, reverse=True
+    )[:limit]
     return [asdict(attempt) for attempt in recent_attempts]

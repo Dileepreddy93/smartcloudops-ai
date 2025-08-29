@@ -19,8 +19,8 @@ import joblib
 import numpy as np
 import pandas as pd
 
-from app.utils.response import build_error_response, build_success_response
-from app.utils.validation import validate_ml_metrics
+from utils.response import build_error_response, build_success_response
+from utils.validation import validate_ml_metrics
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent.parent

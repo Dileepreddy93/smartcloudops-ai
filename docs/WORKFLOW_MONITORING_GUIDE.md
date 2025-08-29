@@ -1,303 +1,451 @@
-# 🔍 GitHub Workflow Monitoring & Auto-Fixing Guide
+# 🔍 SmartCloudOps AI - Workflow Monitoring & Auto-Fix System
 
 ## 📋 Overview
 
-This guide provides comprehensive tools and instructions for monitoring your GitHub workflows, detecting failures, and automatically fixing common issues.
+The SmartCloudOps AI Workflow Monitoring & Auto-Fix System is a comprehensive solution that continuously monitors GitHub Actions workflows, detects issues, and automatically fixes common problems to ensure all workflows pass successfully.
 
-## 🛠️ Available Tools
+## 🚀 Features
 
-### 1. **Quick Status Checker**
+### ✅ Core Capabilities
+- **Real-time Workflow Monitoring**: Continuously monitors GitHub Actions workflows
+- **Automatic Issue Detection**: Identifies common workflow failures and issues
+- **Intelligent Auto-Fixing**: Automatically resolves fixable issues
+- **Multi-Stage Resolution**: Progressive fix application with retry logic
+- **Comprehensive Reporting**: Detailed reports and analytics
+- **GitHub Integration**: Seamless integration with GitHub API
+
+### 🔧 Auto-Fix Capabilities
+- **Dependency Issues**: Missing Python/Node.js packages
+- **Workflow Configuration**: YAML syntax errors, missing fields
+- **Deprecated Actions**: Updates outdated GitHub Actions
+- **Security Issues**: Missing permissions, hardcoded secrets
+- **Performance Issues**: Missing caching, outdated versions
+- **Test Environment**: Environment variables, test configuration
+- **Code Quality**: Formatting, linting issues
+
+## 📁 System Components
+
+### 1. **Workflow Monitor** (`scripts/workflow_monitor.py`)
+- Monitors GitHub Actions workflows via API
+- Analyzes workflow logs for error patterns
+- Detects and classifies issues by severity
+- Generates comprehensive monitoring reports
+
+### 2. **Workflow Fixer** (`scripts/auto_workflow_fixer.py`)
+- Analyzes workflow YAML files for issues
+- Applies automatic fixes for common problems
+- Updates deprecated GitHub Actions
+- Validates workflow configurations
+
+### 3. **Complete Fix Cycle** (`scripts/fix_all_workflow_issues.py`)
+- Runs comprehensive monitoring and fixing
+- Implements retry logic with exponential backoff
+- Handles complex multi-step fixes
+- Ensures all workflows pass before completion
+
+### 4. **GitHub Actions Workflow** (`.github/workflows/workflow-monitor.yml`)
+- Automated monitoring every 6 hours
+- Triggers on workflow failures
+- Creates issues for persistent problems
+- Provides notifications and reporting
+
+### 5. **Runner Script** (`scripts/run_workflow_monitor.sh`)
+- Easy-to-use command-line interface
+- Multiple operation modes
+- Prerequisites checking
+- Status reporting
+
+## 🛠️ Installation & Setup
+
+### Prerequisites
 ```bash
-./scripts/quick_status.sh
+# Required software
+- Python 3.11+
+- Node.js 18+
+- Git
+- GitHub API token
+
+# Required Python packages
+pip install requests pyyaml python-dotenv
 ```
-- **Purpose**: Fast overview of recent workflow runs
-- **Output**: Shows last 3 workflows with status and timestamps
-- **Best for**: Quick status checks
 
-### 2. **Simple Workflow Monitor**
+### Environment Variables
 ```bash
-python scripts/simple_workflow_monitor.py
+# Required for full functionality
+export GITHUB_TOKEN="your-github-token"
+
+# Optional
+export LOG_LEVEL="INFO"  # DEBUG, INFO, WARNING, ERROR
+export GITHUB_REPOSITORY_OWNER="your-username"
+export GITHUB_REPOSITORY_NAME="smartcloudops-ai"
 ```
-- **Purpose**: Check local issues and auto-fix common problems
-- **Features**: 
-  - Detects formatting, linting, type checking, and test issues
-  - Automatically applies fixes
-  - Commits and pushes changes
-- **Best for**: Proactive issue prevention
 
-### 3. **Continuous Monitoring**
-```bash
-python scripts/simple_workflow_monitor.py monitor
-```
-- **Purpose**: Continuous monitoring with auto-refresh
-- **Features**: Runs every 5 minutes, auto-fixes issues
-- **Best for**: Long-term monitoring and maintenance
+### GitHub Token Setup
+1. Go to GitHub Settings → Developer settings → Personal access tokens
+2. Generate a new token with `repo` and `workflow` permissions
+3. Set the token as environment variable: `export GITHUB_TOKEN="your-token"`
 
-### 4. **Advanced Workflow Monitor**
+## 🚀 Usage
+
+### Quick Start
 ```bash
+# Run the complete monitoring and fixing system
+./scripts/run_workflow_monitor.sh
+
+# Or run individual components
+python scripts/workflow_monitor.py
 python scripts/auto_workflow_fixer.py
+python scripts/fix_all_workflow_issues.py
 ```
-- **Purpose**: Advanced monitoring with detailed analysis
-- **Features**: 
-  - Analyzes workflow logs
-  - Detailed failure pattern recognition
-  - Comprehensive reporting
-- **Best for**: Deep debugging and analysis
 
-## 📦 Required Dependencies
-
-### Python Dependencies
+### Command Line Options
 ```bash
-pip install -r scripts/requirements_monitor.txt
+# Different operation modes
+./scripts/run_workflow_monitor.sh monitor    # Monitoring only
+./scripts/run_workflow_monitor.sh fix        # Fixing only
+./scripts/run_workflow_monitor.sh complete   # Complete cycle
+./scripts/run_workflow_monitor.sh auto       # Automatic mode (default)
+./scripts/run_workflow_monitor.sh help       # Show help
 ```
 
-**Included packages:**
-- `requests>=2.31.0` - HTTP requests for GitHub API
-- `black>=23.0.0` - Code formatting
-- `ruff>=0.1.0` - Linting and auto-fixing
-- `mypy>=1.5.0` - Type checking
-- `bandit>=1.7.5` - Security scanning
-- `pytest>=7.4.0` - Testing
-- `types-requests>=2.31.0` - Type stubs
-- `types-PyYAML>=6.0.12` - Type stubs
+### GitHub Actions Integration
+The system automatically runs via GitHub Actions:
+- **Scheduled**: Every 6 hours
+- **On Failure**: When other workflows fail
+- **Manual**: Via workflow dispatch
 
-### System Dependencies
-```bash
-# Install jq for JSON processing
-sudo apt-get install jq  # Ubuntu/Debian
-sudo yum install jq      # CentOS/RHEL
-brew install jq          # macOS
+## 📊 Monitoring & Reports
 
-# Install curl (usually pre-installed)
-sudo apt-get install curl  # Ubuntu/Debian
-sudo yum install curl      # CentOS/RHEL
-```
-
-### Setup Script
-```bash
-chmod +x scripts/setup_monitor.sh
-./scripts/setup_monitor.sh
-```
-
-## 🔧 Auto-Fixing Capabilities
-
-### Issues Automatically Fixed
-
-1. **Code Formatting (Black)**
-   - Detects: `would reformat` errors
-   - Fix: Applies Black formatting to all Python files
-   - Files: `app/`, `scripts/`, `tests/`
-
-2. **Linting (Ruff)**
-   - Detects: Linting errors and warnings
-   - Fix: Applies auto-fixes with `--fix --unsafe-fixes`
-   - Coverage: All Python files
-
-3. **Type Checking (MyPy)**
-   - Detects: Type annotation errors
-   - Fix: Installs missing type stubs
-   - Dependencies: `types-requests`, `types-PyYAML`
-
-4. **Security (Bandit)**
-   - Detects: High-severity security issues
-   - Fix: Reports issues for manual review
-   - Configuration: `--severity-level high`
-
-5. **Test Failures (pytest)**
-   - Detects: Failed test cases
-   - Fix: Runs tests with verbose output for debugging
-   - Coverage: All test files
-
-## 📊 Monitoring Workflows
-
-### Workflow Status Types
-
-- **✅ SUCCESS**: All jobs completed successfully
-- **❌ FAILED**: One or more jobs failed
-- **🔄 RUNNING**: Workflow is currently executing
-- **⏳ QUEUED**: Workflow is waiting to start
-- **⏹️ CANCELLED**: Workflow was cancelled
-
-### Common Failure Patterns
-
-1. **Code Quality Issues**
-   ```
-   Black formatting issues detected
-   Ruff linting errors found
-   MyPy type checking errors
-   ```
-
-2. **Dependency Issues**
-   ```
-   ModuleNotFoundError: No module named 'openai'
-   ImportError: cannot import name 'X'
-   ```
-
-3. **Test Failures**
-   ```
-   pytest FAILED
-   AssertionError
-   ```
-
-4. **Security Issues**
-   ```
-   Bandit found X issues
-   High severity security warnings
-   ```
-
-## 🚀 Usage Examples
-
-### Basic Monitoring
-```bash
-# Quick status check
-./scripts/quick_status.sh
-
-# Single monitoring run
-python scripts/simple_workflow_monitor.py
-```
-
-### Continuous Monitoring
-```bash
-# Start continuous monitoring
-python scripts/simple_workflow_monitor.py monitor
-
-# Stop monitoring (Ctrl+C)
-```
-
-### Advanced Monitoring
-```bash
-# Detailed analysis
-python scripts/auto_workflow_fixer.py
-
-# Continuous advanced monitoring
-python scripts/auto_workflow_fixer.py monitor
-```
-
-## 📈 Monitoring Reports
-
-### Generated Files
-
-1. **`workflow_monitor.log`**
-   - Detailed logging of all monitoring activities
-   - Timestamps and error details
-
-2. **`workflow_monitor_report.json`**
-   - JSON report with statistics
-   - Fixes applied and issues found
-
-3. **Console Output**
-   - Real-time status updates
-   - Color-coded success/failure indicators
+### Generated Reports
+- `workflow_monitor_report_YYYYMMDD_HHMMSS.json` - Monitoring results
+- `workflow_fix_report_YYYYMMDD_HHMMSS.json` - Fix application results
+- `workflow_fix_complete_report_YYYYMMDD_HHMMSS.json` - Complete cycle results
 
 ### Report Structure
 ```json
 {
-  "timestamp": "2025-08-26T14:53:30.953",
-  "fixes_applied": ["black_formatting", "ruff_linting"],
-  "issues_found": ["Type checking errors detected"],
-  "summary": {
-    "total_fixes": 2,
-    "total_issues": 1,
-    "success_rate": 0.67
-  }
+  "timestamp": "2024-12-XX...",
+  "total_issues": 5,
+  "fixed_issues": 3,
+  "remaining_issues": 2,
+  "issues_by_severity": {
+    "critical": 1,
+    "high": 2,
+    "medium": 1,
+    "low": 1
+  },
+  "issues_by_type": {
+    "deprecated_action": 2,
+    "missing_cache": 1,
+    "yaml_syntax_error": 1
+  },
+  "recommendations": [
+    "Address critical issues manually",
+    "Review 2 remaining issues"
+  ]
 }
 ```
 
-## 🔍 Troubleshooting
+## 🔍 Issue Detection
+
+### Common Issue Types
+
+#### 1. **Dependency Issues**
+- Missing Python packages
+- Missing npm packages
+- Outdated dependencies
+- Version conflicts
+
+#### 2. **Workflow Configuration Issues**
+- YAML syntax errors
+- Missing required fields
+- Invalid workflow structure
+- Deprecated GitHub Actions
+
+#### 3. **Security Issues**
+- Hardcoded secrets
+- Missing permissions
+- Insecure configurations
+- Vulnerable dependencies
+
+#### 4. **Performance Issues**
+- Missing caching
+- Outdated runtime versions
+- Inefficient configurations
+- Resource limitations
+
+#### 5. **Test Environment Issues**
+- Missing environment variables
+- Incorrect test configuration
+- Database connection issues
+- Service dependencies
+
+## 🔧 Auto-Fix Capabilities
+
+### Automatic Fixes Applied
+
+#### 1. **Dependency Management**
+```bash
+# Python dependencies
+pip install missing-package
+
+# Node.js dependencies
+npm install missing-package
+
+# Update outdated packages
+pip install --upgrade package-name
+```
+
+#### 2. **Workflow File Updates**
+```yaml
+# Add missing workflow name
+name: "Workflow Name"
+
+# Add default triggers
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+# Add permissions
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+```
+
+#### 3. **GitHub Actions Updates**
+```yaml
+# Update deprecated actions
+- uses: actions/checkout@v4  # Was v1, v2, v3
+- uses: actions/setup-python@v5  # Was v1, v2, v3, v4
+- uses: actions/setup-node@v4  # Was v1, v2, v3
+```
+
+#### 4. **Caching Configuration**
+```yaml
+# Add pip caching
+- name: Cache pip dependencies
+  uses: actions/cache@v4
+  with:
+    path: ~/.cache/pip
+    key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+
+# Add npm caching
+- name: Cache npm dependencies
+  uses: actions/cache@v4
+  with:
+    path: ~/.npm
+    key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+```
+
+## 📈 Monitoring Dashboard
+
+### Status Indicators
+- 🟢 **Healthy**: All workflows passing
+- 🟡 **Warning**: Some issues detected, auto-fixing
+- 🔴 **Critical**: Manual intervention required
+- ⚫ **Unknown**: Unable to determine status
+
+### Metrics Tracked
+- Total workflow runs
+- Success/failure rates
+- Issue detection accuracy
+- Auto-fix success rate
+- Resolution time
+- Retry attempts
+
+## 🚨 Alerting & Notifications
+
+### Automatic Notifications
+- **GitHub Issues**: Created for persistent failures
+- **PR Comments**: Notifications on workflow resolution
+- **Email Alerts**: For critical issues (if configured)
+- **Slack/Teams**: Integration support (if configured)
+
+### Alert Levels
+- **Info**: Workflow monitoring completed
+- **Warning**: Issues detected, auto-fixing in progress
+- **Error**: Auto-fix failed, manual intervention needed
+- **Critical**: System-wide workflow failures
+
+## 🔄 Retry Logic
+
+### Exponential Backoff
+```python
+# Retry configuration
+max_retries = 10
+base_delay = 60  # seconds
+delay = base_delay * (2 ** retry_count)
+```
+
+### Retry Conditions
+- Workflow failures
+- Network issues
+- Temporary GitHub API errors
+- Dependency installation failures
+
+## 🛡️ Security Considerations
+
+### Token Security
+- Use minimal required permissions
+- Rotate tokens regularly
+- Store tokens securely
+- Monitor token usage
+
+### Code Security
+- Validate all inputs
+- Sanitize workflow files
+- Prevent code injection
+- Audit auto-fixes
+
+### Access Control
+- Limit auto-fix permissions
+- Review changes before commit
+- Monitor system access
+- Log all operations
+
+## 📝 Troubleshooting
 
 ### Common Issues
 
-1. **Git Push Rejected**
-   ```bash
-   # Solution: Pull latest changes first
-   git pull --rebase origin main
-   git push origin main
-   ```
-
-2. **Permission Denied**
-   ```bash
-   # Solution: Make scripts executable
-   chmod +x scripts/*.py scripts/*.sh
-   ```
-
-3. **Missing Dependencies**
-   ```bash
-   # Solution: Install monitoring dependencies
-   pip install -r scripts/requirements_monitor.txt
-   ```
-
-4. **API Rate Limits**
-   - GitHub API has rate limits for unauthenticated requests
-   - Consider using GitHub token for higher limits
-
-### Manual Fixes
-
-If auto-fixing fails, you can run fixes manually:
-
+#### 1. **GitHub Token Issues**
 ```bash
-# Format code
-black app/ scripts/ tests/
+# Check token permissions
+curl -H "Authorization: token $GITHUB_TOKEN" \
+     https://api.github.com/user
 
-# Fix linting
-ruff check app/ scripts/ tests/ --fix --unsafe-fixes
-
-# Install type stubs
-pip install types-requests types-PyYAML
-
-# Run tests
-python -m pytest tests/ -v
-
-# Security scan
-bandit -r app/ --severity-level high
+# Verify repository access
+curl -H "Authorization: token $GITHUB_TOKEN" \
+     https://api.github.com/repos/owner/repo
 ```
 
-## 🎯 Best Practices
+#### 2. **Python Dependencies**
+```bash
+# Install missing packages
+pip install -r app/requirements.txt
+pip install requests pyyaml python-dotenv
 
-### 1. **Regular Monitoring**
-- Run monitoring tools before pushing changes
-- Use continuous monitoring for active development
-- Check status after each workflow run
+# Check Python version
+python3 --version
+```
 
-### 2. **Proactive Fixing**
-- Fix issues locally before they reach CI/CD
-- Use pre-commit hooks for automatic checks
-- Maintain consistent code quality standards
+#### 3. **Workflow Validation**
+```bash
+# Validate workflow files
+python -c "import yaml; yaml.safe_load(open('.github/workflows/ci-cd.yml'))"
 
-### 3. **Documentation**
-- Keep monitoring reports for analysis
-- Document manual fixes for future reference
-- Update this guide with new patterns
+# Check GitHub Actions syntax
+# Use GitHub's workflow validator in the web interface
+```
 
-### 4. **Security**
-- Review security scan results manually
-- Don't auto-fix high-severity security issues
-- Keep dependencies updated
+#### 4. **Permission Issues**
+```bash
+# Check git permissions
+git status
+git remote -v
 
-## 📞 Support
+# Verify GitHub token permissions
+# Ensure token has 'repo' and 'workflow' scopes
+```
 
-### Getting Help
+### Debug Mode
+```bash
+# Enable debug logging
+export LOG_LEVEL="DEBUG"
+./scripts/run_workflow_monitor.sh
 
-1. **Check Logs**: Review `workflow_monitor.log` for detailed error information
-2. **Manual Testing**: Run individual tools to isolate issues
-3. **GitHub Issues**: Check workflow logs on GitHub for additional context
+# Check log files
+tail -f workflow_monitor.log
+tail -f workflow_fixer.log
+```
 
-### Contributing
+## 🔮 Future Enhancements
 
-To improve the monitoring system:
+### Planned Features
+- **Machine Learning**: Predictive issue detection
+- **Advanced Analytics**: Detailed performance metrics
+- **Custom Rules**: User-defined fix patterns
+- **Integration APIs**: Third-party service integration
+- **Web Dashboard**: Real-time monitoring interface
+- **Mobile Notifications**: Push notifications for critical issues
 
-1. Add new failure patterns to `analyze_failure()` method
-2. Implement new fix methods for specific issues
-3. Update this documentation with new features
-4. Test thoroughly before deploying
+### Extensibility
+- **Plugin System**: Custom fix modules
+- **Rule Engine**: Configurable detection rules
+- **API Endpoints**: REST API for external integration
+- **Webhooks**: Real-time event notifications
+
+## 📚 API Reference
+
+### WorkflowMonitor Class
+```python
+monitor = WorkflowMonitor(github_token, repo_owner, repo_name)
+status = monitor.get_workflow_status()
+issues = monitor.analyze_workflow_logs(logs)
+report = monitor.run_monitoring_cycle()
+```
+
+### WorkflowFixer Class
+```python
+fixer = WorkflowFixer()
+issues = fixer.analyze_workflows()
+fixes = fixer.apply_fixes(issues)
+report = fixer.generate_report(issues, fixes)
+```
+
+### CompleteWorkflowFixer Class
+```python
+fixer = CompleteWorkflowFixer(github_token, repo_owner, repo_name)
+success = fixer.monitor_and_fix_until_success()
+report = fixer.generate_final_report(success)
+```
+
+## 🤝 Contributing
+
+### Development Setup
+```bash
+# Clone repository
+git clone https://github.com/your-username/smartcloudops-ai.git
+cd smartcloudops-ai
+
+# Install development dependencies
+pip install -r app/requirements.txt
+pip install pytest black flake8 mypy
+
+# Run tests
+pytest tests/
+
+# Format code
+black scripts/
+isort scripts/
+```
+
+### Adding New Fix Types
+1. Add detection pattern in `analyze_workflow_logs()`
+2. Implement fix logic in `auto_fix_issues()`
+3. Add tests for new fix type
+4. Update documentation
+
+### Reporting Issues
+- Use GitHub Issues for bug reports
+- Include logs and error messages
+- Provide reproduction steps
+- Specify environment details
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- GitHub Actions team for the excellent CI/CD platform
+- Python community for the robust ecosystem
+- Open source contributors for inspiration and tools
 
 ---
 
-## 🎉 Quick Start Checklist
+**🎉 Happy Workflow Monitoring!**
 
-- [ ] Install dependencies: `pip install -r scripts/requirements_monitor.txt`
-- [ ] Make scripts executable: `chmod +x scripts/*.py scripts/*.sh`
-- [ ] Test quick status: `./scripts/quick_status.sh`
-- [ ] Run initial monitoring: `python scripts/simple_workflow_monitor.py`
-- [ ] Set up continuous monitoring: `python scripts/simple_workflow_monitor.py monitor`
-
-**You're now ready to monitor and auto-fix your GitHub workflows! 🚀**
+For support and questions, please open an issue on GitHub or contact the development team.

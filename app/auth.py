@@ -6,11 +6,11 @@ SmartCloudOps AI - Authentication System
 Secure authentication using JWT tokens and proper API key management.
 """
 
-import os
+
 import time
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Dict, Optional, Union
+from typing import Dict, Optional
 
 import jwt
 from flask import current_app, jsonify, request

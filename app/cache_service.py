@@ -7,13 +7,14 @@ Comprehensive caching service with Redis and memory fallback.
 Enhanced for production use with unified configuration.
 """
 
+
 import hashlib
 import json
 import logging
 import time
 from datetime import datetime, timezone
 from functools import wraps
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 try:
     import redis

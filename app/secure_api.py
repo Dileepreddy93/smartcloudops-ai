@@ -9,6 +9,7 @@ Enterprise-grade input validation, output sanitization, and DTO management.
 import html
 import logging
 import re
+import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from enum import Enum
@@ -237,7 +238,9 @@ class SecureValidator:
         return validated_metrics
 
     @classmethod
-    def _validate_numeric_value(cls, value: Any, field_name: str, min_val: float = None, max_val: float = None) -> float:
+    def _validate_numeric_value(
+        cls, value: Any, field_name: str, min_val: float = None, max_val: float = None
+    ) -> float:
         """Validate and convert numeric values."""
         try:
             # Convert to float
@@ -321,7 +324,9 @@ class ResponseBuilder:
         return response.to_dict()
 
     @staticmethod
-    def error_response(error_code: ErrorCode, message: str, details: str = None, request_id: str = None) -> Dict[str, Any]:
+    def error_response(
+        error_code: ErrorCode, message: str, details: str = None, request_id: str = None
+    ) -> Dict[str, Any]:
         """Build error API response."""
         response = APIResponse(
             success=False,
@@ -422,7 +427,9 @@ def build_success_response(data: Dict[str, Any], request_id: str = None) -> Dict
     return ResponseBuilder.success_response(data, request_id)
 
 
-def build_error_response(error_code: ErrorCode, message: str, details: str = None, request_id: str = None) -> Dict[str, Any]:
+def build_error_response(
+    error_code: ErrorCode, message: str, details: str = None, request_id: str = None
+) -> Dict[str, Any]:
     """Public interface for error responses."""
     return ResponseBuilder.error_response(error_code, message, details, request_id)
 

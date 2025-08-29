@@ -1,0 +1,22 @@
+{
+  "timestamp": "2025-08-28T14:37:22.248550",
+  "total_issues": 3,
+  "fixed_issues": 3,
+  "remaining_issues": 0,
+  "issues_by_severity": {
+    "critical": 0,
+    "high": 0,
+    "medium": 2,
+    "low": 1
+  },
+  "issues_by_type": {
+    "deprecated_action": 1,
+    "missing_cache": 1,
+    "missing_permissions": 1
+  },
+  "recommendations": [
+    "Monitor workflows for any new issues",
+    "Review applied fixes",
+    "Test workflows after fixes"
+  ]
+}

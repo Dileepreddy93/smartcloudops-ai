@@ -6,9 +6,10 @@ SmartCloudOps AI - Response Utilities
 Standardized response formatting for API endpoints.
 """
 
-import json
+
+import time
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
 from flask import jsonify
 
@@ -329,3 +330,17 @@ def success_response(
     success_data = build_success_response(data=data, message=message, status_code=status_code, metadata=metadata)
 
     return json_response(success_data, status_code)
+
+
+def make_response(data: Dict[str, Any], status_code: int = 200) -> tuple:
+    """
+    Create a Flask response with the given data and status code.
+    
+    Args:
+        data: Response data
+        status_code: HTTP status code
+        
+    Returns:
+        Flask response tuple (response, status_code)
+    """
+    return success_response(data=data, status_code=status_code)

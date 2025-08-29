@@ -1,7 +1,7 @@
 from app.services.remediation_service import (
     AutoRemediationEngine,
-    RemediationRule,
     RemediationAction,
+    RemediationRule,
 )
 
 

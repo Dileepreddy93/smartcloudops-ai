@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Simple Real Data Collector"""
 
+
 import os
 import time
 from datetime import datetime
@@ -31,7 +32,7 @@ def main():
     for i in range(3):
         metrics = collect_system_metrics()
         if metrics:
-            print(f"Sample {i+1}: CPU {metrics['cpu_percent']:.1f}%")
+            print(f"Sample {i + 1}: CPU {metrics['cpu_percent']:.1f}%")
         time.sleep(1)
 
     print("Data collection completed!")

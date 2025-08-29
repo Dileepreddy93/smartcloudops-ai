@@ -12,17 +12,23 @@ Production-ready Flask application with:
 - Health checks and metrics
 """
 
-import logging
+
 import os
-import sys
 import time
 from contextlib import contextmanager
 from datetime import datetime
 
 import structlog
+
 # Import security components
-from auth_secure import (get_current_user, get_request_id, require_admin,
-                         require_api_key, require_ml_access)
+from auth_secure import (
+    get_current_user,
+    get_request_id,
+    require_admin,
+    require_api_key,
+    require_ml_access,
+)
+
 # Import production components
 from database_improvements import get_db_service
 from flask import Flask, g, jsonify, request

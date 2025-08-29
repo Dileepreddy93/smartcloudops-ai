@@ -1,18 +1,11 @@
 #!/usr/bin/env python3
 """
-🎯 SmartCloudOps AI - Workflow Monitor Demo
-==========================================
+SmartCloudOps AI - Workflow Monitor Demo
+========================================
 
-This script demonstrates the workflow monitoring system capabilities
-without requiring actual GitHub API access. It shows:
-
-1. How the system analyzes failure patterns
-2. How fixes are applied
-3. How the monitoring loop works
-4. How reports are generated
-
-Usage:
-    python3 scripts/demo_workflow_monitor.py
+This script demonstrates the workflow monitoring and auto-fix system
+without requiring external dependencies. It shows the key features
+and capabilities of the system.
 """
 
 import os
@@ -22,233 +15,299 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-# Add the parent directory to the path
-sys.path.append(str(Path(__file__).parent.parent))
+def print_header(title):
+    """Print a formatted header."""
+    print("\n" + "=" * 60)
+    print(f"🚀 {title}")
+    print("=" * 60)
 
-def demo_failure_analysis():
-    """Demonstrate failure pattern analysis"""
-    print("🔍 Demo: Failure Pattern Analysis")
-    print("=" * 50)
+def print_section(title):
+    """Print a formatted section."""
+    print(f"\n📋 {title}")
+    print("-" * 40)
+
+def print_success(message):
+    """Print a success message."""
+    print(f"✅ {message}")
+
+def print_warning(message):
+    """Print a warning message."""
+    print(f"⚠️  {message}")
+
+def print_error(message):
+    """Print an error message."""
+    print(f"❌ {message}")
+
+def print_info(message):
+    """Print an info message."""
+    print(f"ℹ️  {message}")
+
+def check_workflow_files():
+    """Check for workflow files and analyze them."""
+    print_section("Checking Workflow Files")
     
-    # Import the WorkflowMonitor class
-    from auto_workflow_fixer import WorkflowMonitor
+    workflow_dir = Path(".github/workflows")
+    if not workflow_dir.exists():
+        print_error("No .github/workflows directory found")
+        return False
     
-    # Create a monitor instance (we won't use the API)
-    monitor = WorkflowMonitor("demo_owner", "demo_repo", "demo_token")
+    workflow_files = list(workflow_dir.glob("*.yml"))
+    if not workflow_files:
+        print_error("No workflow files found")
+        return False
     
-    # Sample failure logs
-    failure_logs = [
+    print_success(f"Found {len(workflow_files)} workflow files:")
+    for workflow_file in workflow_files:
+        print(f"  📄 {workflow_file}")
+    
+    return True
+
+def analyze_workflow_issues():
+    """Simulate workflow issue analysis."""
+    print_section("Analyzing Workflow Issues")
+    
+    # Simulate common issues found
+    issues = [
         {
-            "name": "Dependency Failure",
-            "logs": "ModuleNotFoundError: No module named 'requests'\npip install requests"
+            "type": "deprecated_action",
+            "severity": "medium",
+            "message": "Using deprecated action: actions/checkout@v1",
+            "fixable": True,
+            "fix": "Update to actions/checkout@v4"
         },
         {
-            "name": "Test Failure", 
-            "logs": "FAILED test_example.py::test_function\nAssertionError: expected 2, got 1"
+            "type": "missing_cache",
+            "severity": "low",
+            "message": "Missing pip cache configuration",
+            "fixable": True,
+            "fix": "Add pip cache step"
         },
         {
-            "name": "Linting Failure",
-            "logs": "flake8 found 5 errors\nblack would reformat 3 files"
-        },
-        {
-            "name": "Security Failure",
-            "logs": "bandit found 2 security issues\nsafety check failed"
-        },
-        {
-            "name": "Build Failure",
-            "logs": "docker build failed\nBuild error in Dockerfile"
+            "type": "missing_permissions",
+            "severity": "medium",
+            "message": "Missing explicit permissions configuration",
+            "fixable": True,
+            "fix": "Add permissions section"
         }
     ]
     
-    for failure in failure_logs:
-        print(f"\n📋 Analyzing: {failure['name']}")
-        issues = monitor.analyze_failure(failure['logs'])
-        print(f"   Issues detected: {len(issues)}")
-        for issue in issues:
-            print(f"   • {issue}")
+    print_info(f"Found {len(issues)} potential issues:")
+    for i, issue in enumerate(issues, 1):
+        print(f"  {i}. {issue['severity'].upper()}: {issue['type']}")
+        print(f"     {issue['message']}")
+        print(f"     Fix: {issue['fix']}")
     
-    print("\n✅ Failure analysis demo completed!")
+    return issues
 
-def demo_fix_application():
-    """Demonstrate fix application"""
-    print("\n🔧 Demo: Fix Application")
-    print("=" * 50)
+def simulate_auto_fix(issues):
+    """Simulate automatic fixing of issues."""
+    print_section("Applying Auto-Fixes")
     
-    from auto_workflow_fixer import WorkflowMonitor
+    fixed_issues = []
+    for issue in issues:
+        if issue["fixable"]:
+            print(f"🔧 Fixing {issue['type']}...")
+            time.sleep(0.5)  # Simulate work
+            print_success(f"Fixed: {issue['fix']}")
+            fixed_issues.append(issue)
+        else:
+            print_warning(f"Skipping non-fixable issue: {issue['type']}")
     
-    monitor = WorkflowMonitor("demo_owner", "demo_repo", "demo_token")
-    
-    # Create a test file to demonstrate fixes
-    test_file = "demo_test.py"
-    with open(test_file, "w") as f:
-        f.write("import os\nprint('hello world')\n")
-    
-    print("📝 Created test file for demonstration")
-    
-    # Demonstrate different fix types
-    fix_types = [
-        ("Dependency Issues", monitor.fix_dependency_issues),
-        ("Test Issues", monitor.fix_test_issues),
-        ("Linting Issues", monitor.fix_linting_issues),
-        ("Security Issues", monitor.fix_security_issues)
-    ]
-    
-    for fix_name, fix_function in fix_types:
-        print(f"\n🔧 Applying {fix_name}...")
-        try:
-            result = fix_function()
-            print(f"   ✅ {fix_name}: {'Success' if result else 'Failed'}")
-        except Exception as e:
-            print(f"   ❌ {fix_name}: Error - {e}")
-    
-    # Clean up
-    if os.path.exists(test_file):
-        os.remove(test_file)
-    
-    print(f"\n📊 Fixes applied: {monitor.fixes_applied}")
-    print("✅ Fix application demo completed!")
+    return fixed_issues
 
-def demo_monitoring_loop():
-    """Demonstrate the monitoring loop"""
-    print("\n🔄 Demo: Monitoring Loop")
-    print("=" * 50)
+def check_dependencies():
+    """Check project dependencies."""
+    print_section("Checking Dependencies")
     
-    from auto_workflow_fixer import WorkflowMonitor
+    # Check Python requirements
+    if Path("app/requirements.txt").exists():
+        print_success("Found Python requirements.txt")
+        with open("app/requirements.txt", "r") as f:
+            requirements = f.read().strip().split("\n")
+        print(f"  📦 {len(requirements)} Python packages")
+    else:
+        print_warning("No Python requirements.txt found")
     
-    monitor = WorkflowMonitor("demo_owner", "demo_repo", "demo_token")
+    # Check Node.js dependencies
+    if Path("frontend/package.json").exists():
+        print_success("Found Node.js package.json")
+        print("  📦 Frontend dependencies available")
+    else:
+        print_warning("No frontend package.json found")
     
-    # Simulate monitoring statistics
-    stats = {
-        "checks": 0,
-        "fixes_applied": 0,
-        "workflows_fixed": 0,
-        "start_time": datetime.now()
+    return True
+
+def check_test_environment():
+    """Check test environment setup."""
+    print_section("Checking Test Environment")
+    
+    # Check for test directories
+    test_dirs = ["tests", "tests/phase_1", "tests/phase_2", "tests/phase_3"]
+    for test_dir in test_dirs:
+        if Path(test_dir).exists():
+            print_success(f"Found {test_dir}")
+        else:
+            print_warning(f"Missing {test_dir}")
+    
+    # Check for test environment file
+    if Path(".env.test").exists():
+        print_success("Found test environment file (.env.test)")
+    else:
+        print_warning("No test environment file found")
+    
+    return True
+
+def generate_report(issues, fixed_issues):
+    """Generate a monitoring report."""
+    print_section("Generating Report")
+    
+    report = {
+        "timestamp": datetime.now().isoformat(),
+        "total_issues": len(issues),
+        "fixed_issues": len(fixed_issues),
+        "remaining_issues": len(issues) - len(fixed_issues),
+        "issues_by_severity": {
+            "critical": 0,
+            "high": 0,
+            "medium": len([i for i in issues if i["severity"] == "medium"]),
+            "low": len([i for i in issues if i["severity"] == "low"])
+        },
+        "issues_by_type": {
+            "deprecated_action": len([i for i in issues if i["type"] == "deprecated_action"]),
+            "missing_cache": len([i for i in issues if i["type"] == "missing_cache"]),
+            "missing_permissions": len([i for i in issues if i["type"] == "missing_permissions"])
+        },
+        "recommendations": [
+            "Monitor workflows for any new issues",
+            "Review applied fixes",
+            "Test workflows after fixes"
+        ]
     }
     
-    print("🚀 Starting simulated monitoring loop...")
-    print("   (This simulates 5 monitoring cycles)")
+    # Save report
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    report_file = f"workflow_monitor_demo_report_{timestamp}.json"
     
-    for cycle in range(1, 6):
-        stats["checks"] += 1
-        print(f"\n🔄 Cycle {cycle}/5")
-        print(f"   📊 Checks performed: {stats['checks']}")
-        
-        # Simulate different scenarios
-        if cycle == 2:
-            print("   ❌ Detected failed workflow")
-            print("   🔧 Applying dependency fix...")
-            stats["fixes_applied"] += 1
-            stats["workflows_fixed"] += 1
-            print("   ✅ Fix applied successfully")
-        elif cycle == 4:
-            print("   ❌ Detected linting issues")
-            print("   🔧 Applying linting fix...")
-            stats["fixes_applied"] += 1
-            stats["workflows_fixed"] += 1
-            print("   ✅ Fix applied successfully")
-        else:
-            print("   ✅ All workflows passing")
-        
-        # Simulate wait time
-        time.sleep(1)
-    
-    runtime = datetime.now() - stats["start_time"]
-    print(f"\n📊 Final Statistics:")
-    print(f"   Runtime: {runtime}")
-    print(f"   Checks performed: {stats['checks']}")
-    print(f"   Fixes applied: {stats['fixes_applied']}")
-    print(f"   Workflows fixed: {stats['workflows_fixed']}")
-    
-    print("✅ Monitoring loop demo completed!")
-
-def demo_report_generation():
-    """Demonstrate report generation"""
-    print("\n📊 Demo: Report Generation")
-    print("=" * 50)
-    
-    from auto_workflow_fixer import WorkflowMonitor
-    
-    monitor = WorkflowMonitor("demo_owner", "demo_repo", "demo_token")
-    
-    # Simulate some fixes being applied
-    monitor.fixes_applied = ["dependency_issues", "test_issues", "linting_issues"]
-    
-    # Generate report
-    report = monitor.generate_report()
-    
-    print("📋 Generated monitoring report:")
-    print(json.dumps(report, indent=2))
-    
-    # Save report to file
-    report_file = "demo_workflow_report.json"
     with open(report_file, "w") as f:
         json.dump(report, f, indent=2)
     
-    print(f"\n💾 Report saved to: {report_file}")
-    print("✅ Report generation demo completed!")
+    print_success(f"Report saved to {report_file}")
+    
+    # Print summary
+    print("\n📊 REPORT SUMMARY:")
+    print(f"  Total Issues: {report['total_issues']}")
+    print(f"  Fixed Issues: {report['fixed_issues']}")
+    print(f"  Remaining Issues: {report['remaining_issues']}")
+    
+    print("\n📈 Issues by Severity:")
+    for severity, count in report["issues_by_severity"].items():
+        if count > 0:
+            print(f"  {severity.upper()}: {count}")
+    
+    print("\n💡 Recommendations:")
+    for rec in report["recommendations"]:
+        print(f"  • {rec}")
+    
+    return report
 
-def demo_continuous_monitor():
-    """Demonstrate continuous monitoring setup"""
-    print("\n🔄 Demo: Continuous Monitor Setup")
-    print("=" * 50)
+def show_system_capabilities():
+    """Show the system's capabilities."""
+    print_section("System Capabilities")
     
-    try:
-        from monitor_workflows import ContinuousWorkflowMonitor
-        
-        # Create continuous monitor
-        monitor = ContinuousWorkflowMonitor(interval=5)  # 5 seconds for demo
-        
-        print("✅ ContinuousWorkflowMonitor initialized")
-        print(f"   Monitoring interval: {monitor.interval} seconds")
-        print(f"   Running status: {monitor.running}")
-        print(f"   Statistics tracking: {len(monitor.stats)} metrics")
-        
-        print("\n📊 Available statistics:")
-        for key, value in monitor.stats.items():
-            print(f"   • {key}: {value}")
-        
-        print("\n💡 To run continuous monitoring:")
-        print("   python3 scripts/monitor_workflows.py --continuous")
-        print("   python3 scripts/monitor_workflows.py --continuous --interval 30")
-        
-    except ImportError as e:
-        print(f"❌ Could not import ContinuousWorkflowMonitor: {e}")
-    
-    print("✅ Continuous monitor demo completed!")
-
-def main():
-    """Main demonstration function"""
-    print("🎯 SmartCloudOps AI - Workflow Monitor Demo")
-    print("=" * 60)
-    print("This demo shows the capabilities of the workflow monitoring system")
-    print("without requiring actual GitHub API access.")
-    print("")
-    
-    # Run all demos
-    demos = [
-        ("Failure Analysis", demo_failure_analysis),
-        ("Fix Application", demo_fix_application),
-        ("Monitoring Loop", demo_monitoring_loop),
-        ("Report Generation", demo_report_generation),
-        ("Continuous Monitor", demo_continuous_monitor)
+    capabilities = [
+        "🔍 Real-time workflow monitoring",
+        "🔧 Automatic issue detection and classification",
+        "🛠️ Intelligent auto-fixing of common problems",
+        "📊 Comprehensive reporting and analytics",
+        "🔄 Retry logic with exponential backoff",
+        "🔒 Security issue detection and fixing",
+        "⚡ Performance optimization suggestions",
+        "📝 Automatic commit and push of fixes",
+        "🚨 Alerting and notifications",
+        "🧪 Test environment setup and validation"
     ]
     
-    for demo_name, demo_function in demos:
-        try:
-            demo_function()
-        except Exception as e:
-            print(f"❌ Demo '{demo_name}' failed: {e}")
+    for capability in capabilities:
+        print(f"  {capability}")
     
-    print("\n" + "=" * 60)
-    print("🎉 All demos completed!")
-    print("")
-    print("📚 Next Steps:")
-    print("   1. Set up your GitHub token: export GITHUB_TOKEN=your_token")
-    print("   2. Run single check: python3 scripts/monitor_workflows.py")
-    print("   3. Run continuous monitoring: python3 scripts/monitor_workflows.py --continuous")
-    print("   4. View the full guide: WORKFLOW_MONITORING_GUIDE.md")
-    print("")
-    print("🚀 Your workflow monitoring system is ready to use!")
+    print("\n🎯 Auto-Fix Capabilities:")
+    fix_capabilities = [
+        "Dependency management (Python/Node.js)",
+        "Workflow configuration validation",
+        "Deprecated GitHub Actions updates",
+        "Security permissions configuration",
+        "Caching optimization",
+        "Code quality improvements",
+        "Test environment setup",
+        "Environment variable management"
+    ]
+    
+    for capability in fix_capabilities:
+        print(f"  • {capability}")
+
+def show_usage_examples():
+    """Show usage examples."""
+    print_section("Usage Examples")
+    
+    examples = [
+        ("Basic monitoring", "./scripts/run_workflow_monitor.sh"),
+        ("Monitor only", "./scripts/run_workflow_monitor.sh monitor"),
+        ("Fix only", "./scripts/run_workflow_monitor.sh fix"),
+        ("Complete cycle", "./scripts/run_workflow_monitor.sh complete"),
+        ("Automatic mode", "./scripts/run_workflow_monitor.sh auto"),
+        ("Direct Python", "python scripts/workflow_monitor.py"),
+        ("Workflow fixer", "python scripts/auto_workflow_fixer.py"),
+        ("Complete fixer", "python scripts/fix_all_workflow_issues.py")
+    ]
+    
+    for description, command in examples:
+        print(f"  {description}:")
+        print(f"    {command}")
+        print()
+
+def main():
+    """Main demonstration function."""
+    print_header("SmartCloudOps AI - Workflow Monitor Demo")
+    
+    print_info("This demo shows the capabilities of the workflow monitoring system")
+    print_info("without requiring external dependencies or GitHub API access.")
+    
+    # Show system capabilities
+    show_system_capabilities()
+    
+    # Check workflow files
+    if not check_workflow_files():
+        print_error("Cannot proceed without workflow files")
+        return 1
+    
+    # Check dependencies
+    check_dependencies()
+    
+    # Check test environment
+    check_test_environment()
+    
+    # Analyze issues
+    issues = analyze_workflow_issues()
+    
+    if not issues:
+        print_success("No issues found! Workflows are healthy.")
+        return 0
+    
+    # Apply fixes
+    fixed_issues = simulate_auto_fix(issues)
+    
+    # Generate report
+    report = generate_report(issues, fixed_issues)
+    
+    # Show usage examples
+    show_usage_examples()
+    
+    print_header("Demo Complete")
+    print_success("Workflow monitoring system demonstration completed!")
+    print_info("To use the full system, install dependencies and set up GitHub token.")
+    print_info("See WORKFLOW_MONITORING_GUIDE.md for detailed instructions.")
+    
+    return 0
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

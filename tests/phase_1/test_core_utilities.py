@@ -3,11 +3,14 @@ Phase 1: Core Utilities Tests
 Tests for response and validation utility modules.
 """
 
-import pytest
+import time
 from datetime import datetime
+
+import pytest
 from flask import Flask
-from app.utils.response import success_response, error_response, build_success_response
-from app.utils.validation import validate_user_input, sanitize_string
+
+from app.utils.response import build_success_response, error_response, success_response
+from app.utils.validation import sanitize_string, validate_user_input
 
 
 @pytest.fixture
@@ -152,7 +155,7 @@ class TestValidationUtilities:
             result = sanitize_string(test_input)
             assert isinstance(result, str)
             assert result == str(test_input).strip()
-        
+
         # Test None separately
         result = sanitize_string(None)
         assert isinstance(result, str)

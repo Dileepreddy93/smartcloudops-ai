@@ -7,9 +7,11 @@ Enterprise-grade authentication with fail-secure patterns, comprehensive
 rate limiting, session management, and audit logging.
 """
 
+
 import hashlib
 import logging
 import threading
+import time
 import uuid
 from collections import defaultdict
 from dataclasses import asdict, dataclass
@@ -341,7 +343,9 @@ class SecureAPIKeyAuth:
         cutoff_time = current_time - timedelta(minutes=self.auth_attempt_window_minutes)
 
         # Clean old blocked attempts
-        self.blocked_ips[ip_address] = [timestamp for timestamp in self.blocked_ips[ip_address] if timestamp > cutoff_time]
+        self.blocked_ips[ip_address] = [
+            timestamp for timestamp in self.blocked_ips[ip_address] if timestamp > cutoff_time
+        ]
 
         return len(self.blocked_ips[ip_address]) >= self.max_auth_attempts_per_ip
 

@@ -6,12 +6,14 @@ SmartCloudOps AI - Phase 5 Optimized Test Runner
 Optimized test runner for Phase 5 ChatOps functionality with resource monitoring.
 """
 
+
 import os
+import subprocess
 import sys
 import time
-import psutil
-import subprocess
 from pathlib import Path
+
+import psutil
 
 # Add project root to Python path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]

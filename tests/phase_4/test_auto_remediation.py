@@ -6,17 +6,20 @@ SmartCloudOps AI - Phase 4 Auto-Remediation Tests
 Comprehensive test suite for Phase 4 auto-remediation functionality.
 """
 
-import pytest
+
 import json
+import time
 from datetime import datetime, timedelta
 from unittest.mock import patch
 
+import pytest
+
+from app.services.integration_service import MLRemediationIntegration
 from app.services.remediation_service import (
     AutoRemediationEngine,
-    RemediationRule,
     RemediationAction,
+    RemediationRule,
 )
-from app.services.integration_service import MLRemediationIntegration
 
 
 class TestRemediationEngine:
@@ -91,9 +94,7 @@ class TestRemediationEngine:
         assert engine.check_cooldown(rule)
 
         # Wait for cooldown to expire
-        rule.last_triggered = datetime.utcnow() - timedelta(
-            minutes=rule.cooldown_minutes + 1
-        )
+        rule.last_triggered = datetime.utcnow() - timedelta(minutes=rule.cooldown_minutes + 1)
 
         # Should not be in cooldown
         assert not engine.check_cooldown(rule)

@@ -6,13 +6,14 @@ SmartCloudOps AI - Rate Limiting
 Comprehensive rate limiting system for API protection.
 """
 
+
 import logging
 import time
 from collections import defaultdict, deque
-from datetime import datetime, timezone
 from functools import wraps
 from typing import Any, Dict, Optional, Tuple
 
+import requests
 from flask import g, jsonify, request
 
 from app.utils.response import error_response

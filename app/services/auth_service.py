@@ -6,11 +6,12 @@ SmartCloudOps AI - Authentication Service
 Dedicated service for handling authentication and authorization.
 """
 
+
 import os
 import secrets
 import time
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional
 
 import jwt
 from werkzeug.security import check_password_hash, generate_password_hash

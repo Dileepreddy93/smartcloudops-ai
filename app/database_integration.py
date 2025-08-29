@@ -7,8 +7,10 @@ Provides database access layer for Flask application using SQLAlchemy.
 Integrates PostgreSQL/MySQL database with application logic.
 """
 
+
 import logging
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -274,7 +276,7 @@ class DatabaseService:
         try:
             with self.get_session() as session:
                 result = session.execute(text("""
-                    SELECT 
+                    SELECT
                         COUNT(*) as total_metrics,
                         AVG(cpu_usage) as avg_cpu,
                         MAX(cpu_usage) as max_cpu,

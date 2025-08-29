@@ -12,17 +12,15 @@ Features:
 - Production inference optimization
 """
 
+
 import json
 import logging
-import os
-import pickle
 import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-import boto3
 import joblib
 import numpy as np
 import pandas as pd
@@ -269,7 +267,9 @@ class ProductionMLPipeline:
                 self.current_scaler,
                 self.current_metadata,
             ) = self.registry.get_production_model("anomaly_detection")
-            logger.info(f"✅ Production model loaded: {self.current_metadata.model_id} v{self.current_metadata.version}")
+            logger.info(
+                f"✅ Production model loaded: {self.current_metadata.model_id} v{self.current_metadata.version}"
+            )
         except Exception as e:
             logger.error(f"❌ Failed to load production model: {e}")
 

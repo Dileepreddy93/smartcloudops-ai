@@ -6,6 +6,7 @@ SmartCloudOps AI - Secrets Manager
 Secure secrets management using environment variables and AWS Secrets Manager.
 """
 
+
 import json
 import logging
 import os

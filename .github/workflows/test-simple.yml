@@ -6,6 +6,7 @@ on:
   pull_request:
     branches:
     - main
+
 jobs:
   test-simple:
     name: Simple Test
@@ -17,28 +18,31 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
+        cache: 'pip'
     - name: Cache pip dependencies
       uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: '| ${{ runner.os }}-pip-'
+        restore-keys: '${{ runner.os }}-pip-'
     - name: Install dependencies
-      run: 'python3 -m pip install --upgrade pip
-
+      run: |
+        python3 -m pip install --upgrade pip
         pip3 install -r app/requirements.txt
-
-        '
     - name: Test basic functionality
-      run: "echo \"Testing basic functionality...\"\npython3 -c \"print('✅ Python is working')\"\n"
+      run: |
+        echo "Testing basic functionality..."
+        python3 -c "print('✅ Python is working')"
     - name: Test Flask import
-      run: "echo \"Testing Flask import...\"\ncd app\npython3 -c \"from main import create_app; print('✅ Flask import successful')\"\n"
+      run: |
+        echo "Testing Flask import..."
+        cd app
+        python3 -c "from main import create_app; print('✅ Flask import successful')"
     - name: Run basic pytest
-      run: 'echo "Running basic pytest..."
-
+      run: |
+        echo "Running basic pytest..."
         python3 -m pytest tests/phase_1/ -v --tb=short
 
-        '
 permissions:
   contents: read
   pull-requests: write

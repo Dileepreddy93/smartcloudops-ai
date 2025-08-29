@@ -8,6 +8,7 @@ on:
     branches:
     - main
     - develop
+
 jobs:
   test:
     name: Test Application
@@ -19,30 +20,44 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-        cache: pip
+        cache: 'pip'
     - name: Install dependencies
-      run: 'python3 -m pip install --upgrade pip
-
+      run: |
+        python3 -m pip install --upgrade pip
         pip3 install -r app/requirements.txt
-
-        '
     - name: Run basic tests
-      run: "echo \"🧪 Running basic tests...\"\ncd app\npython3 -c \"from main import create_app; print('✅ App import successful')\"\ncd ../scripts\npython3 simple_real_data_collector.py\npython3 simple_real_ml_trainer.py\necho \"✅ Basic tests completed\"\n"
+      run: |
+        echo "🧪 Running basic tests..."
+        cd app
+        python3 -c "from main import create_app; print('✅ App import successful')"
+        cd ../scripts
+        python3 simple_real_data_collector.py
+        python3 simple_real_ml_trainer.py
+        echo "✅ Basic tests completed"
     - name: Run code quality checks
-      run: "echo \"🔍 Running code quality checks...\"\npip3 install black ruff\nblack --check app/ scripts/ || echo \"⚠️ Black check failed but continuing...\"\nruff check app/ scripts/ || echo \"⚠️ Ruff check failed but continuing...\"\necho \"✅ Code quality checks completed\"\n"
+      run: |
+        echo "🔍 Running code quality checks..."
+        pip3 install black ruff
+        black --check app/ scripts/ || echo "⚠️ Black check failed but continuing..."
+        ruff check app/ scripts/ || echo "⚠️ Ruff check failed but continuing..."
+        echo "✅ Code quality checks completed"
     - name: Run security scan
-      run: "echo \"🔒 Running security scan...\"\npip3 install bandit safety\nbandit -r app/ -f json -o bandit-report.json || echo \"⚠️ Bandit scan failed but continuing...\"\nsafety check --json > safety-report.json || echo \"⚠️ Safety check failed but continuing...\"\necho \"✅ Security scan completed\"\n"
+      run: |
+        echo "🔒 Running security scan..."
+        pip3 install bandit safety
+        bandit -r app/ -f json -o bandit-report.json || echo "⚠️ Bandit scan failed but continuing..."
+        safety check --json > safety-report.json || echo "⚠️ Safety check failed but continuing..."
+        echo "✅ Security scan completed"
     - name: Upload artifacts
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: test-results
-        path: 'bandit-report.json
-
+        path: |
+          bandit-report.json
           safety-report.json
-
-          '
         retention-days: 7
+
   notify:
     name: Notify Results
     runs-on: ubuntu-latest
@@ -51,13 +66,17 @@ jobs:
     steps:
     - name: Notify on success
       if: needs.test.result == 'success'
-      run: "echo \"\U0001F389 CI/CD Pipeline completed successfully!\"\necho \"\u2705\
-        \ All tests passed\"\necho \"\u2705 Code quality checks passed\"\necho \"\u2705\
-        \ Security scan completed\"\n"
+      run: |
+        echo "🎉 CI/CD Pipeline completed successfully!"
+        echo "✅ All tests passed"
+        echo "✅ Code quality checks passed"
+        echo "✅ Security scan completed"
     - name: Notify on failure
       if: needs.test.result == 'failure'
-      run: "echo \"\u274C CI/CD Pipeline failed\"\necho \"\U0001F4A1 Check the test\
-        \ job logs for details\"\n"
+      run: |
+        echo "❌ CI/CD Pipeline failed"
+        echo "💡 Check the test job logs for details"
+
 permissions:
   contents: read
   pull-requests: write

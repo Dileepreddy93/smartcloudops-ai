@@ -21,28 +21,17 @@ jobs:
         python-version: '3.11'
         cache: pip
     - name: Install dependencies
-      run: 'python -m pip install --upgrade pip
+      run: 'python3 -m pip install --upgrade pip
 
-        pip install -r app/requirements.txt
+        pip3 install -r app/requirements.txt
 
         '
     - name: Run basic tests
-      run: "echo \"\U0001F9EA Running basic tests...\"\ncd app\npython -c \"from main\
-        \ import create_app; print('\u2705 App import successful')\"\ncd ../scripts\n\
-        python simple_real_data_collector.py\npython simple_real_ml_trainer.py\necho\
-        \ \"\u2705 Basic tests completed\"\n"
+      run: "echo \"🧪 Running basic tests...\"\ncd app\npython3 -c \"from main import create_app; print('✅ App import successful')\"\ncd ../scripts\npython3 simple_real_data_collector.py\npython3 simple_real_ml_trainer.py\necho \"✅ Basic tests completed\"\n"
     - name: Run code quality checks
-      run: "echo \"\U0001F50D Running code quality checks...\"\npip install black\
-        \ ruff\nblack --check app/ scripts/ || echo \"\u26A0\uFE0F Black check failed\
-        \ but continuing...\"\nruff check app/ scripts/ || echo \"\u26A0\uFE0F Ruff\
-        \ check failed but continuing...\"\necho \"\u2705 Code quality checks completed\"\
-        \n"
+      run: "echo \"🔍 Running code quality checks...\"\npip3 install black ruff\nblack --check app/ scripts/ || echo \"⚠️ Black check failed but continuing...\"\nruff check app/ scripts/ || echo \"⚠️ Ruff check failed but continuing...\"\necho \"✅ Code quality checks completed\"\n"
     - name: Run security scan
-      run: "echo \"\U0001F512 Running security scan...\"\npip install bandit safety\n\
-        bandit -r app/ -f json -o bandit-report.json || echo \"\u26A0\uFE0F Bandit\
-        \ scan failed but continuing...\"\nsafety check --json > safety-report.json\
-        \ || echo \"\u26A0\uFE0F Safety check failed but continuing...\"\necho \"\u2705\
-        \ Security scan completed\"\n"
+      run: "echo \"🔒 Running security scan...\"\npip3 install bandit safety\nbandit -r app/ -f json -o bandit-report.json || echo \"⚠️ Bandit scan failed but continuing...\"\nsafety check --json > safety-report.json || echo \"⚠️ Safety check failed but continuing...\"\necho \"✅ Security scan completed\"\n"
     - name: Upload artifacts
       if: always()
       uses: actions/upload-artifact@v4

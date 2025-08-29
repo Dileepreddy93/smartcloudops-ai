@@ -31,7 +31,7 @@ jobs:
         key: ${{ runner.os }}-pip-3.11-${{ hashFiles('app/requirements.txt') }}
         restore-keys: '${{ runner.os }}-pip-3.11-'
     - name: Install dependencies
-      run: "python -m pip install --upgrade pip\npip install -r app/requirements.txt\npip install black ruff safety bandit mypy\npip install types-boto3 types-psutil types-seaborn pandas-stubs\necho \"🔍 Installed packages:\"\npip list | grep -E \"(mypy|types-|pandas-stubs)\"\necho \"🔍 MyPy version:\"\nmypy --version\n"
+      run: "python3 -m pip install --upgrade pip\npip3 install -r app/requirements.txt\npip3 install black ruff safety bandit mypy\npip3 install types-boto3 types-psutil types-seaborn pandas-stubs\necho \"🔍 Installed packages:\"\npip3 list | grep -E \"(mypy|types-|pandas-stubs)\"\necho \"🔍 MyPy version:\"\nmypy --version\n"
     - name: Run Black formatting check
       run: "echo \"🎨 Checking code formatting with Black...\"\nblack --check --diff app/ scripts/ tests/\necho \"✅ Black formatting check passed\"\n"
     - name: Run Ruff linting

@@ -33,7 +33,7 @@ class SecureMLInferenceEngine:
     def __init__(self, model_path: Optional[str] = None):
         """Initialize the ML inference engine."""
         self.logger = logging.getLogger(__name__)
-        self.model_path = model_path or os.getenv("ML_MODEL_PATH", "/app/ml_models")
+        self.model_path = model_path or os.getenv("ML_MODEL_PATH", "./ml_models")
         self.model = None
         self.model_metadata = {}
         self.feature_names = []

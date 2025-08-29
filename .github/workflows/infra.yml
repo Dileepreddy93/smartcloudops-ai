@@ -1,5 +1,5 @@
 name: Infrastructure Validation
-on:
+true:
   pull_request:
     paths:
     - terraform/**
@@ -11,15 +11,12 @@ on:
     paths:
     - terraform/**
     - .github/workflows/infra.yml
-
 permissions:
   contents: read
   pull-requests: write
   issues: write
-
 env:
   TF_VERSION: 1.6.6
-
 jobs:
   terraform-validation:
     name: Terraform Validation & Security
@@ -33,83 +30,54 @@ jobs:
         terraform_version: ${{ env.TF_VERSION }}
     - name: Terraform Format Check
       working-directory: terraform
-      run: |
-        echo "🔍 Checking Terraform formatting..."
-        terraform fmt -check -recursive
-        echo "✅ Terraform formatting check passed"
+      run: "echo \"\U0001F50D Checking Terraform formatting...\"\nterraform fmt -check\
+        \ -recursive\necho \"\u2705 Terraform formatting check passed\"\n"
     - name: Terraform Init
       working-directory: terraform
-      run: |
-        echo "🚀 Initializing Terraform..."
-        terraform init -backend=false
-        echo "✅ Terraform initialization completed"
+      run: "echo \"\U0001F680 Initializing Terraform...\"\nterraform init -backend=false\n\
+        echo \"\u2705 Terraform initialization completed\"\n"
     - name: Terraform Validate
       working-directory: terraform
-      run: |
-        echo "✅ Validating Terraform configuration..."
-        terraform validate
-        echo "✅ Terraform validation passed"
+      run: "echo \"\u2705 Validating Terraform configuration...\"\nterraform validate\n\
+        echo \"\u2705 Terraform validation passed\"\n"
     - name: Terraform Security Scan
       working-directory: terraform
-      run: |
-        echo "🔒 Running Terraform security scan..."
-        # Install tfsec if not available
-        if ! command -v tfsec &> /dev/null; then
-          curl -L -o tfsec https://github.com/aquasecurity/tfsec/releases/latest/download/tfsec-linux-amd64
-          chmod +x tfsec
-          sudo mv tfsec /usr/local/bin/
-        fi
-        tfsec . --format json --out tfsec-report.json || true
-        echo "✅ Terraform security scan completed"
+      run: "echo \"\U0001F512 Running Terraform security scan...\"\n# Install tfsec\
+        \ if not available\nif ! command -v tfsec &> /dev/null; then\n  curl -L -o\
+        \ tfsec https://github.com/aquasecurity/tfsec/releases/latest/download/tfsec-linux-amd64\n\
+        \  chmod +x tfsec\n  sudo mv tfsec /usr/local/bin/\nfi\ntfsec . --format json\
+        \ --out tfsec-report.json || true\necho \"\u2705 Terraform security scan completed\"\
+        \n"
     - name: Terraform Plan (Dry Run)
       if: github.event_name == 'pull_request'
       working-directory: terraform
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      run: |
-        echo "📋 Running Terraform plan (dry run)..."
-        # Create dummy variables for validation
-        cat > terraform.tfvars << EOF
-        ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC dummy-key-for-validation"
-        allowed_ssh_cidrs = ["0.0.0.0/0"]
-        allowed_app_cidrs = ["0.0.0.0/0"]
-        allowed_monitoring_cidrs = ["0.0.0.0/0"]
-        EOF
-        
-        # Run plan for validation
-        terraform plan -out=tf.plan || echo "Plan validation completed (expected to fail without AWS credentials)"
+      run: "echo \"\U0001F4CB Running Terraform plan (dry run)...\"\n# Create dummy\
+        \ variables for validation\ncat > terraform.tfvars << EOF\nssh_public_key\
+        \ = \"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC dummy-key-for-validation\"\n\
+        allowed_ssh_cidrs = [\"0.0.0.0/0\"]\nallowed_app_cidrs = [\"0.0.0.0/0\"]\n\
+        allowed_monitoring_cidrs = [\"0.0.0.0/0\"]\nEOF\n\n# Run plan for validation\n\
+        terraform plan -out=tf.plan || echo \"Plan validation completed (expected\
+        \ to fail without AWS credentials)\"\n"
     - name: Comment PR with results
       if: github.event_name == 'pull_request'
       uses: actions/github-script@v7
       with:
-        script: |
-          const fs = require('fs');
-          let comment = '## 🔍 Infrastructure Validation Results\n\n';
-          
-          comment += '### ✅ Validation Status\n';
-          comment += '- **Terraform Format**: ✅ Passed\n';
-          comment += '- **Terraform Init**: ✅ Passed\n';
-          comment += '- **Terraform Validate**: ✅ Passed\n';
-          comment += '- **Security Scan**: ✅ Completed\n\n';
-          
-          comment += '### 📋 Summary\n';
-          comment += 'All infrastructure validation checks have passed successfully.\n\n';
-          
-          comment += '### 🔒 Security Notes\n';
-          comment += '- Terraform security scan completed\n';
-          comment += '- No critical security issues found\n\n';
-          
-          comment += '### 🚀 Next Steps\n';
-          comment += 'This PR is ready for review and merge.\n';
-          
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: comment
-          });
-
+        script: "const fs = require('fs');\nlet comment = '## \U0001F50D Infrastructure\
+          \ Validation Results\\n\\n';\n\ncomment += '### \u2705 Validation Status\\\
+          n';\ncomment += '- **Terraform Format**: \u2705 Passed\\n';\ncomment +=\
+          \ '- **Terraform Init**: \u2705 Passed\\n';\ncomment += '- **Terraform Validate**:\
+          \ \u2705 Passed\\n';\ncomment += '- **Security Scan**: \u2705 Completed\\\
+          n\\n';\n\ncomment += '### \U0001F4CB Summary\\n';\ncomment += 'All infrastructure\
+          \ validation checks have passed successfully.\\n\\n';\n\ncomment += '###\
+          \ \U0001F512 Security Notes\\n';\ncomment += '- Terraform security scan\
+          \ completed\\n';\ncomment += '- No critical security issues found\\n\\n';\n\
+          \ncomment += '### \U0001F680 Next Steps\\n';\ncomment += 'This PR is ready\
+          \ for review and merge.\\n';\n\ngithub.rest.issues.createComment({\n  issue_number:\
+          \ context.issue.number,\n  owner: context.repo.owner,\n  repo: context.repo.repo,\n\
+          \  body: comment\n});\n"
   terraform-deploy:
     name: Deploy Infrastructure
     runs-on: ubuntu-latest
@@ -130,26 +98,25 @@ jobs:
         aws-region: us-east-1
     - name: Terraform Init
       working-directory: terraform
-      run: |
-        echo "🚀 Initializing Terraform for deployment..."
-        terraform init
-        echo "✅ Terraform initialization completed"
+      run: "echo \"\U0001F680 Initializing Terraform for deployment...\"\nterraform\
+        \ init\necho \"\u2705 Terraform initialization completed\"\n"
     - name: Terraform Plan
       working-directory: terraform
-      run: |
-        echo "📋 Creating deployment plan..."
-        terraform plan -out=tf.plan
-        echo "✅ Terraform plan created"
+      run: "echo \"\U0001F4CB Creating deployment plan...\"\nterraform plan -out=tf.plan\n\
+        echo \"\u2705 Terraform plan created\"\n"
     - name: Terraform Apply
       working-directory: terraform
-      run: |
-        echo "🚀 Deploying infrastructure..."
-        terraform apply -auto-approve tf.plan
-        echo "✅ Infrastructure deployment completed"
+      run: "echo \"\U0001F680 Deploying infrastructure...\"\nterraform apply -auto-approve\
+        \ tf.plan\necho \"\u2705 Infrastructure deployment completed\"\n"
     - name: Get Terraform outputs
       working-directory: terraform
-      run: |
-        echo "📊 Infrastructure Outputs:"
-        terraform output -json > outputs.json
-        cat outputs.json
-
+      run: "echo \"\U0001F4CA Infrastructure Outputs:\"\nterraform output -json >\
+        \ outputs.json\ncat outputs.json\n"
+'on':
+  push:
+    branches:
+    - main
+    - develop
+  pull_request:
+    branches:
+    - main

@@ -17,9 +17,9 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from app.cache_service import cache_service
-from app.core.ml_engine.secure_inference import SecureMLInferenceEngine
-from app.utils.response import build_error_response, build_success_response
+from cache_service import cache_service
+from core.ml_engine.secure_inference import SecureMLInferenceEngine
+from utils.response import build_error_response, build_success_response
 
 try:
     from celery import Celery, Task
@@ -33,9 +33,9 @@ except ImportError:
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from app.cache_service import cache_service
-from app.database_integration import db_service
-from app.config import config
+from cache_service import cache_service
+from database_integration import db_service
+from config import config
 
 logger = logging.getLogger(__name__)
 

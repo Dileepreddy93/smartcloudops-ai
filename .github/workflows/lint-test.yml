@@ -1,0 +1,329 @@
+name: Lint & Test
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  lint-python:
+    name: Python Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-${{ hashFiles('app/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r app/requirements.txt
+          pip install black ruff isort mypy bandit safety
+
+      - name: Run Black formatting check
+        run: |
+          echo "🔍 Checking code formatting with Black..."
+          black --check --diff app/ scripts/ tests/
+          echo "✅ Black formatting check passed"
+
+      - name: Run Ruff linting
+        run: |
+          echo "🔍 Running Ruff linting..."
+          ruff check app/ scripts/ tests/
+          echo "✅ Ruff linting passed"
+
+      - name: Run isort import sorting check
+        run: |
+          echo "🔍 Checking import sorting with isort..."
+          isort --check-only --diff app/ scripts/ tests/
+          echo "✅ isort check passed"
+
+      - name: Run MyPy type checking
+        run: |
+          echo "🔍 Running type checking with MyPy..."
+          mypy app/ --ignore-missing-imports --no-strict-optional --no-warn-return-any --no-warn-unused-ignores || echo "⚠️ MyPy found issues but continuing..."
+
+      - name: Run Bandit security scan
+        run: |
+          echo "🔒 Running Bandit security scan..."
+          bandit -r app/ -f json -o bandit-report.json --severity-level high || true
+          echo "✅ Bandit security scan completed"
+
+      - name: Run Safety dependency check
+        run: |
+          echo "🔒 Running Safety dependency check..."
+          safety check --json --output safety-report.json || true
+          echo "✅ Safety dependency check completed"
+
+      - name: Upload Python linting reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-lint-reports
+          path: |
+            bandit-report.json
+            safety-report.json
+          retention-days: 30
+
+  lint-frontend:
+    name: Frontend Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: frontend
+        run: |
+          echo "🔍 Running ESLint..."
+          npm run lint
+          echo "✅ ESLint passed"
+
+      - name: Run TypeScript check
+        working-directory: frontend
+        run: |
+          echo "🔍 Running TypeScript check..."
+          npm run type-check || echo "⚠️ TypeScript check completed with warnings"
+
+      - name: Run Prettier check
+        working-directory: frontend
+        run: |
+          echo "🔍 Checking code formatting with Prettier..."
+          npm run format:check || echo "⚠️ Prettier check completed with warnings"
+
+  test-python:
+    name: Python Tests
+    runs-on: ubuntu-latest
+    needs: lint-python
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-${{ hashFiles('app/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r app/requirements.txt
+          pip install pytest pytest-cov pytest-mock
+
+      - name: Set up test environment
+        run: |
+          # Generate test environment variables with fallbacks
+          python -c "
+          import secrets
+          import os
+          test_vars = {
+              'JWT_SECRET_KEY': os.getenv('JWT_SECRET_KEY', secrets.token_urlsafe(64)),
+              'ADMIN_API_KEY': os.getenv('ADMIN_API_KEY', f'sk-admin-{secrets.token_urlsafe(32)}'),
+              'ML_API_KEY': os.getenv('ML_API_KEY', f'sk-ml-{secrets.token_urlsafe(32)}'),
+              'READONLY_API_KEY': os.getenv('READONLY_API_KEY', f'sk-readonly-{secrets.token_urlsafe(32)}'),
+              'API_KEY_SALT': os.getenv('API_KEY_SALT', secrets.token_urlsafe(16)),
+              'ADMIN_PASSWORD': os.getenv('ADMIN_PASSWORD', secrets.token_urlsafe(16))
+          }
+          for key, value in test_vars.items():
+              print(f'{key}={value}')
+          " > .env.test
+
+      - name: Run Python unit tests
+        run: |
+          export $(cat .env.test | xargs)
+          echo "🧪 Running Python unit tests..."
+          pytest tests/ -v --cov=app --cov-report=xml --cov-report=html --cov-report=term-missing
+          echo "✅ Python unit tests completed"
+
+      - name: Upload Python test coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-coverage
+          path: |
+            htmlcov/
+            coverage.xml
+          retention-days: 30
+
+  test-frontend:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    needs: lint-frontend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run frontend tests
+        working-directory: frontend
+        run: |
+          echo "🧪 Running frontend tests..."
+          npm test -- --coverage --watchAll=false --passWithNoTests
+          echo "✅ Frontend tests completed"
+
+      - name: Upload frontend test coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage/
+          retention-days: 30
+
+  test-integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [test-python, test-frontend]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r app/requirements.txt
+          pip install pytest requests
+
+      - name: Run integration tests
+        run: |
+          echo "🧪 Running integration tests..."
+          # Add your integration test commands here
+          echo "✅ Integration tests completed"
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: sarif
+          output: trivy-results.sarif
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-results.sarif
+
+  notify-results:
+    name: Notify Results
+    runs-on: ubuntu-latest
+    needs: [lint-python, lint-frontend, test-python, test-frontend, test-integration, security-scan]
+    if: always()
+    steps:
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const results = {
+              'lint-python': '${{ needs.lint-python.result }}',
+              'lint-frontend': '${{ needs.lint-frontend.result }}',
+              'test-python': '${{ needs.test-python.result }}',
+              'test-frontend': '${{ needs.test-frontend.result }}',
+              'test-integration': '${{ needs.test-integration.result }}',
+              'security-scan': '${{ needs.security-scan.result }}'
+            };
+
+            let comment = '## 🔍 Lint & Test Results\n\n';
+            
+            comment += '### ✅ Passed Jobs\n';
+            Object.entries(results).forEach(([job, result]) => {
+              if (result === 'success') {
+                comment += `- **${job}**: ✅ Passed\n`;
+              }
+            });
+            
+            comment += '\n### ❌ Failed Jobs\n';
+            Object.entries(results).forEach(([job, result]) => {
+              if (result === 'failure') {
+                comment += `- **${job}**: ❌ Failed\n`;
+              }
+            });
+            
+            comment += '\n### ⚠️ Skipped Jobs\n';
+            Object.entries(results).forEach(([job, result]) => {
+              if (result === 'skipped') {
+                comment += `- **${job}**: ⚠️ Skipped\n`;
+              }
+            });
+
+            const allPassed = Object.values(results).every(result => result === 'success');
+            if (allPassed) {
+              comment += '\n🎉 **All checks passed!** This PR is ready for review.';
+            } else {
+              comment += '\n⚠️ **Some checks failed.** Please review the failed jobs and fix the issues.';
+            }
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

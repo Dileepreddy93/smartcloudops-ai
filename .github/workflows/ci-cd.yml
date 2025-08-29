@@ -1,5 +1,5 @@
 name: CI/CD Pipeline
-true:
+on:
   push:
     branches:
     - main
@@ -23,15 +23,12 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
         cache: pip
     - name: Install dependencies
-      run: 'python3 -m pip install --upgrade pip
-
+      run: |
+        python3 -m pip install --upgrade pip
         pip3 install -r app/requirements.txt
-
-        '
     - name: Run security audit
-      run: 'python scripts/security_audit.py
-
-        '
+      run: |
+        python scripts/security_audit.py
     - name: Upload security report
       uses: actions/upload-artifact@v4
       if: always()
@@ -51,37 +48,41 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
         cache: pip
     - name: Install dependencies
-      run: 'python3 -m pip install --upgrade pip
-
+      run: |
+        python3 -m pip install --upgrade pip
         pip3 install -r app/requirements.txt
-
         pip3 install pytest pytest-cov
-
-        '
     - name: Set up test environment
-      run: "# Generate test environment variables with fallbacks\npython -c \"\nimport\
-        \ secrets\nimport os\ntest_vars = {\n    'JWT_SECRET_KEY': os.getenv('JWT_SECRET_KEY',\
-        \ secrets.token_urlsafe(64)),\n    'ADMIN_API_KEY': os.getenv('ADMIN_API_KEY',\
-        \ f'sk-admin-{secrets.token_urlsafe(32)}'),\n    'ML_API_KEY': os.getenv('ML_API_KEY',\
-        \ f'sk-ml-{secrets.token_urlsafe(32)}'),\n    'READONLY_API_KEY': os.getenv('READONLY_API_KEY',\
-        \ f'sk-readonly-{secrets.token_urlsafe(32)}'),\n    'API_KEY_SALT': os.getenv('API_KEY_SALT',\
-        \ secrets.token_urlsafe(16)),\n    'ADMIN_PASSWORD': os.getenv('ADMIN_PASSWORD',\
-        \ secrets.token_urlsafe(16))\n}\nfor key, value in test_vars.items():\n  \
-        \  print(f'{key}={value}')\n\" > .env.test\n"
+      run: |
+        # Generate test environment variables with fallbacks
+        python -c "
+        import secrets
+        import os
+        test_vars = {
+            'JWT_SECRET_KEY': os.getenv('JWT_SECRET_KEY', secrets.token_urlsafe(64)),
+            'ADMIN_API_KEY': os.getenv('ADMIN_API_KEY', f'sk-admin-{secrets.token_urlsafe(32)}'),
+            'ML_API_KEY': os.getenv('ML_API_KEY', f'sk-ml-{secrets.token_urlsafe(32)}'),
+            'READONLY_API_KEY': os.getenv('READONLY_API_KEY', f'sk-readonly-{secrets.token_urlsafe(32)}'),
+            'API_KEY_SALT': os.getenv('API_KEY_SALT', secrets.token_urlsafe(16)),
+            'ADMIN_PASSWORD': os.getenv('ADMIN_PASSWORD', secrets.token_urlsafe(16))
+        }
+        for key, value in test_vars.items():
+            print(f'{key}={value}')
+        " > .env.test
     - name: Run backend tests
-      run: "export $(cat .env.test | xargs)\npytest tests/phase_1/ tests/phase_2/test_api_blueprints.py\
-        \ tests/test_security_fixes.py \\\n  tests/phase_3/test_ml_inference.py::TestSecureMLInferenceEngine::test_engine_initialization\
-        \ \\\n  tests/phase_3/test_ml_inference.py::TestSecureMLInferenceEngine::test_health_check_healthy_status\
-        \ \\\n  -v --cov=app --cov-report=xml --cov-report=html\n"
+      run: |
+        export $(cat .env.test | xargs)
+        pytest tests/phase_1/ tests/phase_2/test_api_blueprints.py tests/test_security_fixes.py \
+          tests/phase_3/test_ml_inference.py::TestSecureMLInferenceEngine::test_engine_initialization \
+          tests/phase_3/test_ml_inference.py::TestSecureMLInferenceEngine::test_health_check_healthy_status \
+          -v --cov=app --cov-report=xml --cov-report=html
     - name: Upload coverage reports
       uses: actions/upload-artifact@v4
       with:
         name: coverage-reports
-        path: 'htmlcov/
-
+        path: |
+          htmlcov/
           coverage.xml
-
-          '
         retention-days: 30
   test-frontend:
     name: Frontend Tests
@@ -119,34 +120,25 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
         cache: pip
     - name: Install linting tools
-      run: 'python3 -m pip install --upgrade pip
-
+      run: |
+        python3 -m pip install --upgrade pip
         pip3 install flake8 black isort mypy bandit
-
-        '
     - name: Run flake8
-      run: 'flake8 app/ --count --select=E9,F63,F7,F82 --show-source --statistics
-
-        flake8 app/ --count --exit-zero --max-complexity=10 --max-line-length=127
-        --statistics
-
-        '
+      run: |
+        flake8 app/ --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 app/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Run black
-      run: 'black --check --diff app/
-
-        '
+      run: |
+        black --check --diff app/
     - name: Run isort
-      run: 'isort --check-only --diff app/
-
-        '
+      run: |
+        isort --check-only --diff app/
     - name: Run mypy
-      run: 'mypy app/ --ignore-missing-imports --no-strict-optional
-
-        '
+      run: |
+        mypy app/ --ignore-missing-imports --no-strict-optional
     - name: Run bandit security check
-      run: 'bandit -r app/ -f json -o bandit-report.json || true
-
-        '
+      run: |
+        bandit -r app/ -f json -o bandit-report.json || true
   lint-frontend:
     name: Frontend Linting
     runs-on: ubuntu-latest
@@ -182,19 +174,14 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
     - name: Build Docker image
-      run: 'docker build -t smartcloudops-ai:latest .
-
-        '
+      run: |
+        docker build -t smartcloudops-ai:latest .
     - name: Test Docker image
-      run: 'docker run --rm -d --name test-app -p 5000:5000 smartcloudops-ai:latest
-
+      run: |
+        docker run --rm -d --name test-app -p 5000:5000 smartcloudops-ai:latest
         sleep 15
-
         curl -f http://localhost:5000/health || echo "Health check failed but continuing"
-
         docker stop test-app || true
-
-        '
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
@@ -203,19 +190,14 @@ jobs:
     if: github.ref == 'refs/heads/develop'
     steps:
     - name: Deploy to staging
-      run: 'echo "Deploying to staging environment..."
-
+      run: |
+        echo "Deploying to staging environment..."
         # Add your staging deployment logic here
-
         # Use secrets for sensitive data: ${{ secrets.STAGING_DEPLOY_KEY }}
-
-        '
     - name: Run smoke tests
-      run: 'echo "Running smoke tests on staging..."
-
+      run: |
+        echo "Running smoke tests on staging..."
         # Add your smoke test logic here
-
-        '
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
@@ -224,19 +206,14 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
     - name: Deploy to production
-      run: 'echo "Deploying to production environment..."
-
+      run: |
+        echo "Deploying to production environment..."
         # Add your production deployment logic here
-
         # Use secrets for sensitive data: ${{ secrets.PRODUCTION_DEPLOY_KEY }}
-
-        '
     - name: Run production tests
-      run: 'echo "Running production tests..."
-
+      run: |
+        echo "Running production tests..."
         # Add your production test logic here
-
-        '
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
@@ -259,11 +236,3 @@ permissions:
   contents: read
   pull-requests: write
   issues: write
-'on':
-  push:
-    branches:
-    - main
-    - develop
-  pull_request:
-    branches:
-    - main

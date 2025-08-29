@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-SmartCloudOps AI - Secure Configuration Manager
-=============================================
+SmartCloudOps AI - Unified Configuration System
+==============================================
 
-Production-ready, secure configuration management with multiple secret providers.
+Production-ready configuration management with environment-specific settings,
+secure secret handling, and comprehensive validation.
 """
 
 import json
@@ -39,7 +40,6 @@ class AWSSecretsProvider(SecretProvider):
         self.available = False
         try:
             import boto3
-
             self.client = boto3.client("secretsmanager")
             self.available = True
             logging.info("✅ AWS Secrets Manager provider initialized")
@@ -58,114 +58,12 @@ class AWSSecretsProvider(SecretProvider):
         try:
             response = self.client.get_secret_value(SecretId=key)
             secret_data = json.loads(response["SecretString"])
-
+            
             # Handle both direct values and nested structures
             if isinstance(secret_data, dict):
                 return secret_data.get("value") or secret_data.get(key.split("/")[-1])
             return secret_data
-
-        except self.client.exceptions.ResourceNotFoundException:
-            logging.debug(f"Secret {key} not found in AWS Secrets Manager")
-            return None
-        except Exception as e:
-            logging.error(f"Failed to retrieve AWS secret {key}: {e}")
-            return None
-
-
-class EnvironmentProvider(SecretProvider):
-    """Environment variable provider - fallback for development."""
-
-    def get_priority(self) -> int:
-        return 2  # Lower priority than AWS
-
-    def get_secret(self, key: str) -> Optional[str]:
-        """Retrieve secret from environment variables."""
-        return os.getenv(key)
-
-
-class DevFileProvider(SecretProvider):
-    """Development file-based provider for persistent local secrets."""
-
-    def __init__(self):
-        self.dev_secret_file = ".dev-secret"
-
-    def get_priority(self) -> int:
-        return 3  # Lowest priority
-
-    def get_secret(self, key: str) -> Optional[str]:
-        """Get or create persistent development secrets."""
-        if key == "SECRET_KEY":
-            return self._get_or_create_dev_secret()
-        return None
-
-    def _get_or_create_dev_secret(self) -> str:
-        """Get or create persistent development secret key."""
-        if os.path.exists(self.dev_secret_file):
-            try:
-                with open(self.dev_secret_file, "r") as f:
-                    return f.read().strip()
-            except Exception as e:
-                logging.error(f"Failed to read dev secret: {e}")
-
-        # Create new persistent secret
-        new_secret = secrets.token_hex(32)
-        try:
-            with open(self.dev_secret_file, "w") as f:
-                f.write(new_secret)
-            os.chmod(self.dev_secret_file, 0o600)  # Restrict permissions
-            logging.info("✅ Created persistent development secret")
-            return new_secret
-        except Exception as e:
-            logging.error(f"Failed to create dev secret: {e}")
-            return secrets.token_hex(32)  # Fallback to temporary
-
-
-class SecretProvider(ABC):
-    """Abstract secret provider interface for secure secret management."""
-
-    @abstractmethod
-    def get_secret(self, key: str) -> Optional[str]:
-        """Retrieve secret by key."""
-        pass
-
-    @abstractmethod
-    def get_priority(self) -> int:
-        """Return provider priority (lower = higher priority)."""
-        pass
-
-
-class AWSSecretsProvider(SecretProvider):
-    """AWS Secrets Manager provider for production secrets."""
-
-    def __init__(self):
-        self.available = False
-        try:
-            import boto3
-
-            self.client = boto3.client("secretsmanager")
-            self.available = True
-            logging.info("✅ AWS Secrets Manager provider initialized")
-        except Exception as e:
-            logging.warning(f"⚠️ AWS Secrets Manager not available: {e}")
-
-    def get_priority(self) -> int:
-        return 1  # Highest priority for production
-
-    @lru_cache(maxsize=50)
-    def get_secret(self, key: str) -> Optional[str]:
-        """Retrieve secret from AWS Secrets Manager with caching."""
-        if not self.available:
-            return None
-
-        try:
-            response = self.client.get_secret_value(SecretId=key)
-            secret_data = json.loads(response["SecretString"])
-
-            # Handle both direct values and nested structures
-            if isinstance(secret_data, dict):
-                return secret_data.get("value") or secret_data.get(key.split("/")[-1])
-            return secret_data
-
+            
         except self.client.exceptions.ResourceNotFoundException:
             logging.debug(f"Secret {key} not found in AWS Secrets Manager")
             return None
@@ -226,7 +124,7 @@ class SecureConfigManager:
     """Production-ready configuration manager with multiple secret providers."""
 
     def __init__(self, environment: str = None):
-        self.environment = environment or os.getenv("ENVIRONMENT", "development")
+        self.environment = environment or os.getenv("APP_ENV", "development")
         self.providers: List[SecretProvider] = []
         self._setup_secret_providers()
         self._load_base_environment()
@@ -239,13 +137,16 @@ class SecureConfigManager:
                 AWSSecretsProvider(),
                 EnvironmentProvider(),  # Emergency fallback only
             ]
-        elif self.environment == "staging":
+        elif self.environment == "testing":
             self.providers = [
-                AWSSecretsProvider(),  # Try AWS first
                 EnvironmentProvider(),
+                DevFileProvider(),
             ]
         else:  # development
-            self.providers = [DevFileProvider(), EnvironmentProvider()]
+            self.providers = [
+                DevFileProvider(),
+                EnvironmentProvider(),
+            ]
 
         # Sort by priority
         self.providers.sort(key=lambda p: p.get_priority())
@@ -263,7 +164,7 @@ class SecureConfigManager:
     def get_secret(self, key: str, required: bool = False, secret_key: str = None) -> Optional[str]:
         """
         Get secret from configured providers with fallback chain.
-
+        
         Args:
             key: Environment variable key
             required: Raise error if not found
@@ -297,9 +198,9 @@ class SecureConfigManager:
 
         required_secrets = [
             ("SECRET_KEY", "smartcloudops/app/secret-key"),
-            ("PROMETHEUS_URL", None),
+            ("DATABASE_URL", "smartcloudops/database/url"),
+            ("REDIS_URL", "smartcloudops/redis/url"),
             ("OPENAI_API_KEY", "smartcloudops/openai/api-key"),
-            ("GEMINI_API_KEY", "smartcloudops/google/api-key"),
         ]
 
         missing_secrets = []
@@ -318,151 +219,131 @@ config_manager = SecureConfigManager()
 
 
 @dataclass
-class PrometheusConfig:
-    """Prometheus configuration with validation."""
-
+class DatabaseConfig:
+    """Database configuration with validation."""
+    
     url: str
-    timeout: int = 30
-    ssl_verify: bool = True
-
+    pool_size: int = 10
+    max_overflow: int = 20
+    pool_timeout: int = 30
+    pool_recycle: int = 3600
+    
     def __post_init__(self):
         if not self.url:
-            raise ValueError("Prometheus URL is required")
-        if not self.url.startswith(("http://", "https://")):
-            raise ValueError("Prometheus URL must start with http:// or https://")
-
-        # Security warning for production
-        if self.url.startswith("http://") and os.getenv("ENVIRONMENT") == "production":
-            raise ValueError("Production Prometheus must use HTTPS")
+            raise ValueError("Database URL is required")
+        if self.pool_size <= 0:
+            raise ValueError("Pool size must be positive")
+        if self.max_overflow < 0:
+            raise ValueError("Max overflow must be non-negative")
 
 
 @dataclass
-class AIConfig:
-    """AI providers configuration with secure key handling."""
-
-    openai_api_key: Optional[str] = None
-    gemini_api_key: Optional[str] = None
-    anthropic_api_key: Optional[str] = None
-    provider: str = "auto"
-
+class RedisConfig:
+    """Redis configuration with validation."""
+    
+    url: str
+    max_connections: int = 10
+    socket_timeout: int = 5
+    socket_connect_timeout: int = 5
+    retry_on_timeout: bool = True
+    
     def __post_init__(self):
-        if self.provider not in ["auto", "openai", "gemini", "anthropic", "fallback"]:
-            raise ValueError(f"Invalid AI provider: {self.provider}")
-
-    def has_any_key(self) -> bool:
-        """Check if any AI API key is available."""
-        return any([self.openai_api_key, self.gemini_api_key, self.anthropic_api_key])
-
-
-@dataclass
-class MLConfig:
-    """Machine Learning configuration with validation."""
-
-    model_path: str = "/app/ml_models/real_data_model.json"
-    data_path: str = "/app/data/real_training_data.json"
-    confidence_threshold: float = 0.7
-    max_prediction_time: int = 30
-
-    def __post_init__(self):
-        if not 0 <= self.confidence_threshold <= 1:
-            raise ValueError("Confidence threshold must be between 0 and 1")
-        if self.max_prediction_time <= 0:
-            raise ValueError("Max prediction time must be positive")
+        if not self.url:
+            raise ValueError("Redis URL is required")
+        if not self.url.startswith(("redis://", "rediss://")):
+            raise ValueError("Redis URL must start with redis:// or rediss://")
 
 
 @dataclass
 class SecurityConfig:
     """Security configuration with environment-specific validation."""
-
+    
     secret_key: str
     cors_origins: List[str]
     ssl_cert_path: Optional[str] = None
     ssl_key_path: Optional[str] = None
     rate_limit: str = "500/hour"
-
+    
     def __post_init__(self):
         if len(self.secret_key) < 32:
             raise ValueError("Secret key must be at least 32 characters")
-
+        
         # Validate CORS origins format
         for origin in self.cors_origins:
             if not origin.startswith(("http://", "https://")):
                 raise ValueError(f"Invalid CORS origin format: {origin}")
 
 
-class SecureConfig:
+class UnifiedConfig:
     """
     Immutable, validated configuration with secure secret handling.
-
+    
     This class ensures:
     1. No secrets are logged or exposed
     2. Production requires proper secret sources
     3. Configuration is validated on initialization
     4. Environment-specific security rules are enforced
     """
-
+    
     def __init__(self, config_manager: SecureConfigManager):
         self.environment = config_manager.environment
         self.debug = self._get_debug_setting(config_manager)
         self.config_manager = config_manager
-
+        
         # Validate production requirements first
         if self.environment == "production":
             config_manager.validate_production_secrets()
-
+        
         # Security configuration
         self.security = self._build_security_config(config_manager)
-
-        # Prometheus configuration
-        self.prometheus = self._build_prometheus_config(config_manager)
-
-        # AI configuration
-        self.ai = self._build_ai_config(config_manager)
-
-        # ML configuration
-        self.ml = self._build_ml_config(config_manager)
-
+        
+        # Database configuration
+        self.database = self._build_database_config(config_manager)
+        
+        # Redis configuration
+        self.redis = self._build_redis_config(config_manager)
+        
         # Logging configuration
         self.log_level = config_manager.get_secret("LOG_LEVEL") or "INFO"
-
+        
         # Final security validation
         self._validate_security_rules()
-
-        logging.info(f"✅ Secure configuration initialized for {self.environment}")
-
+        
+        logging.info(f"✅ Unified configuration initialized for {self.environment}")
+    
     def _get_debug_setting(self, config_manager: SecureConfigManager) -> bool:
         """Get debug setting with environment-specific validation."""
         debug_str = config_manager.get_secret("DEBUG", required=False) or "false"
         debug = debug_str.lower() == "true"
-
+        
         # Security rule: Never allow debug in production
         if self.environment == "production" and debug:
             raise ValueError("DEBUG mode is forbidden in production environment")
-
+        
         return debug
-
+    
     def _build_security_config(self, config_manager: SecureConfigManager) -> SecurityConfig:
         """Build security configuration with environment-specific rules."""
         # Get secret key
         secret_key = config_manager.get_secret(
-            "SECRET_KEY",
+            "SECRET_KEY", 
             required=True,
-            secret_key=("smartcloudops/app/secret-key" if self.environment == "production" else None),
+            secret_key=("smartcloudops/app/secret-key" if self.environment == "production" else None)
         )
-
+        
         # Get CORS origins
         cors_origins_str = config_manager.get_secret("CORS_ORIGINS") or self._get_default_cors_origins()
         cors_origins = [origin.strip() for origin in cors_origins_str.split(",")]
-
+        
         # SSL configuration for production
         ssl_cert_path = None
         ssl_key_path = None
         if self.environment == "production":
             ssl_cert_path = config_manager.get_secret("SSL_CERT_PATH")
             ssl_key_path = config_manager.get_secret("SSL_KEY_PATH")
-
+        
         rate_limit = config_manager.get_secret("RATE_LIMIT") or self._get_default_rate_limit()
-
+        
         return SecurityConfig(
             secret_key=secret_key,
             cors_origins=cors_origins,
@@ -470,102 +351,85 @@ class SecureConfig:
             ssl_key_path=ssl_key_path,
             rate_limit=rate_limit,
         )
-
-    def _build_prometheus_config(self, config_manager: SecureConfigManager) -> PrometheusConfig:
-        """Build Prometheus configuration with environment-specific defaults."""
-        prometheus_url = config_manager.get_secret("PROMETHEUS_URL") or self._get_default_prometheus_url()
-        timeout = int(config_manager.get_secret("PROMETHEUS_TIMEOUT") or "30")
-        ssl_verify = config_manager.get_secret("PROMETHEUS_SSL_VERIFY", required=False) != "false"
-
-        return PrometheusConfig(url=prometheus_url, timeout=timeout, ssl_verify=ssl_verify)
-
-    def _build_ai_config(self, config_manager: SecureConfigManager) -> AIConfig:
-        """Build AI configuration with secure key retrieval."""
-        # Get AI API keys from secure sources
-        openai_key = config_manager.get_secret("OPENAI_API_KEY", secret_key="smartcloudops/openai/api-key")
-
-        gemini_key = config_manager.get_secret("GEMINI_API_KEY", secret_key="smartcloudops/google/api-key")
-
-        anthropic_key = config_manager.get_secret("ANTHROPIC_API_KEY", secret_key="smartcloudops/anthropic/api-key")
-
-        provider = config_manager.get_secret("AI_PROVIDER") or "auto"
-
-        return AIConfig(
-            openai_api_key=openai_key,
-            gemini_api_key=gemini_key,
-            anthropic_api_key=anthropic_key,
-            provider=provider,
+    
+    def _build_database_config(self, config_manager: SecureConfigManager) -> DatabaseConfig:
+        """Build database configuration with environment-specific defaults."""
+        database_url = config_manager.get_secret(
+            "DATABASE_URL", 
+            required=True,
+            secret_key=("smartcloudops/database/url" if self.environment == "production" else None)
         )
-
-    def _build_ml_config(self, config_manager: SecureConfigManager) -> MLConfig:
-        """Build ML configuration with validation."""
-        model_path = config_manager.get_secret("ML_MODEL_PATH") or "/app/ml_models/real_data_model.json"
-        data_path = config_manager.get_secret("ML_DATA_PATH") or "/app/data/real_training_data.json"
-        confidence_threshold = float(config_manager.get_secret("ML_CONFIDENCE_THRESHOLD") or "0.7")
-        max_prediction_time = int(config_manager.get_secret("ML_MAX_PREDICTION_TIME") or "30")
-
-        return MLConfig(
-            model_path=model_path,
-            data_path=data_path,
-            confidence_threshold=confidence_threshold,
-            max_prediction_time=max_prediction_time,
+        
+        pool_size = int(config_manager.get_secret("DB_POOL_SIZE") or "10")
+        max_overflow = int(config_manager.get_secret("DB_MAX_OVERFLOW") or "20")
+        pool_timeout = int(config_manager.get_secret("DB_POOL_TIMEOUT") or "30")
+        pool_recycle = int(config_manager.get_secret("DB_POOL_RECYCLE") or "3600")
+        
+        return DatabaseConfig(
+            url=database_url,
+            pool_size=pool_size,
+            max_overflow=max_overflow,
+            pool_timeout=pool_timeout,
+            pool_recycle=pool_recycle,
         )
-
-    def _get_default_prometheus_url(self) -> str:
-        """Get environment-specific Prometheus URL defaults."""
-        if self.environment == "production":
-            return "https://prometheus.internal.smartcloudops.com:9090"
-        elif self.environment == "staging":
-            return "https://staging-prometheus.internal.smartcloudops.com:9090"
-        else:
-            # Development: Check for local instance first
-            try:
-                import requests
-
-                local_url = "http://localhost:9090"
-                requests.get(f"{local_url}/api/v1/status/config", timeout=2)
-                return local_url
-            except Exception:
-                # NOTE: This should be replaced with your actual development Prometheus
-                logging.warning("Using fallback Prometheus URL - configure PROMETHEUS_URL in .env")
-                return "http://localhost:9090"
-
+    
+    def _build_redis_config(self, config_manager: SecureConfigManager) -> RedisConfig:
+        """Build Redis configuration with environment-specific defaults."""
+        redis_url = config_manager.get_secret(
+            "REDIS_URL", 
+            required=True,
+            secret_key=("smartcloudops/redis/url" if self.environment == "production" else None)
+        )
+        
+        max_connections = int(config_manager.get_secret("REDIS_MAX_CONNECTIONS") or "10")
+        socket_timeout = int(config_manager.get_secret("REDIS_SOCKET_TIMEOUT") or "5")
+        socket_connect_timeout = int(config_manager.get_secret("REDIS_SOCKET_CONNECT_TIMEOUT") or "5")
+        retry_on_timeout = config_manager.get_secret("REDIS_RETRY_ON_TIMEOUT", required=False) != "false"
+        
+        return RedisConfig(
+            url=redis_url,
+            max_connections=max_connections,
+            socket_timeout=socket_timeout,
+            socket_connect_timeout=socket_connect_timeout,
+            retry_on_timeout=retry_on_timeout,
+        )
+    
     def _get_default_cors_origins(self) -> str:
         """Get environment-specific CORS origins."""
         if self.environment == "production":
             return "https://smartcloudops.com,https://dashboard.smartcloudops.com"
-        elif self.environment == "staging":
-            return "https://staging.smartcloudops.com"
+        elif self.environment == "testing":
+            return "http://localhost:3000,http://localhost:5000"
         else:
             return "http://localhost:3000,http://localhost:5000"
-
+    
     def _get_default_rate_limit(self) -> str:
         """Get environment-specific rate limits."""
         if self.environment == "production":
             return "1000/hour"
-        elif self.environment == "staging":
+        elif self.environment == "testing":
             return "500/hour"
         else:
             return "100/hour"
-
+    
     def _validate_security_rules(self):
         """Validate environment-specific security rules."""
         if self.environment == "production":
             # Production security validations
-            if not self.ai.has_any_key():
-                logging.warning("⚠️ No AI API keys configured for production")
-
-            if not self.prometheus.url.startswith("https://"):
-                raise ValueError("Production Prometheus must use HTTPS")
-
+            if not self.database.url.startswith(("postgresql://", "mysql://")):
+                raise ValueError("Production database must use PostgreSQL or MySQL")
+            
+            if not self.redis.url.startswith("rediss://"):
+                raise ValueError("Production Redis must use SSL")
+            
             if not all(origin.startswith("https://") for origin in self.security.cors_origins):
                 raise ValueError("Production CORS origins must use HTTPS")
-
+    
     @property
     def secret_key(self) -> str:
         """Access secret key (for Flask configuration)."""
         return self.security.secret_key
-
+    
     def to_dict(self) -> Dict[str, Any]:
         """
         Convert config to dictionary for logging/debugging.
@@ -574,43 +438,47 @@ class SecureConfig:
         return {
             "environment": self.environment,
             "debug": self.debug,
-            "prometheus_url": self.prometheus.url,
-            "ai_provider": self.ai.provider,
-            "ai_keys_available": self.ai.has_any_key(),
+            "database_url": self.database.url.split("@")[-1] if "@" in self.database.url else "configured",
+            "redis_url": self.redis.url.split("@")[-1] if "@" in self.redis.url else "configured",
             "log_level": self.log_level,
-            "ml_confidence_threshold": self.ml.confidence_threshold,
             "cors_origins_count": len(self.security.cors_origins),
             "ssl_enabled": bool(self.security.ssl_cert_path),
         }
 
 
-# Global secure configuration instance
+# Global unified configuration instance
 try:
-    config = SecureConfig(config_manager)
-
+    config = UnifiedConfig(config_manager)
+    
     # Configure logging with secure settings
     logging.basicConfig(
         level=getattr(logging, config.log_level.upper()),
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
-
+    
     logger = logging.getLogger(__name__)
-    logger.info(f"✅ Secure configuration loaded: {config.to_dict()}")
-
+    logger.info(f"✅ Unified configuration loaded: {config.to_dict()}")
+    
 except Exception as e:
     # Fallback configuration for emergencies
     logger = logging.getLogger(__name__)
-    logger.error(f"❌ Failed to load secure configuration: {e}")
+    logger.error(f"❌ Failed to load unified configuration: {e}")
     logger.error("🚨 Using emergency fallback configuration")
-
+    
     class EmergencyConfig:
         def __init__(self):
             self.environment = "emergency"
             self.debug = False
             self.secret_key = secrets.token_hex(32)
             self.log_level = "ERROR"
-
+            self.database = DatabaseConfig(url="sqlite:///emergency.db")
+            self.redis = RedisConfig(url="redis://localhost:6379/0")
+            self.security = SecurityConfig(
+                secret_key=secrets.token_hex(32),
+                cors_origins=["http://localhost:3000"]
+            )
+        
         def to_dict(self):
             return {"environment": "emergency", "status": "fallback_mode"}
-
+    
     config = EmergencyConfig()

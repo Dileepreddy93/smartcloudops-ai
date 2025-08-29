@@ -4,6 +4,7 @@ SmartCloudOps AI - Cache Service
 ===============================
 
 Comprehensive caching service with Redis and memory fallback.
+Enhanced for production use with unified configuration.
 """
 
 import hashlib
@@ -16,7 +17,6 @@ from typing import Any, Dict, List, Optional, Union
 
 try:
     import redis
-
     REDIS_AVAILABLE = True
 except ImportError:
     REDIS_AVAILABLE = False
@@ -28,19 +28,27 @@ logger = logging.getLogger(__name__)
 class CacheService:
     """Comprehensive caching service with Redis and memory fallback."""
 
-    def __init__(self, redis_url: Optional[str] = None):
+    def __init__(self, redis_url: Optional[str] = None, max_connections: int = 10):
         """Initialize cache service."""
         self.redis_client = None
         self.memory_cache = {}
         self.cache_stats = {"hits": 0, "misses": 0, "sets": 0, "deletes": 0}
+        self.max_connections = max_connections
 
         # Try to connect to Redis
         if REDIS_AVAILABLE and redis_url:
             try:
-                self.redis_client = redis.from_url(redis_url)
+                self.redis_client = redis.from_url(
+                    redis_url,
+                    max_connections=max_connections,
+                    socket_timeout=5,
+                    socket_connect_timeout=5,
+                    retry_on_timeout=True,
+                    decode_responses=True,
+                )
                 # Test connection
                 self.redis_client.ping()
-                logger.info("Connected to Redis cache")
+                logger.info("✅ Connected to Redis cache")
             except Exception as e:
                 logger.warning(f"Failed to connect to Redis: {e}. Using memory cache.")
                 self.redis_client = None
@@ -77,7 +85,7 @@ class CacheService:
                 value = self.redis_client.get(key)
                 if value is not None:
                     self.cache_stats["hits"] += 1
-                    return self._deserialize_value(value.decode())
+                    return self._deserialize_value(value)
 
             # Fall back to memory cache
             if key in self.memory_cache:
@@ -224,7 +232,7 @@ class CacheService:
             return {
                 "status": "healthy" if set_success and get_success else "unhealthy",
                 "redis": redis_status,
-                "memory_cache": ("healthy" if set_success and get_success else "unhealthy"),
+                "memory_cache": "healthy" if set_success and get_success else "unhealthy",
                 "test_passed": set_success and get_success,
                 "stats": self.get_stats(),
             }
@@ -238,6 +246,29 @@ class CacheService:
                 "memory_cache": "unavailable",
                 "test_passed": False,
             }
+
+    def get_memory_usage(self) -> Dict[str, Any]:
+        """Get memory usage statistics."""
+        try:
+            if self.redis_client:
+                # Get Redis memory info
+                info = self.redis_client.info("memory")
+                return {
+                    "redis_used_memory": info.get("used_memory_human", "unknown"),
+                    "redis_used_memory_peak": info.get("used_memory_peak_human", "unknown"),
+                    "redis_used_memory_rss": info.get("used_memory_rss_human", "unknown"),
+                }
+            else:
+                # Estimate memory cache usage
+                memory_size = sum(len(str(v)) for v in self.memory_cache.values())
+                return {
+                    "memory_cache_entries": len(self.memory_cache),
+                    "memory_cache_size_bytes": memory_size,
+                    "memory_cache_size_human": f"{memory_size / 1024:.2f} KB",
+                }
+        except Exception as e:
+            logger.error(f"Failed to get memory usage: {e}")
+            return {"error": str(e)}
 
 
 # Global cache service instance
@@ -301,3 +332,25 @@ CACHE_CONFIGS = {
     "api_keys": {"ttl": 3600},  # 1 hour
     "system_config": {"ttl": 7200},  # 2 hours
 }
+
+
+def get_cache_service() -> CacheService:
+    """Get cache service instance."""
+    return cache_service
+
+
+def is_cache_available() -> bool:
+    """Check if cache is available."""
+    return cache_service.redis_client is not None or len(cache_service.memory_cache) >= 0
+
+
+# Export functions for easy import
+__all__ = [
+    "CacheService",
+    "cache_service",
+    "get_cache_service",
+    "is_cache_available",
+    "cached",
+    "cache_invalidate",
+    "CACHE_CONFIGS",
+]

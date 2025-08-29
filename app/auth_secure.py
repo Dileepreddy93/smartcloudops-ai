@@ -164,7 +164,12 @@ class SecureAPIKeyAuth:
 
     def _hash_api_key(self, api_key: str) -> str:
         """Securely hash API key for storage and comparison"""
-        salt = self.app.config.get("API_KEY_SALT", "smartcloudops_secure_salt_2024")
+        salt = self.app.config.get("API_KEY_SALT")
+        if not salt:
+            raise ValueError(
+                "API_KEY_SALT environment variable is required for secure API key hashing. "
+                "Set it to a secure random string."
+            )
         return hashlib.sha256((api_key + salt).encode()).hexdigest()
 
     def validate_api_key(self, api_key: str, required_permission: str = "read") -> Tuple[bool, Optional[Dict], str]:

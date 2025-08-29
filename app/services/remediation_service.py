@@ -68,8 +68,9 @@ class AutoRemediationEngine:
         self._initialize_default_rules()
 
         # Setup AWS clients for remediation actions
-        self.ec2_client = boto3.client("ec2", region_name="us-east-1")
-        self.sns_client = boto3.client("sns", region_name="us-east-1")
+        aws_region = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
+        self.ec2_client = boto3.client("ec2", region_name=aws_region)
+        self.sns_client = boto3.client("sns", region_name=aws_region)
 
         logger.info("✅ Auto-Remediation Engine initialized")
 

@@ -132,7 +132,7 @@ class ProductionInferenceEngine:
     def __init__(
         self,
         s3_bucket: str = None,
-        prometheus_url: str = "http://3.89.229.102:9090",
+        prometheus_url: str = None,
         model_cache_ttl: int = 3600,  # 1 hour
         use_real_data: bool = True,
     ):
@@ -141,7 +141,7 @@ class ProductionInferenceEngine:
         self.s3_bucket = env_bucket or s3_bucket or os.getenv("ML_MODELS_BUCKET")
         # Allow overriding Prometheus endpoint via environment
         env_prom = os.getenv("PROMETHEUS_URL")
-        self.prometheus_url = env_prom or prometheus_url
+        self.prometheus_url = env_prom or prometheus_url or "http://localhost:9090"
         self.model_cache_ttl = model_cache_ttl
         self.use_real_data = use_real_data
 

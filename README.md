@@ -1,355 +1,389 @@
 # 🚀 SmartCloudOps AI - Production-Ready Platform
 
-**Intelligent Cloud Operations with AI-Powered Automation & Real-Time Monitoring**
-
-[![CI/CD Pipeline](https://github.com/your-org/smartcloudops-ai/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/your-org/smartcloudops-ai/actions)
-[![Security Scan](https://github.com/your-org/smartcloudops-ai/workflows/Security%20Scan/badge.svg)](https://github.com/your-org/smartcloudops-ai/security)
-[![Coverage](https://codecov.io/gh/your-org/smartcloudops-ai/branch/main/graph/badge.svg)](https://codecov.io/gh/your-org/smartcloudops-ai)
-
-## �� Project Status
-
-**🔄 IN DEVELOPMENT** - Enterprise-grade platform with comprehensive security, monitoring, and scalability
-
-### 🏆 Key Features
-
-- **Complete React Frontend** - Modern, responsive dashboard with real-time updates
-- **Secure Flask Backend** - Production-ready API with JWT authentication and RBAC
-- **Real ML Pipeline** - Actual anomaly detection with model versioning and A/B testing
-- **Production CI/CD** - Automated testing, security scanning, multi-environment deployment
-- **Enterprise Security** - No hardcoded secrets, proper environment management
-- **Comprehensive Monitoring** - Prometheus, Grafana, custom metrics, alerting
-- **High Availability** - Load balancing, auto-scaling, disaster recovery
-- **Performance Optimized** - Caching, rate limiting, connection pooling
-
----
+A comprehensive, production-hardened backend application for intelligent cloud operations with ML-powered anomaly detection, auto-remediation, and real-time monitoring.
 
 ## 🏗 Architecture Overview
 
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   React Frontend│    │   API Gateway   │    │   Load Balancer │
-│   (TypeScript)  │◄──►│   (Flask)       │◄──►│   (ALB)         │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                │
-                ┌───────────────┼───────────────┐
-                │               │               │
-    ┌───────────▼──────────┐    │    ┌──────────▼──────────┐
-    │   Authentication     │    │    │   ChatOps Service   │
-    │   Service            │    │    │   (NLP/Intent)      │
-    └──────────────────────┘    │    └──────────────────────┘
-                                │
-    ┌───────────▼──────────┐    │    ┌──────────▼──────────┐
-    │   ML Service         │    │    │   Monitoring        │
-    │   (Anomaly Detection)│    │    │   Service           │
-    └──────────────────────┘    │    └──────────────────────┘
-                                │
-    ┌───────────▼──────────┐    │    ┌──────────▼──────────┐
-    │   Remediation        │    │    │   Cache Service     │
-    │   Service            │    │    │   (Redis/Memory)    │
-    └──────────────────────┘    │    └──────────────────────┘
-                                │
-                ┌───────────────▼───────────────┐
-                │        PostgreSQL RDS         │
-                │     (Encrypted, HA)           │
-                └───────────────────────────────┘
-```
+The application has been refactored into a unified, production-ready system with the following components:
 
----
+### Core Components
+
+- **Unified Configuration System**: Environment-specific configuration with secure secret management
+- **Database Integration**: SQLAlchemy-based data persistence with connection pooling
+- **Caching Layer**: Redis-based caching with memory fallback
+- **Background Task Processing**: Celery-based asynchronous task processing
+- **API Blueprints**: Modular, RESTful API endpoints with comprehensive business logic
+- **Security Layer**: Authentication, authorization, and input validation
+- **ML Engine**: Secure inference engine for anomaly detection
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- **Docker & Docker Compose** (for local development)
-- **Node.js 18+** (for frontend development)
-- **Python 3.11+** (for backend development)
-- **AWS CLI** (for production deployment)
+- Python 3.8+
+- Redis server
+- PostgreSQL/MySQL database (optional, SQLite for development)
+- Docker (optional)
 
-### 1. Clone & Setup
+### Installation
 
-```bash
-git clone https://github.com/your-org/smartcloudops-ai.git
-cd smartcloudops-ai
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd smartcloudops-ai
+   ```
 
-# Setup environment
-cp env.example .env
-# Edit .env with your configuration
-```
+2. **Create virtual environment**
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
 
-### 2. Generate Secure Secrets
+3. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-```bash
-# Generate Flask secret key
-python -c "import secrets; print(secrets.token_hex(32))"
+4. **Set up environment variables**
+   ```bash
+   cp env.example .env
+   # Edit .env with your configuration
+   ```
 
-# Generate API keys
-python -c "import secrets; print('sk-admin-' + secrets.token_hex(32))"
-python -c "import secrets; print('sk-ml-' + secrets.token_hex(32))"
-python -c "import secrets; print('sk-readonly-' + secrets.token_hex(32))"
+5. **Run the application**
+   ```bash
+   # Development
+   export APP_ENV=development
+   python app/main.py
+   
+   # Production
+   export APP_ENV=production
+   gunicorn -w 4 -b 0.0.0.0:5000 app.main:app
+   ```
 
-# Generate API key salt
-python -c "import secrets; print(secrets.token_hex(16))"
-```
+## 🔧 Configuration
 
-### 3. Frontend Development
+### Environment Variables
 
-```bash
-cd frontend
-npm install
-npm start
-# Frontend runs on http://localhost:3000
-```
-
-### 4. Backend Development
-
-```bash
-cd app
-pip install -r requirements.txt
-python main.py
-# Backend runs on http://localhost:5000
-```
-
-### 5. Microservices Development
+The application uses a unified configuration system that supports multiple environments:
 
 ```bash
-# Authentication Service
-cd services/auth_service
-pip install -r requirements.txt
-python app.py
-# Auth service runs on http://localhost:5001
+# Application Environment
+APP_ENV=development|testing|production
 
-# ML Service
-cd services/ml_service
-pip install -r requirements.txt
-python app.py
-# ML service runs on http://localhost:5002
+# Database Configuration
+DATABASE_URL=postgresql://user:pass@localhost/dbname
+DB_POOL_SIZE=10
+DB_MAX_OVERFLOW=20
+
+# Redis Configuration
+REDIS_URL=redis://localhost:6379/0
+REDIS_MAX_CONNECTIONS=10
+
+# Security
+SECRET_KEY=your-secret-key-here
+CORS_ORIGINS=http://localhost:3000,https://yourdomain.com
+
+# Logging
+LOG_LEVEL=INFO
 ```
 
-### 6. Docker Development
+### Environment-Specific Settings
 
-```bash
-# Start all services
-docker-compose up -d
+#### Development
+- Uses local file-based secrets
+- SQLite database
+- Memory cache fallback
+- Debug mode enabled
 
-# View logs
-docker-compose logs -f
+#### Testing
+- Environment variable secrets
+- Test database
+- Minimal caching
+- Strict validation
 
-# Stop services
-docker-compose down
+#### Production
+- AWS Secrets Manager integration
+- PostgreSQL/MySQL database
+- Redis caching
+- Comprehensive security
+
+## 🗄 Database Setup
+
+### Using SQLAlchemy
+
+The application uses SQLAlchemy for database operations:
+
+```python
+from app.database_integration import db_service
+
+# Check database availability
+if db_service.is_available():
+    # Store metrics
+    db_service.store_metrics(metrics_data)
+    
+    # Get performance summary
+    summary = db_service.get_performance_summary()
 ```
 
----
+### Database Models
 
-## 🧪 Testing
+The system includes models for:
+- Metrics storage and retrieval
+- ML model predictions
+- User management
+- System events
 
-### Run All Tests
+## 🗂 Caching System
 
-```bash
-# Comprehensive test suite
-python tests/comprehensive_test_suite.py
+### Redis Integration
 
-# Security audit
-python scripts/security_audit.py
+```python
+from app.cache_service import cache_service, cached
 
-# Load testing
-python scripts/load_tester.py
+# Cache function results
+@cached("user_data", ttl=1800)
+def get_user_data(user_id):
+    return fetch_user_from_database(user_id)
+
+# Manual cache operations
+cache_service.set("key", value, ttl=300)
+cached_value = cache_service.get("key")
 ```
 
-### Test Coverage
+### Cache Configuration
 
-```bash
-# Run with coverage
-pytest --cov=app --cov-report=html
+- **Health Check**: 60 seconds TTL
+- **Metrics**: 30 seconds TTL
+- **ML Predictions**: 5 minutes TTL
+- **User Data**: 30 minutes TTL
+- **API Keys**: 1 hour TTL
+- **System Config**: 2 hours TTL
 
-# View coverage report
-open reports/coverage/index.html
+## 🔄 Background Tasks
+
+### Celery Integration
+
+The application uses Celery for asynchronous task processing:
+
+```python
+from app.background_tasks import (
+    train_ml_model,
+    process_metrics_data,
+    system_maintenance,
+    send_notifications
+)
+
+# Schedule tasks
+task = train_ml_model.delay(
+    model_type="anomaly_detection",
+    hyperparameters={"n_estimators": 100}
+)
+
+# Check task status
+from app.background_tasks import get_task_status
+status = get_task_status(task.id)
 ```
 
----
+### Available Tasks
 
-## 🚀 Production Deployment
+- **ML Model Training**: Train and deploy ML models
+- **Metrics Processing**: Analyze and store system metrics
+- **System Maintenance**: Cleanup, backup, and health checks
+- **Notifications**: Send alerts via email, Slack, or webhooks
+- **System Metrics Update**: Collect and store real-time metrics
 
-### 1. AWS Infrastructure
+## 🔌 API Endpoints
 
-```bash
-# Deploy infrastructure
-cd terraform/production
-terraform init
-terraform plan
-terraform apply
+### Core Endpoints
+
+```
+GET  /health                    # Health check
+GET  /status                    # System status
+GET  /metrics                   # System metrics
+GET  /tasks/{task_id}/status    # Background task status
 ```
 
-### 2. Application Deployment
+### API Blueprints
 
-```bash
-# Deploy application
-./scripts/deploy_production.sh
+#### Remediation API (`/api/v1/remediation`)
+```
+GET  /status                    # Remediation engine status
+POST /enable                    # Enable auto-remediation
+POST /disable                   # Disable auto-remediation
+GET  /rules                     # List remediation rules
+POST /rules                     # Add new rule
+DELETE /rules/{name}            # Remove rule
+GET  /actions                   # Action history
+POST /test                      # Test remediation
+GET  /metrics                   # Remediation metrics
+GET  /health                    # Remediation health
 ```
 
-### 3. Monitoring Setup
-
-```bash
-# Setup monitoring
-./scripts/setup_monitoring.sh
+#### ML API (`/api/v1/ml`)
+```
+GET  /health                    # ML engine health
+POST /predict                   # Make predictions
+GET  /metrics                   # ML performance metrics
 ```
 
----
+#### Other Blueprints
+- **Analytics**: Data analysis endpoints
+- **ChatOps**: Chat-based operations
+- **Integration**: Third-party integrations
+- **Logs**: Log management
+- **Metrics**: System metrics
 
-## 📊 Monitoring & Observability
-
-### Prometheus Metrics
-
-- **Application Metrics**: Request rate, response time, error rate
-- **ML Metrics**: Prediction accuracy, model performance, A/B test results
-- **System Metrics**: CPU, memory, disk usage
-- **Business Metrics**: Active users, API usage, revenue
-
-### Grafana Dashboards
-
-- **System Overview**: Real-time system health
-- **Application Performance**: API performance and errors
-- **ML Pipeline**: Model performance and predictions
-- **Business Intelligence**: User activity and trends
-
-### Alerting
-
-- **Critical Alerts**: System down, high error rate
-- **Performance Alerts**: Slow response time, high resource usage
-- **ML Alerts**: Model drift, low accuracy
-- **Business Alerts**: Unusual user activity
-
----
-
-## 🔒 Security
+## 🔒 Security Features
 
 ### Authentication & Authorization
 
-- **JWT Tokens**: Secure token-based authentication
-- **API Keys**: Role-based API key management
-- **RBAC**: Role-based access control
-- **Rate Limiting**: Protection against abuse
+- API key-based authentication
+- Role-based access control
+- Rate limiting
+- Input validation and sanitization
+
+### Security Headers
+
+- X-Content-Type-Options: nosniff
+- X-Frame-Options: DENY
+- X-XSS-Protection: 1; mode=block
+- Strict-Transport-Security
+- Content-Security-Policy
 
 ### Data Protection
 
-- **Encryption**: Data encrypted at rest and in transit
-- **Secrets Management**: Secure secrets storage
-- **Input Validation**: Comprehensive input sanitization
-- **SQL Injection Protection**: Parameterized queries
+- Secure secret management
+- Environment-specific security rules
+- Audit logging
+- Fail-secure design
 
-### Compliance
+## 🧪 Testing
 
-- **GDPR**: Data privacy compliance
-- **SOC 2**: Security controls
-- **ISO 27001**: Information security management
+### Running Tests
 
----
+```bash
+# Run all tests
+pytest
 
-## 🤖 Machine Learning
+# Run with coverage
+pytest --cov=app
 
-### Anomaly Detection
+# Run specific test suite
+pytest tests/phase_1/
+pytest tests/phase_2/
+pytest tests/phase_3/
+pytest tests/phase_4/
+```
 
-- **Isolation Forest**: Unsupervised anomaly detection
-- **Real-time Processing**: Sub-second prediction latency
-- **Model Versioning**: Track model performance over time
-- **A/B Testing**: Compare model versions
+### Test Structure
 
-### Model Management
+- **Phase 1**: Core utilities and infrastructure
+- **Phase 2**: API blueprints and Flask application
+- **Phase 3**: ML inference and metrics
+- **Phase 4**: Auto-remediation and background tasks
 
-- **Model Registry**: Centralized model storage
-- **Version Control**: Track model changes
-- **Performance Monitoring**: Monitor model drift
-- **Auto-retraining**: Automatic model updates
+## 📊 Monitoring & Observability
 
----
+### Health Checks
 
-## 📈 Performance
+```bash
+# Application health
+curl http://localhost:5000/health
 
-### Optimization
+# Database health
+curl http://localhost:5000/status
 
-- **Caching**: Redis-based caching layer
-- **Connection Pooling**: Database connection optimization
-- **Load Balancing**: Distribute traffic across instances
-- **Auto-scaling**: Automatic resource scaling
+# ML engine health
+curl http://localhost:5000/api/v1/ml/health
+```
 
-### Benchmarks
+### Metrics Collection
 
-- **Response Time**: < 100ms for 95% of requests
-- **Throughput**: 10,000+ requests per second
-- **Availability**: 99.9% uptime
-- **Scalability**: Linear scaling with resources
+- Prometheus metrics endpoint
+- Custom application metrics
+- Database performance metrics
+- Cache hit/miss ratios
 
----
+### Logging
+
+- Structured logging with structlog
+- Request/response logging
+- Error tracking with Sentry
+- Audit trail for security events
+
+## 🚀 Production Deployment
+
+### Docker Deployment
+
+```dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+COPY . .
+EXPOSE 5000
+
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "app.main:app"]
+```
+
+### Environment Setup
+
+```bash
+# Production environment
+export APP_ENV=production
+export DATABASE_URL=postgresql://user:pass@db:5432/smartcloudops
+export REDIS_URL=redis://redis:6379/0
+export SECRET_KEY=$(openssl rand -hex 32)
+
+# Start services
+docker-compose up -d
+```
+
+### Scaling
+
+- **Horizontal Scaling**: Multiple application instances behind load balancer
+- **Database Scaling**: Read replicas and connection pooling
+- **Cache Scaling**: Redis cluster for high availability
+- **Task Processing**: Multiple Celery workers
 
 ## 🔧 Development
 
 ### Code Quality
 
-- **Linting**: ESLint, Pylint, Black
-- **Type Checking**: TypeScript, MyPy
-- **Security Scanning**: Bandit, Safety, Trivy
-- **Code Coverage**: > 90% test coverage
-
-### CI/CD Pipeline
-
-- **Automated Testing**: Unit, integration, security tests
-- **Code Quality**: Linting, type checking, coverage
-- **Security Scanning**: Vulnerability scanning
-- **Deployment**: Automated deployment to staging/production
-
----
-
-## 📚 API Documentation
-
-### Authentication
-
 ```bash
-# Login
-POST /auth/login
-{
-  "username": "admin",
-  "password": "password"
-}
+# Format code
+black app/
 
-# Verify Token
-POST /auth/verify
-{
-  "token": "jwt_token_here"
-}
+# Lint code
+flake8 app/
+
+# Type checking
+mypy app/
+
+# Security audit
+bandit -r app/
+safety check
 ```
 
-### ML Predictions
+### Development Workflow
 
-```bash
-# Make Prediction
-POST /ml/predict
-{
-  "features": {
-    "cpu_usage": 0.75,
-    "memory_usage": 0.60,
-    "disk_usage": 0.45,
-    "network_io": 0.30
-  }
-}
-```
+1. Create feature branch
+2. Implement changes
+3. Add tests
+4. Run quality checks
+5. Submit pull request
 
-### Monitoring
+## 📚 Documentation
 
-```bash
-# Health Check
-GET /health
-
-# Metrics
-GET /metrics
-
-# Status
-GET /status
-```
-
----
+- [API Documentation](docs/api.md)
+- [Architecture Guide](docs/architecture.md)
+- [Deployment Guide](docs/deployment.md)
+- [Security Guide](docs/security.md)
 
 ## 🤝 Contributing
-
-### Development Setup
 
 1. Fork the repository
 2. Create a feature branch
@@ -357,63 +391,16 @@ GET /status
 4. Add tests
 5. Submit a pull request
 
-### Code Standards
-
-- Follow PEP 8 for Python
-- Use TypeScript for frontend
-- Write comprehensive tests
-- Update documentation
-
----
-
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
----
-
 ## 🆘 Support
 
-### Documentation
-
-- [API Reference](docs/api.md)
-- [Deployment Guide](docs/deployment.md)
-- [Troubleshooting](docs/troubleshooting.md)
-
-### Community
-
-- [Discussions](https://github.com/your-org/smartcloudops-ai/discussions)
-- [Issues](https://github.com/your-org/smartcloudops-ai/issues)
-- [Wiki](https://github.com/your-org/smartcloudops-ai/wiki)
-
-### Contact
-
-- **Email**: support@smartcloudops.ai
-- **Slack**: [Join our workspace](https://smartcloudops.slack.com)
-- **Discord**: [Join our server](https://discord.gg/smartcloudops)
+- **Documentation**: [docs/](docs/)
+- **Issues**: [GitHub Issues](https://github.com/your-repo/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-repo/discussions)
 
 ---
 
-## 🗺 Roadmap
-
-### Q1 2024
-- [ ] Multi-cloud support
-- [ ] Advanced ML models
-- [ ] Real-time collaboration
-- [ ] Mobile app
-
-### Q2 2024
-- [ ] AI-powered recommendations
-- [ ] Advanced analytics
-- [ ] Enterprise features
-- [ ] API marketplace
-
-### Q3 2024
-- [ ] Global deployment
-- [ ] Advanced security
-- [ ] Performance optimization
-- [ ] Developer tools
-
----
-
-**Built with ❤️ by the SmartCloudOps AI Team**
+**SmartCloudOps AI** - Intelligent Cloud Operations Platform

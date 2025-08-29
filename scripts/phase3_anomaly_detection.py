@@ -66,8 +66,8 @@ class SmartCloudOpsAnomalyDetector:
 
     def __init__(
         self,
-        prometheus_url="http://3.89.229.102:9090",
-        s3_bucket="smartcloudops-ai-ml-models-aa7be1e7",
+        prometheus_url=None,
+        s3_bucket=None,
     ):
         """
         Initialize the anomaly detection system.
@@ -76,8 +76,8 @@ class SmartCloudOpsAnomalyDetector:
             prometheus_url (str): Prometheus server URL
             s3_bucket (str): S3 bucket for model storage
         """
-        self.prometheus_url = prometheus_url
-        self.s3_bucket = s3_bucket
+        self.prometheus_url = prometheus_url or os.getenv("PROMETHEUS_URL", "http://localhost:9090")
+        self.s3_bucket = s3_bucket or os.getenv("S3_BUCKET", "smartcloudops-ai-ml-models")
         self.models = {}
         self.scalers = {}
         self.metrics_config = {

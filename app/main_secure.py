@@ -787,4 +787,5 @@ if __name__ == "__main__":
     if debug:
         logger.warning("⚠️ Running in DEBUG mode - disable for production!")
 
-    app.run(host="0.0.0.0", port=port, debug=debug, threaded=True)
+    host = os.environ.get("HOST", "0.0.0.0")
+    app.run(host=host, port=port, debug=debug, threaded=True)

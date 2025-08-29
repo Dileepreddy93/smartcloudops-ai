@@ -152,9 +152,10 @@ class NLPEnhancedChatOps:
 
         # Initialize AWS clients (mock for testing)
         try:
-            self.ec2_client = boto3.client("ec2", region_name="us-east-1")
-            self.cloudwatch_client = boto3.client("cloudwatch", region_name="us-east-1")
-            self.s3_client = boto3.client("s3", region_name="us-east-1")
+            aws_region = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
+            self.ec2_client = boto3.client("ec2", region_name=aws_region)
+            self.cloudwatch_client = boto3.client("cloudwatch", region_name=aws_region)
+            self.s3_client = boto3.client("s3", region_name=aws_region)
         except Exception as e:
             logger.warning(f"AWS clients not configured: {e}")
             self.ec2_client = None

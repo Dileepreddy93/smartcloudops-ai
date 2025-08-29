@@ -27,7 +27,7 @@ class AWSIntegrationService:
 
     def __init__(self):
         """Initialize AWS integration service."""
-        self.region = "us-east-1"
+        self.region = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
         self.session = boto3.Session(region_name=self.region)
 
         # Initialize AWS clients

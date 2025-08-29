@@ -413,10 +413,12 @@ def initialize_database_pool(db_url: Optional[str] = None) -> DatabasePool:
 
     # Parse database URL
     if not db_url:
-        db_url = os.getenv(
-            "DATABASE_URL",
-            "postgresql://postgres:password@localhost:5432/smartcloudops",
-        )
+        db_url = os.getenv("DATABASE_URL")
+        if not db_url:
+            raise ValueError(
+                "DATABASE_URL environment variable is required. "
+                "Set it to: postgresql://user:password@host:port/database"
+            )
 
     # Parse URL components
     if db_url.startswith("postgresql://"):

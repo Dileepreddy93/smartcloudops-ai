@@ -498,14 +498,23 @@ def main():
         print(f"   • {rec}")
     print("="*60)
     
-    # Ask user if they want to commit fixes
+    # Auto-commit fixes in CI environment or ask user in interactive mode
     if applied_fixes:
-        response = input("\n🤔 Do you want to commit and push these fixes? (y/N): ")
-        if response.lower() in ['y', 'yes']:
+        # Check if running in CI environment
+        if os.getenv('CI') or os.getenv('GITHUB_ACTIONS'):
+            logger.info("🔧 Running in CI environment - auto-committing fixes...")
             if fixer.commit_fixes():
                 logger.info("✅ Fixes committed and pushed successfully")
             else:
                 logger.error("❌ Failed to commit fixes")
+        else:
+            # Interactive mode
+            response = input("\n🤔 Do you want to commit and push these fixes? (y/N): ")
+            if response.lower() in ['y', 'yes']:
+                if fixer.commit_fixes():
+                    logger.info("✅ Fixes committed and pushed successfully")
+                else:
+                    logger.error("❌ Failed to commit fixes")
     
     logger.info(f"📄 Report saved to {report_file}")
 

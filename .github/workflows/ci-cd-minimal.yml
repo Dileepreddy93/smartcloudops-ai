@@ -1,5 +1,5 @@
 name: SmartCloudOps AI - Minimal CI/CD Pipeline
-true:
+on:
   push:
     branches:
     - main
@@ -69,14 +69,6 @@ jobs:
       if: needs.test.result == 'failure'
       run: "echo \"\u274C CI/CD Pipeline failed\"\necho \"\U0001F4A1 Check the test\
         \ job logs for details\"\n"
-'on':
-  push:
-    branches:
-    - main
-    - develop
-  pull_request:
-    branches:
-    - main
 permissions:
   contents: read
   pull-requests: write

@@ -56,16 +56,22 @@ jobs:
 
         '
     - name: Set up test environment
-      run: "# Generate test environment variables with fallbacks\npython -c \"\nimport\
-        \ secrets\nimport os\ntest_vars = {\n    'JWT_SECRET_KEY': '${{ secrets.JWT_SECRET_KEY\
-        \ }}' or secrets.token_urlsafe(64),\n    'ADMIN_API_KEY': '${{ secrets.ADMIN_API_KEY\
-        \ }}' or f'sk-admin-{secrets.token_urlsafe(32)}',\n    'ML_API_KEY': '${{\
-        \ secrets.ML_API_KEY }}' or f'sk-ml-{secrets.token_urlsafe(32)}',\n    'READONLY_API_KEY':\
-        \ '${{ secrets.READONLY_API_KEY }}' or f'sk-readonly-{secrets.token_urlsafe(32)}',\n\
-        \    'API_KEY_SALT': '${{ secrets.API_KEY_SALT }}' or secrets.token_urlsafe(16),\n\
-        \    'ADMIN_PASSWORD': '${{ secrets.ADMIN_PASSWORD }}' or secrets.token_urlsafe(16)\n\
-        }\nfor key, value in test_vars.items():\n    print(f'{key}={value}')\n\" >\
-        \ .env.test\n"
+      run: |
+        # Generate test environment variables with fallbacks
+        python -c "
+        import secrets
+        import os
+        test_vars = {
+            'JWT_SECRET_KEY': os.getenv('JWT_SECRET_KEY', secrets.token_urlsafe(64)),
+            'ADMIN_API_KEY': os.getenv('ADMIN_API_KEY', f'sk-admin-{secrets.token_urlsafe(32)}'),
+            'ML_API_KEY': os.getenv('ML_API_KEY', f'sk-ml-{secrets.token_urlsafe(32)}'),
+            'READONLY_API_KEY': os.getenv('READONLY_API_KEY', f'sk-readonly-{secrets.token_urlsafe(32)}'),
+            'API_KEY_SALT': os.getenv('API_KEY_SALT', secrets.token_urlsafe(16)),
+            'ADMIN_PASSWORD': os.getenv('ADMIN_PASSWORD', secrets.token_urlsafe(16))
+        }
+        for key, value in test_vars.items():
+            print(f'{key}={value}')
+        " > .env.test
     - name: Run backend tests
       run: 'export $(cat .env.test | xargs)
 
@@ -219,7 +225,6 @@ jobs:
     needs:
     - build-docker
     if: github.ref == 'refs/heads/main'
-    environment: production
     steps:
     - name: Deploy to production
       run: 'echo "Deploying to production environment..."
@@ -251,14 +256,6 @@ jobs:
       if: always()
       with:
         sarif_file: trivy-results.sarif
-'on':
-  push:
-    branches:
-    - main
-    - develop
-  pull_request:
-    branches:
-    - main
 permissions:
   contents: read
   pull-requests: write

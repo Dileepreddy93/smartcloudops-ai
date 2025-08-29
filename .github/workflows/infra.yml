@@ -1,5 +1,5 @@
 name: Infrastructure Validation
-true:
+on:
   pull_request:
     paths:
     - terraform/**
@@ -112,11 +112,4 @@ jobs:
       working-directory: terraform
       run: "echo \"\U0001F4CA Infrastructure Outputs:\"\nterraform output -json >\
         \ outputs.json\ncat outputs.json\n"
-'on':
-  push:
-    branches:
-    - main
-    - develop
-  pull_request:
-    branches:
-    - main
+

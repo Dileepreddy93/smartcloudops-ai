@@ -1,5 +1,5 @@
 name: Code Quality & Security
-true:
+on:
   push:
     branches:
     - main
@@ -29,83 +29,53 @@ jobs:
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-3.11-${{ hashFiles('app/requirements.txt') }}
-        restore-keys: '${{ runner.os }}-pip-3.11-
-
-          '
+        restore-keys: '${{ runner.os }}-pip-3.11-'
     - name: Install dependencies
-      run: "python -m pip install --upgrade pip\npip install -r app/requirements.txt\n\
-        pip install black ruff safety bandit mypy\npip install types-boto3 types-psutil\
-        \ types-seaborn pandas-stubs\necho \"\U0001F50D Installed packages:\"\npip\
-        \ list | grep -E \"(mypy|types-|pandas-stubs)\"\necho \"\U0001F50D MyPy version:\"\
-        \nmypy --version\n"
+      run: "python -m pip install --upgrade pip\npip install -r app/requirements.txt\npip install black ruff safety bandit mypy\npip install types-boto3 types-psutil types-seaborn pandas-stubs\necho \"🔍 Installed packages:\"\npip list | grep -E \"(mypy|types-|pandas-stubs)\"\necho \"🔍 MyPy version:\"\nmypy --version\n"
     - name: Run Black formatting check
-      run: "echo \"\U0001F3A8 Checking code formatting with Black...\"\nblack --check\
-        \ --diff app/ scripts/ tests/\necho \"\u2705 Black formatting check passed\"\
-        \n"
+      run: "echo \"🎨 Checking code formatting with Black...\"\nblack --check --diff app/ scripts/ tests/\necho \"✅ Black formatting check passed\"\n"
     - name: Run Ruff linting
-      run: "echo \"\U0001F50D Running Ruff linting...\"\nruff check app/ scripts/\
-        \ tests/\necho \"\u2705 Ruff linting passed\"\n"
+      run: "echo \"🔍 Running Ruff linting...\"\nruff check app/ scripts/ tests/\necho \"✅ Ruff linting passed\"\n"
     - name: Run type checking with MyPy
-      run: "echo \"\U0001F50D Running type checking with MyPy...\"\necho \"\U0001F50D\
-        \ Current directory: $(pwd)\"\necho \"\U0001F50D Testing MyPy with minimal\
-        \ config:\"\nmypy app/ --ignore-missing-imports --no-strict-optional --no-warn-return-any\
-        \ --no-warn-unused-ignores || echo \"\u26A0\uFE0F MyPy found issues but continuing...\"\
-        \necho \"\u2705 Type checking completed\"\n"
+      run: "echo \"🔍 Running type checking with MyPy...\"\necho \"🔍 Current directory: $(pwd)\"\necho \"🔍 Testing MyPy with minimal config:\"\nmypy app/ --ignore-missing-imports --no-strict-optional --no-warn-return-any --no-warn-unused-ignores || echo \"⚠️ MyPy found issues but continuing...\"\necho \"✅ Type checking completed\"\n"
     - name: Run Bandit security scan
-      run: "echo \"\U0001F512 Running Bandit security scan...\"\nbandit -r app/ -f\
-        \ json -o bandit-report.json --severity-level high || true\necho \"\u2705\
-        \ Bandit security scan completed\"\n"
+      run: "echo \"🔒 Running Bandit security scan...\"\nbandit -r app/ -f json -o bandit-report.json --severity-level high || true\necho \"✅ Bandit security scan completed\"\n"
     - name: Run Safety dependency check
-      run: "echo \"\U0001F512 Running Safety dependency check...\"\nsafety check --json\
-        \ --output safety-report.json || true\necho \"\u2705 Safety dependency check\
-        \ completed\"\n"
+      run: "echo \"🔒 Running Safety dependency check...\"\nsafety check --json --output safety-report.json || true\necho \"✅ Safety dependency check completed\"\n"
     - name: Check for security vulnerabilities
-      run: "if [ -f safety-report.json ]; then\n  if command -v jq >/dev/null 2>&1;\
-        \ then\n    VULN_COUNT=$(jq '.vulnerabilities | length' safety-report.json\
-        \ 2>/dev/null || echo \"0\")\n    if [ \"$VULN_COUNT\" -gt 0 ]; then\n   \
-        \   echo \"\u26A0\uFE0F Found $VULN_COUNT security vulnerabilities (showing\
-        \ first 5)\"\n      jq '.vulnerabilities[] | \"\\(.package_name): \\(.vulnerable_spec)\
-        \ - \\(.advisory)\"' safety-report.json 2>/dev/null | head -5\n      echo\
-        \ \"\u26A0\uFE0F Security vulnerabilities found but not blocking deployment\"\
-        \n      echo \"\U0001F4A1 Consider updating dependencies to fix these vulnerabilities\"\
-        \n    else\n      echo \"\u2705 No security vulnerabilities found\"\n    fi\n\
-        \  else\n    echo \"\u26A0\uFE0F jq not available, skipping vulnerability\
-        \ count\"\n    echo \"\u26A0\uFE0F Security scan completed but vulnerability\
-        \ analysis skipped\"\n  fi\nelse\n  echo \"\u26A0\uFE0F No safety report found\"\
-        \nfi\n"
+      run: "if [ -f safety-report.json ]; then\n  if command -v jq >/dev/null 2>&1; then\n    VULN_COUNT=$(jq '.vulnerabilities | length' safety-report.json 2>/dev/null || echo \"0\")\n    if [ \"$VULN_COUNT\" -gt 0 ]; then\n      echo \"⚠️ Found $VULN_COUNT security vulnerabilities (showing first 5)\"\n      jq '.vulnerabilities[] | \"\\(.package_name): \\(.vulnerable_spec) - \\(.advisory)\"' safety-report.json 2>/dev/null | head -5\n      echo \"⚠️ Security vulnerabilities found but not blocking deployment\"\n      echo \"💡 Consider updating dependencies to fix these vulnerabilities\"\n    else\n      echo \"✅ No security vulnerabilities found\"\n    fi\n  else\n    echo \"⚠️ jq not available, skipping vulnerability count\"\n    echo \"⚠️ Security scan completed but vulnerability analysis skipped\"\n  fi\nelse\n  echo \"⚠️ No safety report found\"\nfi\n"
     - name: Upload security reports
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: security-reports
-        path: 'bandit-report.json
-
-          safety-report.json
-
-          '
+        path: 'bandit-report.json\nsafety-report.json'
         retention-days: 30
     - name: Comment PR with results
       if: github.event_name == 'pull_request'
       uses: actions/github-script@v7
       with:
-        script: "let comment = '## \U0001F50D Code Quality & Security Results\\n\\\
-          n';\n\ncomment += '### \u2705 Quality Checks\\n';\ncomment += '- **Black\
-          \ Formatting**: \u2705 Passed\\n';\ncomment += '- **Ruff Linting**: \u2705\
-          \ Passed\\n';\ncomment += '- **Type Checking**: \u2705 Passed\\n\\n';\n\n\
-          comment += '### \U0001F512 Security Checks\\n';\ncomment += '- **Bandit\
-          \ Scan**: \u2705 Completed\\n';\ncomment += '- **Safety Check**: \u2705\
-          \ Completed\\n';\ncomment += '- **Vulnerabilities**: \u2705 None found\\\
-          n\\n';\n\ncomment += '### \U0001F4CB Summary\\n';\ncomment += 'All code\
-          \ quality and security checks have passed successfully.\\n\\n';\ncomment\
-          \ += '### \U0001F680 Next Steps\\n';\ncomment += 'This PR meets all quality\
-          \ standards and is ready for review.\\n';\n\ngithub.rest.issues.createComment({\n\
-          \  issue_number: context.issue.number,\n  owner: context.repo.owner,\n \
-          \ repo: context.repo.repo,\n  body: comment\n});\n"
-'on':
-  push:
-    branches:
-    - main
-    - develop
-  pull_request:
-    branches:
-    - main
+        script: |
+          let comment = '## 🔍 Code Quality & Security Results\n\n';
+          
+          comment += '### ✅ Quality Checks\n';
+          comment += '- **Black Formatting**: ✅ Passed\n';
+          comment += '- **Ruff Linting**: ✅ Passed\n';
+          comment += '- **Type Checking**: ✅ Passed\n\n';
+          
+          comment += '### 🔒 Security Checks\n';
+          comment += '- **Bandit Scan**: ✅ Completed\n';
+          comment += '- **Safety Check**: ✅ Completed\n';
+          comment += '- **Vulnerabilities**: ✅ None found\n\n';
+          
+          comment += '### 📋 Summary\n';
+          comment += 'All code quality and security checks have passed successfully.\n\n';
+          comment += '### 🚀 Next Steps\n';
+          comment += 'This PR meets all quality standards and is ready for review.\n';
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });

@@ -41,14 +41,6 @@ jobs:
         python -m pytest tests/phase_1/ -v --tb=short
 
         '
-'on':
-  push:
-    branches:
-    - main
-    - develop
-  pull_request:
-    branches:
-    - main
 permissions:
   contents: read
   pull-requests: write

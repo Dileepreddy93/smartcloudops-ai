@@ -1,270 +1,227 @@
 name: Workflow Monitor & Auto-Fix
-
-on:
+true:
   schedule:
-    # Run every 6 hours
-    - cron: '0 */6 * * *'
+  - cron: 0 */6 * * *
   workflow_run:
-    # Trigger when other workflows fail
-    workflows: ["CI/CD Pipeline", "Code Quality & Security", "Infrastructure Validation"]
-    types: [completed]
-    branches: [main, develop]
-  workflow_dispatch:
-    # Allow manual triggering
-
+    workflows:
+    - CI/CD Pipeline
+    - Code Quality & Security
+    - Infrastructure Validation
+    types:
+    - completed
+    branches:
+    - main
+    - develop
+  workflow_dispatch: null
 env:
   PYTHON_VERSION: '3.11'
-
 permissions:
   contents: read
   pull-requests: write
   issues: write
-
 jobs:
   monitor-workflows:
     name: Monitor & Auto-Fix Workflows
     runs-on: ubuntu-latest
-    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         fetch-depth: 0
-    
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-        cache: 'pip'
-    
+        cache: pip
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
+      run: 'python -m pip install --upgrade pip
+
         pip install requests pyyaml python-dotenv
-    
+
+        '
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-        cache: 'npm'
+        cache: npm
         cache-dependency-path: frontend/package-lock.json
       continue-on-error: true
-    
     - name: Install frontend dependencies
       working-directory: frontend
       run: npm ci
       continue-on-error: true
-    
     - name: Run workflow monitor
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
         GITHUB_REPOSITORY_NAME: ${{ github.event.repository.name }}
-      run: |
-        python3 scripts/workflow_monitor.py
-    
+      run: 'python3 scripts/workflow_monitor.py
+
+        '
     - name: Run workflow fixer
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        python3 scripts/auto_workflow_fixer.py
-    
+      run: 'python3 scripts/auto_workflow_fixer.py
+
+        '
     - name: Check for workflow issues
       id: check-issues
-      run: |
-        # Check if any workflow files have issues
-        if [ -f workflow_fix_report_*.json ]; then
-          echo "issues_found=true" >> $GITHUB_OUTPUT
-          echo "Found workflow issues that need fixing"
-        else
-          echo "issues_found=false" >> $GITHUB_OUTPUT
-          echo "No workflow issues found"
-        fi
-    
+      run: "# Check if any workflow files have issues\nif [ -f workflow_fix_report_*.json\
+        \ ]; then\n  echo \"issues_found=true\" >> $GITHUB_OUTPUT\n  echo \"Found\
+        \ workflow issues that need fixing\"\nelse\n  echo \"issues_found=false\"\
+        \ >> $GITHUB_OUTPUT\n  echo \"No workflow issues found\"\nfi\n"
     - name: Apply fixes if needed
       if: steps.check-issues.outputs.issues_found == 'true'
-      run: |
-        echo "Applying workflow fixes..."
+      run: 'echo "Applying workflow fixes..."
+
         # The auto_workflow_fixer.py script will handle the fixes
+
         # This step is just for logging
-    
+
+        '
     - name: Commit fixes
       if: steps.check-issues.outputs.issues_found == 'true'
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add .
-        git commit -m "🔧 Auto-fix workflow issues [skip ci]" || echo "No changes to commit"
-        git push
-    
+      run: "git config --local user.email \"action@github.com\"\ngit config --local\
+        \ user.name \"GitHub Action\"\ngit add .\ngit commit -m \"\U0001F527 Auto-fix\
+        \ workflow issues [skip ci]\" || echo \"No changes to commit\"\ngit push\n"
     - name: Upload monitoring reports
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: workflow-monitoring-reports
-        path: |
-          workflow_monitor_report_*.json
+        path: 'workflow_monitor_report_*.json
+
           workflow_fix_report_*.json
+
           workflow_monitor.log
+
           workflow_fixer.log
+
+          '
         retention-days: 30
-    
     - name: Create issue for persistent failures
       if: failure()
       uses: actions/github-script@v7
       with:
-        script: |
-          const fs = require('fs');
-          const path = require('path');
-          
-          // Check for recent monitoring reports
-          const reports = fs.readdirSync('.').filter(file => 
-            file.startsWith('workflow_monitor_report_') || 
-            file.startsWith('workflow_fix_report_')
-          );
-          
-          if (reports.length > 0) {
-            const latestReport = reports.sort().pop();
-            const reportData = JSON.parse(fs.readFileSync(latestReport, 'utf8'));
-            
-            const issueTitle = '🚨 Workflow Monitoring: Persistent Issues Detected';
-            const issueBody = '## Workflow Monitoring Alert\n\n' +
-              '**Timestamp:** ' + reportData.timestamp + '\n' +
-              '**Total Issues:** ' + (reportData.total_issues || 0) + '\n' +
-              '**Fixed Issues:** ' + (reportData.fixed_issues || 0) + '\n' +
-              '**Remaining Issues:** ' + (reportData.remaining_issues || 0) + '\n\n' +
-              '### Issues by Severity:\n' +
-              Object.entries(reportData.issues_by_severity || {}).map(([severity, count]) => 
-                '- **' + severity.toUpperCase() + ':** ' + count
-              ).join('\n') + '\n\n' +
-              '### Recommendations:\n' +
-              (reportData.recommendations || []).map(rec => '- ' + rec).join('\n') + '\n\n' +
-              '### Next Steps:\n' +
-              '1. Review the attached monitoring reports\n' +
-              '2. Address any critical issues manually\n' +
-              '3. Check workflow configurations\n' +
-              '4. Update dependencies if needed\n\n' +
-              '---\n' +
-              '*This issue was automatically created by the Workflow Monitor & Auto-Fix system.*';
-            
-            // Check if issue already exists
-            const existingIssues = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              labels: ['workflow-monitor']
-            });
-            
-            const hasExistingIssue = existingIssues.data.some(issue => 
-              issue.title.includes('Workflow Monitoring: Persistent Issues')
-            );
-            
-            if (!hasExistingIssue) {
-              await github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: issueTitle,
-                body: issueBody,
-                labels: ['workflow-monitor', 'automation', 'ci/cd']
-              });
-            }
-          }
-
+        script: "const fs = require('fs');\nconst path = require('path');\n\n// Check\
+          \ for recent monitoring reports\nconst reports = fs.readdirSync('.').filter(file\
+          \ => \n  file.startsWith('workflow_monitor_report_') || \n  file.startsWith('workflow_fix_report_')\n\
+          );\n\nif (reports.length > 0) {\n  const latestReport = reports.sort().pop();\n\
+          \  const reportData = JSON.parse(fs.readFileSync(latestReport, 'utf8'));\n\
+          \  \n  const issueTitle = '\U0001F6A8 Workflow Monitoring: Persistent Issues\
+          \ Detected';\n  const issueBody = '## Workflow Monitoring Alert\\n\\n' +\n\
+          \    '**Timestamp:** ' + reportData.timestamp + '\\n' +\n    '**Total Issues:**\
+          \ ' + (reportData.total_issues || 0) + '\\n' +\n    '**Fixed Issues:** '\
+          \ + (reportData.fixed_issues || 0) + '\\n' +\n    '**Remaining Issues:**\
+          \ ' + (reportData.remaining_issues || 0) + '\\n\\n' +\n    '### Issues by\
+          \ Severity:\\n' +\n    Object.entries(reportData.issues_by_severity || {}).map(([severity,\
+          \ count]) => \n      '- **' + severity.toUpperCase() + ':** ' + count\n\
+          \    ).join('\\n') + '\\n\\n' +\n    '### Recommendations:\\n' +\n    (reportData.recommendations\
+          \ || []).map(rec => '- ' + rec).join('\\n') + '\\n\\n' +\n    '### Next\
+          \ Steps:\\n' +\n    '1. Review the attached monitoring reports\\n' +\n \
+          \   '2. Address any critical issues manually\\n' +\n    '3. Check workflow\
+          \ configurations\\n' +\n    '4. Update dependencies if needed\\n\\n' +\n\
+          \    '---\\n' +\n    '*This issue was automatically created by the Workflow\
+          \ Monitor & Auto-Fix system.*';\n  \n  // Check if issue already exists\n\
+          \  const existingIssues = await github.rest.issues.listForRepo({\n    owner:\
+          \ context.repo.owner,\n    repo: context.repo.repo,\n    state: 'open',\n\
+          \    labels: ['workflow-monitor']\n  });\n  \n  const hasExistingIssue =\
+          \ existingIssues.data.some(issue => \n    issue.title.includes('Workflow\
+          \ Monitoring: Persistent Issues')\n  );\n  \n  if (!hasExistingIssue) {\n\
+          \    await github.rest.issues.create({\n      owner: context.repo.owner,\n\
+          \      repo: context.repo.repo,\n      title: issueTitle,\n      body: issueBody,\n\
+          \      labels: ['workflow-monitor', 'automation', 'ci/cd']\n    });\n  }\n\
+          }\n"
   complete-fix-cycle:
     name: Complete Fix Cycle
     runs-on: ubuntu-latest
     needs: monitor-workflows
     if: needs.monitor-workflows.result == 'failure'
-    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         fetch-depth: 0
-    
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-        cache: 'pip'
-    
+        cache: pip
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
+      run: 'python -m pip install --upgrade pip
+
         pip install -r app/requirements.txt
+
         pip install requests pyyaml python-dotenv
-    
+
+        '
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-        cache: 'npm'
+        cache: npm
         cache-dependency-path: frontend/package-lock.json
       continue-on-error: true
-    
     - name: Install frontend dependencies
       working-directory: frontend
       run: npm ci
       continue-on-error: true
-    
     - name: Run complete fix cycle
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
         GITHUB_REPOSITORY_NAME: ${{ github.event.repository.name }}
-      run: |
-        python scripts/fix_all_workflow_issues.py
-    
+      run: 'python scripts/fix_all_workflow_issues.py
+
+        '
     - name: Upload complete fix report
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: complete-fix-reports
-        path: |
-          workflow_fix_complete_report_*.json
-          workflow_fix_complete.log
-        retention-days: 30
+        path: 'workflow_fix_complete_report_*.json
 
+          workflow_fix_complete.log
+
+          '
+        retention-days: 30
   notify-success:
     name: Notify Success
     runs-on: ubuntu-latest
-    needs: [monitor-workflows, complete-fix-cycle]
-    if: always() && (needs.monitor-workflows.result == 'success' || needs.complete-fix-cycle.result == 'success')
-    
+    needs:
+    - monitor-workflows
+    - complete-fix-cycle
+    if: always() && (needs.monitor-workflows.result == 'success' || needs.complete-fix-cycle.result
+      == 'success')
     steps:
     - name: Success notification
-      run: |
-        echo "🎉 Workflow monitoring and fixing completed successfully!"
-        echo "All workflow issues have been resolved."
-    
+      run: "echo \"\U0001F389 Workflow monitoring and fixing completed successfully!\"\
+        \necho \"All workflow issues have been resolved.\"\n"
     - name: Comment on PR if triggered by workflow_run
       if: github.event.workflow_run
       uses: actions/github-script@v7
       with:
-        script: |
-          const comment = '## ✅ Workflow Issues Resolved\n\n' +
-            'The workflow monitoring system has successfully resolved the issues that caused the previous workflow failure.\n\n' +
-            '**Resolution Details:**\n' +
-            '- Issues detected and fixed automatically\n' +
-            '- All workflows are now passing\n' +
-            '- System is healthy and operational\n\n' +
-            '**Next Steps:**\n' +
-            '- Monitor for any new issues\n' +
-            '- Review the applied fixes\n' +
-            '- Continue with normal development workflow\n\n' +
-            '---\n' +
-            '*This resolution was automatically applied by the Workflow Monitor & Auto-Fix system.*';
-          
-          // Find the PR associated with the workflow run
-          const workflowRun = context.payload.workflow_run;
-          if (workflowRun && workflowRun.pull_requests && workflowRun.pull_requests.length > 0) {
-            const pr = workflowRun.pull_requests[0];
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pr.number,
-              body: comment
-            });
-          }
+        script: "const comment = '## \u2705 Workflow Issues Resolved\\n\\n' +\n  'The\
+          \ workflow monitoring system has successfully resolved the issues that caused\
+          \ the previous workflow failure.\\n\\n' +\n  '**Resolution Details:**\\\
+          n' +\n  '- Issues detected and fixed automatically\\n' +\n  '- All workflows\
+          \ are now passing\\n' +\n  '- System is healthy and operational\\n\\n' +\n\
+          \  '**Next Steps:**\\n' +\n  '- Monitor for any new issues\\n' +\n  '- Review\
+          \ the applied fixes\\n' +\n  '- Continue with normal development workflow\\\
+          n\\n' +\n  '---\\n' +\n  '*This resolution was automatically applied by\
+          \ the Workflow Monitor & Auto-Fix system.*';\n\n// Find the PR associated\
+          \ with the workflow run\nconst workflowRun = context.payload.workflow_run;\n\
+          if (workflowRun && workflowRun.pull_requests && workflowRun.pull_requests.length\
+          \ > 0) {\n  const pr = workflowRun.pull_requests[0];\n  await github.rest.issues.createComment({\n\
+          \    owner: context.repo.owner,\n    repo: context.repo.repo,\n    issue_number:\
+          \ pr.number,\n    body: comment\n  });\n}\n"
+'on':
+  push:
+    branches:
+    - main
+    - develop
+  pull_request:
+    branches:
+    - main

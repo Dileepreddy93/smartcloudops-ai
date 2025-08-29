@@ -1,3 +1,4 @@
+![Lint & Test](https://img.shields.io/badge/Lint & Test-failing-red)
 ![Build](https://img.shields.io/badge/Build-failing-red)
 # 🚀 SmartCloudOps AI - Production-Ready Platform
 

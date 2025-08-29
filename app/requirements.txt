@@ -65,7 +65,7 @@ bandit==1.7.5
 safety==2.3.5
 
 # Security Scanning
-trivy==0.48.1
+# trivy is a standalone binary, not a Python package
 
 # Development Tools
 pre-commit==3.6.0

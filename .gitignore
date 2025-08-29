@@ -51,6 +51,9 @@ htmlcov/
 coverage.xml
 *.cover
 .hypothesis/
+coverage/
+frontend/coverage/
+reports/coverage/
 test_report_*.json
 security_audit_report_*.json
 
@@ -58,6 +61,7 @@ security_audit_report_*.json
 *.log
 logs/
 log/
+**/*.log
 
 # Database
 *.db
@@ -76,9 +80,14 @@ services/ml_service/ml_models/
 *.tfstate
 *.tfstate.*
 .terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
+**/*.tfstate
+**/*.tfstate.backup
 
 # Docker
 .dockerignore
+docker-compose.override.yml
 
 # OS
 .DS_Store
@@ -101,6 +110,26 @@ Thumbs.db
 *.temp
 temp/
 tmp/
+*.bak
+*.backup
+*.old
+*.orig
+*.swp
+*.swo
+
+# Workflow monitor artifacts
+workflow_monitor*.json
+workflow_fix_report_*.json
+workflow_monitor_demo_report_*.json
+workflow_monitor.log
+
+# Reports and large PDFs
+Smartcloudops.ai final.pdf
+
+# Node at root (MCP helpers only)
+package-lock.json
+pnpm-lock.yaml
+**/node_modules/
 
 # Node.js
 node_modules/

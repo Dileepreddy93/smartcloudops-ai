@@ -110,13 +110,4 @@ jobs:
         \ tf.plan\necho \"\u2705 Infrastructure deployment completed\"\n"
     - name: Get Terraform outputs
       working-directory: terraform
-      run: "echo \"\U0001F4CA Infrastructure Outputs:\"\nterraform output -json >\
-        \ outputs.json\ncat outputs.json\n"
-'on':
-  push:
-    branches:
-    - main
-    - develop
-  pull_request:
-    branches:
-    - main
+      run: "echo \"\U0001F4CA Infrastructure Outputs:\"\nterraform output -json > outputs.json\ncat outputs.json\n"

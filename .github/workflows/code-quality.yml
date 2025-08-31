@@ -8,6 +8,7 @@ on:
     branches:
     - main
     - develop
+  workflow_dispatch:
 permissions:
   contents: read
   pull-requests: write
@@ -84,24 +85,4 @@ jobs:
       if: github.event_name == 'pull_request'
       uses: actions/github-script@v7
       with:
-        script: "let comment = '## \U0001F50D Code Quality & Security Results\\n\\\
-          n';\n\ncomment += '### \u2705 Quality Checks\\n';\ncomment += '- **Black\
-          \ Formatting**: \u2705 Passed\\n';\ncomment += '- **Ruff Linting**: \u2705\
-          \ Passed\\n';\ncomment += '- **Type Checking**: \u2705 Passed\\n\\n';\n\n\
-          comment += '### \U0001F512 Security Checks\\n';\ncomment += '- **Bandit\
-          \ Scan**: \u2705 Completed\\n';\ncomment += '- **Safety Check**: \u2705\
-          \ Completed\\n';\ncomment += '- **Vulnerabilities**: \u2705 None found\\\
-          n\\n';\n\ncomment += '### \U0001F4CB Summary\\n';\ncomment += 'All code\
-          \ quality and security checks have passed successfully.\\n\\n';\ncomment\
-          \ += '### \U0001F680 Next Steps\\n';\ncomment += 'This PR meets all quality\
-          \ standards and is ready for review.\\n';\n\ngithub.rest.issues.createComment({\n\
-          \  issue_number: context.issue.number,\n  owner: context.repo.owner,\n \
-          \ repo: context.repo.repo,\n  body: comment\n});\n"
-'on':
-  push:
-    branches:
-    - main
-    - develop
-  pull_request:
-    branches:
-    - main
+        script: "let comment = '## \U0001F50D Code Quality & Security Results\\n\\n';\n\ncomment += '### \u2705 Quality Checks\\n';\ncomment += '- **Black Formatting**: \u2705 Passed\\n';\ncomment += '- **Ruff Linting**: \u2705 Passed\\n';\ncomment += '- **Type Checking**: \u2705 Passed\\n\\n';\n\ncomment += '### \U0001F512 Security Checks\\n';\ncomment += '- **Bandit Scan**: \u2705 Completed\\n';\ncomment += '- **Safety Check**: \u2705 Completed\\n';\ncomment += '- **Vulnerabilities**: \u2705 None found\\n\\n';\n\ncomment += '### \U0001F4CB Summary\\n';\ncomment += 'All code quality and security checks have passed successfully.\\n\\n';\ncomment += '### \U0001F680 Next Steps\\n';\ncomment += 'This PR meets all quality standards and is ready for review.\\n';\n\ngithub.rest.issues.createComment({\n  issue_number: context.issue.number,\n  owner: context.repo.owner,\n  repo: context.repo.repo,\n  body: comment\n});\n"

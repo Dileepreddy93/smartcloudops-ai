@@ -1,0 +1,94 @@
+name: Monitor Workflow Failures
+
+on:
+  workflow_run:
+    workflows: ["Build", "Deploy", "CI/CD", "ci-cd", "lint-test", "build"]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: workflow-failure-monitor
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    name: Detect and Auto-Remediate Failures
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Gather context and maybe rerun
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const run = context.payload.workflow_run;
+            const runId = run.id;
+            const runAttempt = run.run_attempt || 1;
+
+            core.info(`Monitoring failed workflow: ${run.name} (#${runId}), attempt ${runAttempt}`);
+
+            // Auto-rerun once for transient failures
+            if (runAttempt === 1) {
+              core.info('Triggering a single automatic re-run for this failed workflow run.');
+              await github.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun', {
+                owner,
+                repo,
+                run_id: runId
+              });
+              core.info('Re-run requested successfully. Exiting monitor.');
+              return;
+            }
+
+            // Collect jobs and failed steps
+            const jobsResp = await github.request('GET /repos/{owner}/{repo}/actions/runs/{run_id}/jobs', {
+              owner,
+              repo,
+              run_id: runId,
+              per_page: 100
+            });
+
+            const failedJobs = [];
+            for (const job of jobsResp.data.jobs) {
+              if (job.conclusion === 'failure' || job.conclusion === 'cancelled' || job.conclusion === 'timed_out') {
+                failedJobs.push({ name: job.name, conclusion: job.conclusion, html_url: job.html_url });
+              }
+            }
+
+            const runUrl = `https://github.com/${owner}/${repo}/actions/runs/${runId}`;
+            const title = `🚨 Failed workflow: ${run.name} (#${runId}) on ${run.head_branch}`;
+
+            const failedList = failedJobs.length
+              ? failedJobs.map(j => `- ${j.name}: ${j.conclusion} (${j.html_url})`).join('\n')
+              : '- No per-job details available';
+
+            const body = [
+              '## Workflow Failure Summary',
+              `- **Workflow**: ${run.name}`,
+              `- **Run**: [#${runId}](${runUrl})`,
+              `- **Branch**: ${run.head_branch}`,
+              `- **Commit**: ${run.head_sha}`,
+              '',
+              '### Failed Jobs',
+              failedList,
+              '',
+              '### Next Steps',
+              '1. Inspect the failed job logs linked above',
+              '2. If transient (network/timeouts), re-run the failed jobs',
+              '3. If reproducible, fix the underlying script/config and push a commit',
+              '',
+              '*This issue was created automatically by monitor-workflow-failures.*'
+            ].join('\n');
+
+            await github.rest.issues.create({
+              owner,
+              repo,
+              title,
+              body,
+              labels: ['ci', 'automation', 'failure']
+            });
+

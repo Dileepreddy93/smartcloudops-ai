@@ -76,11 +76,19 @@ jobs:
       - name: Run smoke tests
         run: |
           echo "🧪 Running smoke tests on staging..."
-          # Get the service URL from ECS
-          SERVICE_URL=$(aws ecs describe-services \
+          # Resolve ALB DNS name for the ECS service
+          TARGET_GROUP_ARN=$(aws ecs describe-services \
             --cluster $ECS_CLUSTER-staging \
             --services $ECS_SERVICE-staging \
-            --query 'services[0].loadBalancers[0].dnsName' \
+            --query 'services[0].loadBalancers[0].targetGroupArn' \
+            --output text)
+          ALB_ARN=$(aws elbv2 describe-target-groups \
+            --target-group-arns "$TARGET_GROUP_ARN" \
+            --query 'TargetGroups[0].LoadBalancerArns[0]' \
+            --output text)
+          SERVICE_URL=$(aws elbv2 describe-load-balancers \
+            --load-balancer-arns "$ALB_ARN" \
+            --query 'LoadBalancers[0].DNSName' \
             --output text)
           
           # Wait for service to be ready
@@ -93,6 +101,17 @@ jobs:
           curl -f http://$SERVICE_URL/ || echo "⚠️ Root endpoint check failed"
           
           echo "✅ Smoke tests completed"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
 
       - name: Deploy frontend to S3
         run: |
@@ -154,11 +173,19 @@ jobs:
       - name: Run production tests
         run: |
           echo "🧪 Running production tests..."
-          # Get the service URL from ECS
-          SERVICE_URL=$(aws ecs describe-services \
+          # Resolve ALB DNS name for the ECS service
+          TARGET_GROUP_ARN=$(aws ecs describe-services \
             --cluster $ECS_CLUSTER \
             --services $ECS_SERVICE \
-            --query 'services[0].loadBalancers[0].dnsName' \
+            --query 'services[0].loadBalancers[0].targetGroupArn' \
+            --output text)
+          ALB_ARN=$(aws elbv2 describe-target-groups \
+            --target-group-arns "$TARGET_GROUP_ARN" \
+            --query 'TargetGroups[0].LoadBalancerArns[0]' \
+            --output text)
+          SERVICE_URL=$(aws elbv2 describe-load-balancers \
+            --load-balancer-arns "$ALB_ARN" \
+            --query 'LoadBalancers[0].DNSName' \
             --output text)
           
           # Wait for service to be ready
@@ -174,6 +201,17 @@ jobs:
           curl -f http://$SERVICE_URL/api/health || echo "⚠️ API health check failed"
           
           echo "✅ Production tests completed"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
 
       - name: Deploy frontend to S3
         run: |
@@ -193,7 +231,7 @@ jobs:
   deploy-infrastructure:
     name: Deploy Infrastructure
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.modified, 'terraform/')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment: production
     steps:
       - name: Checkout code
@@ -280,30 +318,25 @@ jobs:
               'deploy-production': '${{ needs.deploy-production.result }}',
               'monitor-deployment': '${{ needs.monitor-deployment.result }}'
             };
-
             let comment = '## 🚀 Deployment Results\n\n';
-            
             comment += '### ✅ Successful Deployments\n';
             Object.entries(results).forEach(([job, result]) => {
               if (result === 'success') {
                 comment += `- **${job}**: ✅ Deployed\n`;
               }
             });
-            
             comment += '\n### ❌ Failed Deployments\n';
             Object.entries(results).forEach(([job, result]) => {
               if (result === 'failure') {
                 comment += `- **${job}**: ❌ Failed\n`;
               }
             });
-
             const allPassed = Object.values(results).every(result => result === 'success' || result === 'skipped');
             if (allPassed) {
               comment += '\n🎉 **Deployment successful!** The application is now live.';
             } else {
               comment += '\n⚠️ **Some deployments failed.** Please review the failed jobs.';
             }
-
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -311,7 +344,7 @@ jobs:
               body: comment
             });
 
-                   - name: Create deployment issue on failure
+      - name: Create deployment issue on failure
         if: failure()
         uses: actions/github-script@v7
         with:
@@ -322,12 +355,10 @@ jobs:
               'deploy-production': '${{ needs.deploy-production.result }}',
               'monitor-deployment': '${{ needs.monitor-deployment.result }}'
             };
-            
             const failedJobs = Object.entries(results)
               .filter(([job, result]) => result === 'failure')
               .map(([job, result]) => `- **${job}**: ❌ Failed`)
               .join('\n');
-            
             const issueBody = '## Deployment Failure Alert\n\n' +
               '**Timestamp:** ' + new Date().toISOString() + '\n' +
               '**Branch:** ' + context.ref + '\n' +
@@ -340,7 +371,6 @@ jobs:
               '4. Re-run deployment after fixes\n\n' +
               '---\n' +
               '*This issue was automatically created by the deployment workflow.*';
-
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,

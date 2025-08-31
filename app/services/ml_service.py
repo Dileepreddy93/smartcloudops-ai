@@ -8,6 +8,7 @@ Production-ready machine learning service for anomaly detection and predictive a
 
 
 import logging
+import os
 import pickle
 import time
 from datetime import datetime, timedelta
@@ -29,9 +30,24 @@ logger = logging.getLogger(__name__)
 class MLModelManager:
     """Manages ML model lifecycle, versioning, and deployment."""
 
-    def __init__(self, model_dir: str = "/app/ml_models"):
-        self.model_dir = Path(model_dir)
-        self.model_dir.mkdir(exist_ok=True)
+    def __init__(self, model_dir: str = ""):
+        # Resolve model directory with precedence:
+        # 1) ML_MODELS_DIR env var
+        # 2) Provided model_dir argument if not empty
+        # 3) Repository-relative 'ml_models' directory
+        if not model_dir:
+            env_dir = os.environ.get("ML_MODELS_DIR", "").strip()
+            if env_dir:
+                resolved_dir = Path(env_dir)
+            else:
+                # Repo root is two levels up from this file: app/services/..
+                repo_root = Path(__file__).resolve().parents[2]
+                resolved_dir = repo_root / "ml_models"
+        else:
+            resolved_dir = Path(model_dir)
+
+        self.model_dir = resolved_dir
+        self.model_dir.mkdir(parents=True, exist_ok=True)
         self.current_model = None
         self.current_scaler = None
         self.model_metadata = {}

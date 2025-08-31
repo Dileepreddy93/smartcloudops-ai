@@ -41,21 +41,19 @@ jobs:
           AKID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           ASEC: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          if [ -n "$ROLE_ARN" ] || { [ -n "$AKID" ] && [ -n "$ASEC" ]; }; then
-            echo "aws_ready=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "aws_ready=false" >> "$GITHUB_OUTPUT"
-          fi
+          if [ -n "$ROLE_ARN" ]; then echo "role_ready=true" >> "$GITHUB_OUTPUT"; else echo "role_ready=false" >> "$GITHUB_OUTPUT"; fi
+          if [ -n "$AKID" ] && [ -n "$ASEC" ]; then echo "key_ready=true" >> "$GITHUB_OUTPUT"; else echo "key_ready=false" >> "$GITHUB_OUTPUT"; fi
+          if [ "$role_ready" = "true" ] || [ "$key_ready" = "true" ]; then echo "aws_ready=true" >> "$GITHUB_OUTPUT"; else echo "aws_ready=false" >> "$GITHUB_OUTPUT"; fi
 
       - name: Configure AWS credentials (OIDC)
-        if: steps.aws-env-check-staging.outputs.aws_ready == 'true' && secrets.AWS_ROLE_ARN_STAGING != ''
+        if: steps.aws-env-check-staging.outputs.role_ready == 'true'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN_STAGING }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Configure AWS credentials (Access Keys)
-        if: steps.aws-env-check-staging.outputs.aws_ready == 'true' && secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != ''
+        if: steps.aws-env-check-staging.outputs.key_ready == 'true'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -153,23 +151,21 @@ jobs:
           AKID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           ASEC: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          if [ -n "$ROLE_ARN" ] || { [ -n "$AKID" ] && [ -n "$ASEC" ]; }; then
-            echo "aws_ready=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "aws_ready=false" >> "$GITHUB_OUTPUT"
-          fi
+          if [ -n "$ROLE_ARN" ]; then echo "role_ready=true" >> "$GITHUB_OUTPUT"; else echo "role_ready=false" >> "$GITHUB_OUTPUT"; fi
+          if [ -n "$AKID" ] && [ -n "$ASEC" ]; then echo "key_ready=true" >> "$GITHUB_OUTPUT"; else echo "key_ready=false" >> "$GITHUB_OUTPUT"; fi
+          if [ "$role_ready" = "true" ] || [ "$key_ready" = "true" ]; then echo "aws_ready=true" >> "$GITHUB_OUTPUT"; else echo "aws_ready=false" >> "$GITHUB_OUTPUT"; fi
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Configure AWS credentials (OIDC)
-        if: steps.aws-env-check.outputs.aws_ready == 'true' && secrets.AWS_ROLE_ARN_PRODUCTION != ''
+        if: steps.aws-env-check.outputs.role_ready == 'true'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN_PRODUCTION }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Configure AWS credentials (Access Keys)
-        if: steps.aws-env-check.outputs.aws_ready == 'true' && secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != ''
+        if: steps.aws-env-check.outputs.key_ready == 'true'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -344,21 +340,19 @@ jobs:
           AKID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           ASEC: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          if [ -n "$ROLE_ARN" ] || { [ -n "$AKID" ] && [ -n "$ASEC" ]; }; then
-            echo "aws_ready=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "aws_ready=false" >> "$GITHUB_OUTPUT"
-          fi
+          if [ -n "$ROLE_ARN" ]; then echo "role_ready=true" >> "$GITHUB_OUTPUT"; else echo "role_ready=false" >> "$GITHUB_OUTPUT"; fi
+          if [ -n "$AKID" ] && [ -n "$ASEC" ]; then echo "key_ready=true" >> "$GITHUB_OUTPUT"; else echo "key_ready=false" >> "$GITHUB_OUTPUT"; fi
+          if [ "$role_ready" = "true" ] || [ "$key_ready" = "true" ]; then echo "aws_ready=true" >> "$GITHUB_OUTPUT"; else echo "aws_ready=false" >> "$GITHUB_OUTPUT"; fi
 
       - name: Configure AWS credentials (OIDC)
-        if: steps.aws-env-check-monitor.outputs.aws_ready == 'true' && secrets.AWS_ROLE_ARN_PRODUCTION != ''
+        if: steps.aws-env-check-monitor.outputs.role_ready == 'true'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN_PRODUCTION }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Configure AWS credentials (Access Keys)
-        if: steps.aws-env-check-monitor.outputs.aws_ready == 'true' && secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != ''
+        if: steps.aws-env-check-monitor.outputs.key_ready == 'true'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}

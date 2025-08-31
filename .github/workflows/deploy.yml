@@ -9,9 +9,6 @@ on:
     workflows: ["Build"]
     types:
       - completed
-    branches:
-      - main
-      - develop
   workflow_dispatch:
 
 env:

@@ -279,31 +279,48 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment: production
     steps:
+      - name: Check AWS credential availability
+        id: aws-env-check-infra
+        env:
+          ROLE_ARN: ${{ secrets.AWS_ROLE_ARN_PRODUCTION }}
+          AKID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          ASEC: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          if [ -n "$ROLE_ARN" ]; then echo "role_ready=true" >> "$GITHUB_OUTPUT"; else echo "role_ready=false" >> "$GITHUB_OUTPUT"; fi
+          if [ -n "$AKID" ] && [ -n "$ASEC" ]; then echo "key_ready=true" >> "$GITHUB_OUTPUT"; else echo "key_ready=false" >> "$GITHUB_OUTPUT"; fi
+          if [ "$role_ready" = "true" ] || [ "$key_ready" = "true" ]; then echo "aws_ready=true" >> "$GITHUB_OUTPUT"; else echo "aws_ready=false" >> "$GITHUB_OUTPUT"; fi
+
       - name: Checkout code
         uses: actions/checkout@v4
 
       # Configure credentials only if needed and available
       - name: Configure AWS credentials (OIDC)
-        if: secrets.AWS_ROLE_ARN_PRODUCTION != ''
+        if: steps.aws-env-check-infra.outputs.role_ready == 'true'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN_PRODUCTION }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Configure AWS credentials (Access Keys)
-        if: secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != ''
+        if: steps.aws-env-check-infra.outputs.key_ready == 'true'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Skip infrastructure deploy (no AWS credentials)
+        if: steps.aws-env-check-infra.outputs.aws_ready != 'true'
+        run: echo "No AWS credentials detected; skipping infrastructure deployment."
+
       - name: Setup Terraform
+        if: steps.aws-env-check-infra.outputs.aws_ready == 'true'
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.6.6
 
       - name: Terraform Init
+        if: steps.aws-env-check-infra.outputs.aws_ready == 'true'
         working-directory: terraform
         run: |
           echo "🔧 Initializing Terraform..."
@@ -311,6 +328,7 @@ jobs:
           echo "✅ Terraform initialized"
 
       - name: Terraform Plan
+        if: steps.aws-env-check-infra.outputs.aws_ready == 'true'
         working-directory: terraform
         run: |
           echo "📋 Creating Terraform plan..."
@@ -318,6 +336,7 @@ jobs:
           echo "✅ Terraform plan created"
 
       - name: Terraform Apply
+        if: steps.aws-env-check-infra.outputs.aws_ready == 'true'
         working-directory: terraform
         run: |
           echo "🚀 Applying Terraform changes..."

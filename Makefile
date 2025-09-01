@@ -3,7 +3,7 @@ SHELL := /usr/bin/bash
 PY ?= python3
 PIP ?= pip3
 
-.PHONY: help install install-dev test lint type bandit safety trivy precommit docker-build tf-fmt tf-validate
+.PHONY: help install install-dev test lint type bandit safety trivy precommit docker-build tf-fmt tf-validate aws-setup aws-whoami iam-policies
 
 help:
 	@echo "Targets: install, install-dev, test, lint, type, bandit, safety, trivy, precommit, docker-build, tf-fmt, tf-validate"
@@ -49,4 +49,13 @@ tf-fmt:
 
 tf-validate:
 	cd terraform && terraform init -backend=false && terraform validate
+
+aws-setup:
+	bash scripts/aws_configure_credentials.sh $(PROFILE) $(REGION)
+
+aws-whoami:
+	AWS_PROFILE=$(PROFILE) aws sts get-caller-identity | cat
+
+iam-policies:
+	$(PY) scripts/generate_iam_policies.py --state-bucket smartcloudops-terraform-state --lock-table terraform-locks --region $${AWS_DEFAULT_REGION:-us-east-1} --out-dir reports
 

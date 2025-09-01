@@ -9,6 +9,7 @@ Provides secure and controlled access to AWS services.
 import json
 import logging
 import time
+import os
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
 
@@ -645,5 +646,9 @@ class AWSIntegrationService:
             }
 
 
-# Global instance for the service
-aws_integration_service = AWSIntegrationService()
+# Global instance for the service (guarded to avoid import-time failures)
+try:
+    aws_integration_service = AWSIntegrationService()
+except Exception as _e:
+    logger.warning(f"AWSIntegrationService global instance not initialized: {_e}")
+    aws_integration_service = None

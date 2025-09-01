@@ -3,7 +3,10 @@ from typing import Any, Dict
 from flask import Blueprint, request
 from prometheus_client import Counter, REGISTRY
 
-from app.core.ml_engine.secure_inference import SecureMLInferenceEngine
+from app.core.ml_engine.secure_inference import (
+    SecureMLInferenceEngine,
+    get_secure_inference_engine,
+)
 from app.utils.response import error_response, success_response
 
 bp = Blueprint("ml", __name__)
@@ -23,7 +26,7 @@ ML_PREDICTION_REQUESTS = Counter(
 
 @bp.get("/ml/health")
 def ml_health():
-    engine = SecureMLInferenceEngine()
+    engine = get_secure_inference_engine()
     health = engine.health_check()
     return success_response(data=health)
 
@@ -36,8 +39,12 @@ def ml_predict():
         return error_response(message="Invalid metrics payload", status_code=400)
 
     user_id = request.headers.get("X-User-Id")
-    engine = SecureMLInferenceEngine()
-    result = engine.predict(metrics=metrics)
+    engine = get_secure_inference_engine()
+    # Prefer higher-level API if available
+    if hasattr(engine, "predict_anomaly"):
+        result = engine.predict_anomaly(metrics=metrics, user_id=user_id)
+    else:
+        result = engine.predict(metrics=metrics)
 
     # If engine returns an error structure, treat as 400 to callers
     if isinstance(result, dict) and result.get("error"):
@@ -50,7 +57,7 @@ def ml_predict():
 
 @bp.get("/ml/metrics")
 def ml_metrics():
-    engine = SecureMLInferenceEngine()
+    engine = get_secure_inference_engine()
     health = engine.health_check()
     data = {
         "status": health.get("status"),

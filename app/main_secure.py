@@ -89,11 +89,22 @@ logger = logging.getLogger(__name__)
 # Initialize Flask application with security configuration
 app = Flask(__name__)
 
-# Register API v1 blueprints needed by tests (ChatOps)
+# Register API v1 blueprints needed by tests (ChatOps and Remediation)
 try:
     from app.api.v1.chatops import bp as chatops_bp
-
     app.register_blueprint(chatops_bp, url_prefix="/api/v1/chatops")
+except Exception:
+    pass
+
+try:
+    from app.api.v1.remediation import bp as remediation_bp
+    app.register_blueprint(remediation_bp, url_prefix="/api/v1/remediation")
+except Exception:
+    pass
+
+try:
+    from app.api.v1.integration import bp as integration_bp
+    app.register_blueprint(integration_bp, url_prefix="/api/v1/integration")
 except Exception:
     pass
 

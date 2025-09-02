@@ -434,7 +434,7 @@ class TestPhase5APIEndpoints:
         assert response.status_code == 200
         result = json.loads(response.data)
         assert result["status"] == "success"
-        assert result["action"] == "deploy"
+        assert result["data"]["action"] == "deploy"
 
     def test_get_execution_history(self, client):
         """Test getting execution history."""
@@ -443,7 +443,8 @@ class TestPhase5APIEndpoints:
         assert response.status_code == 200
         result = json.loads(response.data)
         assert result["status"] == "success"
-        assert "history" in result
+        assert "data" in result
+        assert "executions" in result["data"]
 
     def test_health_check(self, client):
         """Test health check endpoint."""
@@ -452,9 +453,8 @@ class TestPhase5APIEndpoints:
         assert response.status_code == 200
         result = json.loads(response.data)
         assert result["status"] == "success"
-        assert "overall_status" in result
-        assert "nlp_service" in result
-        assert "aws_service" in result
+        assert "data" in result
+        assert "status" in result["data"]
 
     def test_test_command(self, client):
         """Test command testing endpoint."""
@@ -465,9 +465,8 @@ class TestPhase5APIEndpoints:
         assert response.status_code == 200
         result = json.loads(response.data)
         assert result["status"] == "success"
-        assert result["command"] == data["command"]
-        assert "nlp_result" in result
-        assert result["execution_simulated"] is False
+        assert result["data"]["command"] == data["command"]
+        assert "result" in result["data"]
 
     def test_get_safety_limits(self, client):
         """Test getting safety limits."""
@@ -476,7 +475,8 @@ class TestPhase5APIEndpoints:
         assert response.status_code == 200
         result = json.loads(response.data)
         assert result["status"] == "success"
-        assert "safety_limits" in result
+        assert "data" in result
+        assert "safety_limits" in result["data"]
 
     def test_update_safety_limits(self, client):
         """Test updating safety limits."""

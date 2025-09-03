@@ -1,3 +1,4 @@
+![Lint & Test](https://img.shields.io/badge/Lint & Test-failing-red)
 ## SmartCloudOps AI
 
 Production-ready DevOps and ML platform combining a Flask backend, Terraform IaC, Dockerized monitoring (Prometheus/Grafana), and a ChatOps layer.

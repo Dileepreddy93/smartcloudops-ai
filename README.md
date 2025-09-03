@@ -1,3 +1,4 @@
+![Deploy](https://img.shields.io/badge/Deploy-passing-brightgreen)
 ![Build](https://img.shields.io/badge/Build-failing-red)
 ![Lint & Test](https://img.shields.io/badge/Lint & Test-failing-red)
 ## SmartCloudOps AI

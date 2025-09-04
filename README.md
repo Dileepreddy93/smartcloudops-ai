@@ -38,6 +38,14 @@ python app/main.py
 # API: http://localhost:5000 (health: /health, status: /status, metrics: /metrics)
 ```
 
+#### Frontend (React + Tailwind)
+```bash
+cd frontend
+npm install
+npm start
+# UI: http://localhost:3000 (proxy to backend http://localhost:5000)
+```
+
 ---
 
 ### Docker (App + DB + Cache + Monitoring)
@@ -82,6 +90,23 @@ Notes:
 
 ---
 
+### Environment Setup
+Copy `env.example` to `.env` and adjust values as needed.
+
+Required highlights:
+- `DATABASE_URL` or individual `DB_*` settings
+- `REDIS_URL` (proxy/cache for ChatOps and ML)
+- `OPENAI_API_KEY` (for ChatOps/generative assistance)
+- `GITHUB_TOKEN` (for workflow monitor tooling in `docs/` and `scripts/`)
+- `PROMETHEUS_URL` and `GRAFANA_URL` (monitoring)
+
+```bash
+cp env.example .env
+# then edit .env
+```
+
+---
+
 ### API Essentials
 - Health: `GET /health`
 - Status: `GET /status`
@@ -96,6 +121,34 @@ All JSON responses follow the shape: `{ "status": "success|error", "data": ..., 
 - Prometheus configured via `monitoring/prometheus-alerts.yml` and Docker Compose service
 - Grafana on port 3000 with dashboards provisioned from `monitoring/`
 - Node Exporter on port 9100 for system metrics
+
+---
+
+### ChatOps API (Phase 5)
+All endpoints are prefixed with `/api/v1/chatops` (see `app/routes/phase5_routes.py`).
+
+Examples:
+```bash
+# Process a natural language command
+curl -sX POST http://localhost:5000/api/v1/chatops/process \
+  -H 'Content-Type: application/json' \
+  -d '{"command":"deploy the app to production"}' | jq
+
+# List supported intents
+curl -s http://localhost:5000/api/v1/chatops/intents | jq
+
+# View recent commands
+curl -s http://localhost:5000/api/v1/chatops/history?limit=5 | jq
+
+# Execute an action directly
+curl -sX POST http://localhost:5000/api/v1/chatops/execute \
+  -H 'Content-Type: application/json' \
+  -d '{"action":"deploy","parameters":{"app_name":"smartcloudops-ai","environment":"production"}}' | jq
+
+# Health and statistics
+curl -s http://localhost:5000/api/v1/chatops/health | jq
+curl -s http://localhost:5000/api/v1/chatops/statistics | jq
+```
 
 ---
 
@@ -123,6 +176,14 @@ make tf-validate   # terraform validate (no-backend)
   - `docs/CI-CD-Guide.md`
   - `docs/README_WORKFLOW_MONITORING.md`
 - Monitoring assets: `monitoring/`
+
+---
+
+### Security & Testing
+- Least-privilege IAM for Terraform and runtime services
+- Secrets via `.env` locally and AWS SSM in production
+- Run security scans: `make bandit && make safety && make trivy`
+- Run unit tests: `make test` (see `tests/`)
 
 ---
 

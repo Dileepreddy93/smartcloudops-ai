@@ -164,8 +164,10 @@ class AWSIntegrationService:
                 if recent_deployments:
                     return {
                         "safe": False,
-                        "reason": f"Deployment blocked: cooldown period of {
-                            self.safety_limits['cooldown_period_minutes']} minutes not met",
+                        "reason": (
+                            f"Deployment blocked: cooldown period of "
+                            f"{self.safety_limits['cooldown_period_minutes']} minutes not met"
+                        ),
                     }
 
             return {"safe": True}

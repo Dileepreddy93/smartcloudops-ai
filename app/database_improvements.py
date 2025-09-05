@@ -73,12 +73,10 @@ class ProductionDatabaseService:
         """Initialize database and Redis connections with proper error handling."""
         try:
             # Initialize SQLAlchemy engine with connection pooling
-            database_url = f"postgresql://{
-                self.config.username}:{
-                self.config.password}@{
-                self.config.host}:{
-                self.config.port}/{
-                    self.config.database}"
+            database_url = (
+                f"postgresql://{self.config.username}:{self.config.password}"
+                f"@{self.config.host}:{self.config.port}/{self.config.database}"
+            )
 
             self.engine = create_engine(
                 database_url,

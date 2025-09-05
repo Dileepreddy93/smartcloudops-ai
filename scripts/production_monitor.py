@@ -232,9 +232,10 @@ This is an automated alert from the SmartCloudOps AI monitoring system.
         if system_health.get("memory_percent", 0) > self.thresholds["memory_percent"]:
             self.send_alert(
                 "High Memory Usage",
-                f"Memory usage is {
-                    system_health['memory_percent']:.1f}% (threshold: {
-                    self.thresholds['memory_percent']}%)",
+                (
+                    f"Memory usage is {system_health['memory_percent']:.1f}% "
+                    f"(threshold: {self.thresholds['memory_percent']}%)"
+                ),
                 "CRITICAL",
             )
 
@@ -256,9 +257,10 @@ This is an automated alert from the SmartCloudOps AI monitoring system.
         if app_health.get("response_time_ms", 0) > self.thresholds["response_time_ms"]:
             self.send_alert(
                 "Slow Response Time",
-                f"Response time is {
-                    app_health['response_time_ms']:.0f}ms (threshold: {
-                    self.thresholds['response_time_ms']}ms)",
+                (
+                    f"Response time is {app_health['response_time_ms']:.0f}ms "
+                    f"(threshold: {self.thresholds['response_time_ms']}ms)"
+                ),
                 "WARNING",
             )
 

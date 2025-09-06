@@ -198,5 +198,50 @@ MIT — see `LICENSE`.
 
 ### Support
 - Docs: `docs/`
+  - `docs/USER_GUIDE.md`
+  - `docs/PRODUCTION_DEPLOYMENT.md`
+  - `docs/DEPLOYMENT_GUIDE.md`
+  - `docs/MASTER_PROJECT_STATUS.md`
 - Issues: use GitHub Issues on the repository
 - Discussions: GitHub Discussions
+
+---
+
+### ML Anomaly Detection
+- Models: Isolation Forest and Prophet
+- Model artifact: `ml_models/anomaly_model.pkl`
+- Validation: F1-score ≥ 0.85 on validation set
+- Live inference: Served via `/ml/predict`; metrics at `/ml/metrics`
+
+### Auto-Remediation
+- Rule engine watches Prometheus alerts and system metrics
+- Example condition: if cpu > 90% for >3min → triggers `scripts/scale_up.py`
+- Audit logs: actions stored in `logs/` with timestamp, action, result
+
+### Secrets & IAM
+- Secrets via AWS SSM in production; `.env` locally
+- Enforce least-privilege IAM; generate starter policies:
+```bash
+make iam-policies
+```
+
+### Terraform Remote State
+- Recommended: S3 backend with DynamoDB locking
+- See `terraform/TERRAFORM_MASTER_DOCUMENTATION.md`
+- Quick init example:
+```bash
+cd terraform
+terraform init \
+  -backend-config="bucket=<your-state-bucket>" \
+  -backend-config="key=envs/dev/terraform.tfstate" \
+  -backend-config="region=us-east-1" \
+  -backend-config="dynamodb_table=<your-lock-table>"
+```
+
+### Docker Production
+- Production Dockerfile: `Dockerfile.production`
+- Compose stack: `docker/docker-compose.yml` includes app, DB, Redis, Prometheus, Grafana
+
+### CI/CD & Workflow Monitoring
+- Guides in `docs/CI-CD-Guide.md` and `docs/README_WORKFLOW_MONITORING.md`
+- Generated reports in `reports/`

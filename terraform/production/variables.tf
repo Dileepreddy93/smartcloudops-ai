@@ -112,7 +112,7 @@ variable "backup_retention_period" {
 variable "multi_az" {
   description = "Enable RDS Multi-AZ deployment"
   type        = bool
-  default     = false  # Set to true for production
+  default     = false # Set to true for production
 }
 
 variable "storage_encrypted" {

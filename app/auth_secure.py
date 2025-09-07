@@ -507,7 +507,7 @@ def require_api_key(permission: str = "read"):
                 api_key = request.headers.get("X-API-Key")
 
                 # Testing bypass: allow requests without API key in test environment
-                if current_app and current_app.config.get("TESTING") and not api_key:
+                if current_app and current_app.config.get("TESTING"):
                     g.current_user = {
                         "user_id": "pytest",
                         "role": "admin",

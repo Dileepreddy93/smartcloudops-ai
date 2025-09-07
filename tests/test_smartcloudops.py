@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 import boto3
 import pytest
 
-from app.main import app as flask_app
+from app.main_secure import app as flask_app
 
 
 # --- Conftest.py (or can be included here for simplicity) ---

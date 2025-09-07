@@ -54,7 +54,7 @@ application_instance_type = "t3.small"     # 2 vCPU, 2 GB RAM
 
 # Database Configuration
 db_username = "smartcloudops_admin"
-db_password = "CHANGE_ME_TO_SECURE_PASSWORD"  # Must be set securely
+# Duplicate definition removed. Set via env TF_VAR_db_password for CI/CD.
 
 # Monitoring Configuration
 prometheus_port = "9090"

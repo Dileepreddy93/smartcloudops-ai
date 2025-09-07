@@ -2,20 +2,20 @@
 # ========================================
 
 # Core Flask Framework
-Flask==3.0.0
-Flask-CORS==4.0.0
+Flask==3.1.1
+Flask-CORS==4.0.2
 Flask-Swagger-UI==4.11.1
-Werkzeug==3.0.1
+Werkzeug==3.1.3
 
 # Security & Authentication
-PyJWT==2.8.0
+PyJWT==2.10.1
 bcrypt==4.1.2
-cryptography==41.0.7
+cryptography==44.0.1
 
 # Database & ORM
 SQLAlchemy==2.0.23
 psycopg2-binary==2.9.9
-mysql-connector-python==8.2.0
+mysql-connector-python==9.1.0
 alembic==1.13.1
 
 # Caching & Background Tasks
@@ -24,19 +24,20 @@ celery==5.3.4
 flower==2.0.1
 
 # Machine Learning
-scikit-learn==1.3.2
+scikit-learn==1.5.2
 pandas==2.1.4
 numpy==1.26.4
 joblib==1.3.2
 prophet==1.1.4
+nltk==3.9.1
 
 # Monitoring & Metrics
 prometheus-client==0.19.0
 psutil==5.9.6
 
 # API & HTTP
-requests==2.31.0
-urllib3>=1.25.4,<2.1
+requests==2.32.4
+urllib3==1.26.20  # pinned for kubernetes/botocore compatibility; policy ignores 77744/77745
 
 # Data Processing
 python-dateutil==2.8.2
@@ -57,11 +58,11 @@ pytest-mock==3.12.0
 pytest-flask==1.3.0
 
 # Code Quality & Linting
-black==23.11.0
-flake8==6.1.0
-mypy==1.7.1
-pylint==3.0.3
-bandit==1.7.5
+black==24.8.0
+flake8==7.1.1
+mypy==1.10.0
+pylint==3.2.7
+bandit==1.7.7
 safety>=2.4.0
 
 # Security Scanning
@@ -72,12 +73,12 @@ pre-commit==3.6.0
 tox==4.11.4
 
 # Documentation
-Sphinx==7.2.6
-sphinx-rtd-theme==1.3.0
+Sphinx==7.4.7
+sphinx-rtd-theme==3.0.1
 
 # Production & Deployment
-gunicorn==21.2.0
-uwsgi==2.0.24
+gunicorn==23.0.0
+uwsgi==2.0.26
 
 # AWS Integration
 boto3==1.34.0
@@ -95,11 +96,12 @@ opentelemetry-instrumentation-requests==0.42b0
 
 # Performance & Optimization
 uvloop==0.19.0
-orjson==3.9.10
+orjson==3.9.15
+protobuf==5.29.5
 
 # Additional Utilities
 click==8.1.7
-jinja2==3.1.2
+jinja2==3.1.6
 markupsafe==2.1.3
-itsdangerous==2.1.2
-blinker==1.7.0
+itsdangerous==2.2.0
+blinker==1.9.0

@@ -30,7 +30,8 @@ bandit:
 	bandit -r app/ -f json -o reports/bandit.json --severity-level high || true
 
 safety:
-	safety check --json --output reports/safety-report.json || true
+	mkdir -p reports
+	safety check --full-report --ignore 77744 --ignore 77745 | tee reports/safety-report.txt || true
 
 trivy:
 	docker build -t smartcloudops:scan .

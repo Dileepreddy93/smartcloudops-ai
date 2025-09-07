@@ -66,13 +66,13 @@ resource "aws_db_instance" "main" {
   port                   = 5432
 
   # Backup and maintenance
-  backup_retention_period = var.backup_retention_period
-  backup_window          = "03:00-04:00"
-  maintenance_window     = "sun:04:00-sun:05:00"
+  backup_retention_period    = var.backup_retention_period
+  backup_window              = "03:00-04:00"
+  maintenance_window         = "sun:04:00-sun:05:00"
   auto_minor_version_upgrade = true
 
   # Performance insights
-  performance_insights_enabled = true
+  performance_insights_enabled          = true
   performance_insights_retention_period = 7
 
   # Monitoring
@@ -132,9 +132,9 @@ resource "aws_db_parameter_group" "main" {
 }
 
 resource "aws_db_option_group" "main" {
-  name                     = "${var.project_name}-db-options"
-  engine_name              = "postgres"
-  major_engine_version     = "15"
+  name                 = "${var.project_name}-db-options"
+  engine_name          = "postgres"
+  major_engine_version = "15"
 
   tags = {
     Name        = "${var.project_name}-db-options"

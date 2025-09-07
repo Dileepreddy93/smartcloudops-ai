@@ -1,0 +1,11 @@
+{
+  "annotations": {"list": []},
+  "panels": [
+    {"type": "graph", "title": "CPU Usage", "targets": [{"expr": "100 - (avg by (instance)(irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)"}]},
+    {"type": "graph", "title": "Memory Usage", "targets": [{"expr": "node_memory_Active_bytes / node_memory_MemTotal_bytes * 100"}]}
+  ],
+  "schemaVersion": 38,
+  "title": "SmartCloudOps Overview",
+  "version": 1
+}
+

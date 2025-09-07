@@ -9,7 +9,7 @@ terraform {
       version = "~> 5.0"
     }
   }
-  
+
   backend "s3" {
     bucket         = "smartcloudops-terraform-state"
     key            = "production/terraform.tfstate"
@@ -21,7 +21,7 @@ terraform {
 
 provider "aws" {
   region = var.aws_region
-  
+
   default_tags {
     tags = {
       Environment = "production"
@@ -58,7 +58,7 @@ resource "aws_internet_gateway" "main" {
 # NAT Gateway for private subnets
 resource "aws_eip" "nat" {
   domain = "vpc"
-  
+
   tags = {
     Name = "smartcloudops-nat-eip"
   }
@@ -369,12 +369,12 @@ resource "aws_db_instance" "main" {
   parameter_group_name   = aws_db_parameter_group.main.name
 
   backup_retention_period = 7
-  backup_window          = "03:00-04:00"
-  maintenance_window     = "sun:04:00-sun:05:00"
+  backup_window           = "03:00-04:00"
+  maintenance_window      = "sun:04:00-sun:05:00"
 
-  multi_az               = false  # Enable for production
-  publicly_accessible    = false
-  skip_final_snapshot    = false
+  multi_az                  = false # Enable for production
+  publicly_accessible       = false
+  skip_final_snapshot       = false
   final_snapshot_identifier = "smartcloudops-final-snapshot"
 
   tags = {
@@ -515,9 +515,9 @@ resource "aws_launch_template" "main" {
 resource "aws_autoscaling_group" "main" {
   name                = "smartcloudops-asg"
   desired_capacity    = 2
-  max_size           = 4
-  min_size           = 1
-  target_group_arns  = [aws_lb_target_group.main.arn]
+  max_size            = 4
+  min_size            = 1
+  target_group_arns   = [aws_lb_target_group.main.arn]
   vpc_zone_identifier = [aws_subnet.private_1.id, aws_subnet.private_2.id]
 
   launch_template {
@@ -527,7 +527,7 @@ resource "aws_autoscaling_group" "main" {
 
   tag {
     key                 = "Name"
-    value              = "smartcloudops-app"
+    value               = "smartcloudops-app"
     propagate_at_launch = true
   }
 }
@@ -537,7 +537,7 @@ resource "aws_autoscaling_policy" "cpu" {
   name                   = "smartcloudops-cpu-policy"
   scaling_adjustment     = 1
   adjustment_type        = "ChangeInCapacity"
-  cooldown              = 300
+  cooldown               = 300
   autoscaling_group_name = aws_autoscaling_group.main.name
 }
 
@@ -545,7 +545,7 @@ resource "aws_autoscaling_policy" "cpu_down" {
   name                   = "smartcloudops-cpu-down-policy"
   scaling_adjustment     = -1
   adjustment_type        = "ChangeInCapacity"
-  cooldown              = 300
+  cooldown               = 300
   autoscaling_group_name = aws_autoscaling_group.main.name
 }
 

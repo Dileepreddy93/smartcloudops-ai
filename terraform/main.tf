@@ -1156,18 +1156,18 @@ module "database" {
   environment  = var.environment
   vpc_id       = aws_vpc.main.id
   subnet_ids   = [aws_subnet.private_1.id, aws_subnet.private_2.id]
-  
+
   app_security_group_id = aws_security_group.application.id
-  
-  instance_class = "db.t3.micro" # Use larger instance for production
-  allocated_storage = 20
+
+  instance_class        = "db.t3.micro" # Use larger instance for production
+  allocated_storage     = 20
   max_allocated_storage = 100
-  
+
   db_username = "smartcloudops_admin"
   db_password = var.db_password
-  
+
   backup_retention_period = var.environment == "production" ? 30 : 7
-  
+
   alarm_actions = [] # Add SNS topic ARNs for production
 }
 

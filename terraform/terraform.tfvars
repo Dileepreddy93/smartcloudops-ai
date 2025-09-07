@@ -16,7 +16,7 @@ db_instance_class = "db.t3.micro" # Use db.t3.small or larger for production
 db_username       = "admin"
 # SECURITY: Password must be set via environment variable or secure method
 # db_password       = "change-this-password-123!" # REMOVED - UNSAFE
-db_password       = "SecurePass123!" # Must be set securely
+db_password = "SecurePass123!" # Must be set securely
 
 # ECS Configuration
 ecs_cpu           = "256" # Use "512" or higher for production

@@ -1,4 +1,4 @@
-![Lint & Test](https://github.com/Dileepreddy93/smartcloudops-ai/workflows/Lint%20and%20Test/badge.svg)
+![Lint ![Lint & Test](https://github.com/Dileepreddy93/smartcloudops-ai/workflows/Lint%20and%20Test/badge.svg) Test](https://img.shields.io/badge/Lint ![Lint & Test](https://github.com/Dileepreddy93/smartcloudops-ai/workflows/Lint%20and%20Test/badge.svg) Test-failing-red)
 ![Deploy](https://img.shields.io/badge/Deploy-passing-brightgreen)
 ![Build](https://github.com/Dileepreddy93/smartcloudops-ai/workflows/Build/badge.svg)
 ![Code Quality](https://github.com/Dileepreddy93/smartcloudops-ai/workflows/Code%20Quality/badge.svg)

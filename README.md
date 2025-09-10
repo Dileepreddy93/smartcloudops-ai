@@ -1,16 +1,41 @@
-![Lint ![Lint & Test](https://img.shields.io/badge/Lint%20%26%20Test-failing-red) Test](https://img.shields.io/badge/Lint ![Lint & Test](https://img.shields.io/badge/Lint%20%26%20Test-failing-red) Test-failing-red)
-![Deploy](https://img.shields.io/badge/Deploy-passing-brightgreen)
-![Build](https://img.shields.io/badge/Build-failing-red)
+![Lint & Test](https://github.com/Dileepreddy93/smartcloudops-ai/workflows/Lint%20and%20Test/badge.svg)
+![Deploy](https://github.com/Dileepreddy93/smartcloudops-ai/workflows/Deploy/badge.svg)
+![Build](https://github.com/Dileepreddy93/smartcloudops-ai/workflows/Build/badge.svg)
+![Code Quality](https://github.com/Dileepreddy93/smartcloudops-ai/workflows/Code%20Quality/badge.svg)
 ## SmartCloudOps AI
 
 Production-ready DevOps and ML platform combining a Flask backend, Terraform IaC, Dockerized monitoring (Prometheus/Grafana), and a ChatOps layer.
 
 ### Key Features
-- Secure Flask API with modular blueprints: health, status, metrics, ML, remediation
-- ML anomaly detection pipeline with model persistence in `ml_models/`
-- Observability: Prometheus scrape + Grafana dashboards; Node Exporter on port 9100
-- Terraform modules for AWS (remote state ready; tfvars for environments)
-- CI/CD and workflow monitoring utilities under `docs/` and `scripts/`
+- **Secure Flask API** with modular blueprints: health, status, metrics, ML, remediation, ChatOps
+- **ML Anomaly Detection** pipeline with Isolation Forest and Prophet models in `ml_models/`
+- **Observability Stack**: Prometheus + Grafana dashboards with Node Exporter (port 9100)
+- **Infrastructure as Code**: Terraform modules for AWS with remote state and environment-specific configs
+- **CI/CD Pipeline**: GitHub Actions for lint, test, build, deploy, and code quality checks
+- **Security Hardening**: Bandit, Safety, Trivy scans with pinned dependencies and IAM policies
+- **ChatOps Integration**: Natural language command processing via `/api/v1/chatops` endpoints
+- **Auto-Remediation**: Rule-based system monitoring with automated response actions
+
+---
+
+## 🚀 Recent Updates
+
+### Security & Dependencies (Latest)
+- **Security Hardening**: Upgraded PyJWT to 2.10.1, cryptography to 44.0.1, uWSGI to 2.0.26
+- **Dependency Management**: Pinned protobuf 5.29.5, nltk 3.9.1 for stability
+- **Vulnerability Scanning**: Integrated Bandit, Safety, and Trivy in CI/CD pipeline
+- **IAM Policies**: Generated least-privilege policies with `make iam-policies`
+
+### CI/CD Enhancements
+- **GitHub Actions**: Comprehensive workflows for lint, test, build, deploy, and code quality
+- **Workflow Monitoring**: Automated failure detection and status reporting
+- **Status Badges**: Real-time workflow status indicators
+- **Multi-Environment**: Support for dev, staging, and production deployments
+
+### Infrastructure Improvements
+- **Terraform Validation**: Fixed regex validations and added secure defaults
+- **Monitoring Stack**: Enhanced Prometheus alerts and Grafana dashboards
+- **Docker Production**: Optimized production Dockerfile and compose configurations
 
 ---
 
@@ -154,28 +179,42 @@ curl -s http://localhost:5000/api/v1/chatops/statistics | jq
 
 ### Useful Make Targets
 ```bash
+# Development
 make install       # install app deps
 make install-dev   # install dev tools
 make test          # run tests
 make lint          # ruff/black/isort
 make type          # mypy
+
+# Security & Quality
 make bandit        # security scan (code)
 make safety        # vulnerability scan (deps)
 make trivy         # filesystem/container scan
-make docker-build  # build app image
+make iam-policies  # generate IAM policies
+
+# Infrastructure
 make tf-fmt        # terraform fmt -recursive
 make tf-validate   # terraform validate (no-backend)
+make aws-setup     # configure AWS credentials
+
+# Docker & Deployment
+make docker-build  # build app image
+make docker-run    # run with docker-compose
 ```
 
 ---
 
 ### Documentation
-- Architecture and deployment: `docs/`
-  - `docs/PRODUCTION_DEPLOYMENT.md`
-  - `docs/AWS_SETUP.md`
-  - `docs/CI-CD-Guide.md`
-  - `docs/README_WORKFLOW_MONITORING.md`
-- Monitoring assets: `monitoring/`
+- **Architecture & Deployment**: `docs/`
+  - `docs/PRODUCTION_DEPLOYMENT.md` - Production deployment guide
+  - `docs/AWS_SETUP.md` - AWS infrastructure setup
+  - `docs/CI-CD-Guide.md` - CI/CD pipeline documentation
+  - `docs/README_WORKFLOW_MONITORING.md` - Workflow monitoring utilities
+- **Monitoring Assets**: `monitoring/`
+  - `monitoring/prometheus-alerts.yml` - Alert rules
+  - `monitoring/grafana-dashboards/` - Dashboard configurations
+- **Infrastructure**: `terraform/`
+  - `terraform/TERRAFORM_MASTER_DOCUMENTATION.md` - Complete Terraform guide
 
 ---
 

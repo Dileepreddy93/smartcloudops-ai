@@ -26,7 +26,7 @@ flower==2.0.1
 # Machine Learning
 scikit-learn==1.5.2
 pandas==2.1.4
-numpy==1.26.4
+numpy>=1.26.4
 joblib==1.3.2
 prophet==1.1.4
 nltk==3.9.1
@@ -64,6 +64,7 @@ mypy==1.10.0
 pylint==3.2.7
 bandit==1.7.7
 safety>=2.4.0
+ruff==0.1.0
 
 # Security Scanning
 # trivy is a standalone binary, not a Python package
@@ -105,3 +106,6 @@ jinja2==3.1.6
 markupsafe==2.1.3
 itsdangerous==2.2.0
 blinker==1.9.0
+
+# Additional dependencies for CI/CD
+ruff==0.1.0

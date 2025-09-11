@@ -1,0 +1,9 @@
+version: 1.0
+ignore-vulnerabilities:
+  - id: 77744
+    reason: "urllib3 redirect control issue not applicable; we do not disable redirects at PoolManager level."
+    expires: "2026-01-31"
+  - id: 77745
+    reason: "Pyodide/browser environment not in use; server-side only."
+    expires: "2026-01-31"
+

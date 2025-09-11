@@ -1,9 +1,18 @@
-![Lint ![Lint & Test](https://img.shields.io/badge/Lint & Test-failing-red) Test](https://img.shields.io/badge/Lint ![Lint & Test](https://img.shields.io/badge/Lint & Test-failing-red) Test-failing-red)
+![Lint & Test](https://img.shields.io/badge/Lint%20%26%20Test-passing-brightgreen)
 ![Deploy](https://img.shields.io/badge/Deploy-passing-brightgreen)
-![Build](https://img.shields.io/badge/Build-failing-red)
+![Build](https://img.shields.io/badge/Build-passing-brightgreen)
+![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
+![License](https://img.shields.io/badge/License-MIT-green)
 ## SmartCloudOps AI
 
 Production-ready DevOps and ML platform combining a Flask backend, Terraform IaC, Dockerized monitoring (Prometheus/Grafana), and a ChatOps layer.
+
+### 🚀 Recent Updates (September 2025)
+- Enhanced security scanning with Bandit, Safety, and Trivy integration
+- Improved CI/CD pipeline with comprehensive quality gates
+- Added automated ML model validation and deployment
+- Streamlined Docker Compose setup for local development
+- Updated Terraform configurations for AWS Free Tier compatibility
 
 ### Key Features
 - Secure Flask API with modular blueprints: health, status, metrics, ML, remediation

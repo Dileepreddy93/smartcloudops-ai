@@ -1,6 +1,6 @@
 ![Lint & Test](https://github.com/Dileepreddy93/smartcloudops-ai/workflows/Lint%20and%20Test/badge.svg)
 ![Deploy](https://img.shields.io/badge/Deploy-passing-brightgreen)
-![Build](https://github.com/Dileepreddy93/smartcloudops-ai/workflows/Build/badge.svg)
+![Build](https://img.shields.io/badge/Build-failing-red)
 ![Code Quality](https://github.com/Dileepreddy93/smartcloudops-ai/workflows/Code%20Quality/badge.svg)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)

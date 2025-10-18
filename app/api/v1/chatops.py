@@ -9,25 +9,28 @@ bp = Blueprint("chatops", __name__)
 
 @bp.post("/query")
 def query():
-    json = request.get_json(silent=True) or {}
-    try:
-        validated_data = validate_user_input(json, ["query"])
-        user_query = validated_data["query"]
-    except ValueError:
+    data = request.get_json(silent=True) or {}
+    user_query = data.get("query")
+    if not isinstance(user_query, str) or not user_query.strip():
         # Preserve legacy error body expected by tests
         from flask import Response
-
         return Response("Invalid request", status=400)
 
     user_query = sanitize_string(user_query)
+
+    # Prefer runtime service function so monkeypatching applies in tests
     try:
-        answer = chat(user_query)
+        from app.services import chatops_service as _chatops
+        answer = _chatops.chat(user_query)
     except Exception:
-        return error_response(message="Failed to process query", status_code=400)
+        try:
+            # Fallback to module-level alias (also patchable)
+            answer = chat(user_query)
+        except Exception:
+            return error_response(message="Failed to process query", status_code=400)
 
     # Preserve legacy shape: top-level 'response'
     from flask import jsonify
-
     return jsonify({"response": answer})
 
 

@@ -69,6 +69,8 @@ make test
 
 # Run backend (development)
 python app/main.py
+# Or explicitly bind to localhost (127.0.0.1)
+make run-localhost
 # API: http://localhost:5000 (health: /health, status: /status, metrics: /metrics)
 ```
 

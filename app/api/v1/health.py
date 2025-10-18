@@ -14,7 +14,10 @@ def status():
     # DTO data
     engine = SecureMLInferenceEngine()
     ml_health = engine.health_check()
+
+    # Build a response compatible with blueprint tests (top-level status: success)
     data = {
+        "status": "healthy",
         "message": "OK",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "ml": {
@@ -22,17 +25,7 @@ def status():
             "metrics": ml_health.get("metrics", {}),
         },
     }
-    # Merge compatibility fields into the response
-    response_data = {
-        "status": "healthy",  # Compatibility field
-        "message": "OK",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "ml": {
-            "status": ml_health.get("status"),
-            "metrics": ml_health.get("metrics", {}),
-        },
-    }
-    return success_response(data=response_data)
+    return success_response(data=data)
 
 
 @bp.get("/")

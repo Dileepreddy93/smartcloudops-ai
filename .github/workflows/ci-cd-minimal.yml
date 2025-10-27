@@ -8,6 +8,9 @@ on:
     branches:
     - main
     - develop
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
 jobs:
   test:
     name: Test Application
@@ -18,7 +21,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: ${{ env.PYTHON_VERSION }}
         cache: pip
     - name: Install dependencies
       run: 'python3 -m pip install --upgrade pip

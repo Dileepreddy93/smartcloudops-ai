@@ -1,0 +1,18 @@
+{
+  "total_tests": 7,
+  "passed": 5,
+  "failed": 2,
+  "results": {
+    "Python Imports": true,
+    "Frontend Build": true,
+    "Python Tests": false,
+    "Security Audit": true,
+    "ML Scripts": true,
+    "Docker Build": false,
+    "Workflow Syntax": true
+  },
+  "failed_tests": [
+    "Python Tests",
+    "Docker Build"
+  ]
+}

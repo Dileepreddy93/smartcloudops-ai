@@ -12,6 +12,8 @@ on:
   workflow_dispatch:
 
 env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
   AWS_REGION: us-east-1
   ECR_REPOSITORY: smartcloudops-ai
   ECS_CLUSTER: smartcloudops-cluster
@@ -120,7 +122,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Build frontend
         working-directory: frontend
@@ -255,7 +257,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Build frontend
         working-directory: frontend

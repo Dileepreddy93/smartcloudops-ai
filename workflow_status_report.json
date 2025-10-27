@@ -1,0 +1,238 @@
+{
+  "summary": {
+    "total_workflows": 12,
+    "successful": 9,
+    "failed": 3,
+    "errors": 0,
+    "skipped": 0,
+    "success_rate": 75.0,
+    "total_duration": 28.614805936813354
+  },
+  "workflows": {
+    "build": {
+      "status": "failure",
+      "jobs": {
+        "python_setup": {
+          "status": "success",
+          "message": "Python setup test"
+        },
+        "python_deps": {
+          "status": "success",
+          "message": "Python dependencies test"
+        },
+        "python_tests": {
+          "status": "success",
+          "message": "Python tests setup"
+        },
+        "node_setup": {
+          "status": "success",
+          "message": "Node.js setup test"
+        },
+        "node_build": {
+          "status": "success",
+          "message": "Node.js build test (package.json exists)"
+        },
+        "docker_build": {
+          "status": "skipped",
+          "message": "Docker not available: [Errno 2] No such file or directory: 'docker'"
+        }
+      },
+      "duration": 4.119153738021851,
+      "message": "Workflow build completed"
+    },
+    "deploy": {
+      "status": "failure",
+      "jobs": {
+        "node_setup": {
+          "status": "success",
+          "message": "Node.js setup test"
+        },
+        "node_build": {
+          "status": "success",
+          "message": "Node.js build test (package.json exists)"
+        },
+        "docker_build": {
+          "status": "skipped",
+          "message": "Docker not available: [Errno 2] No such file or directory: 'docker'"
+        },
+        "terraform_validate": {
+          "status": "success",
+          "message": "Terraform validation test (directory exists)"
+        }
+      },
+      "duration": 0.004069089889526367,
+      "message": "Workflow deploy completed"
+    },
+    "code-quality": {
+      "status": "success",
+      "jobs": {
+        "python_setup": {
+          "status": "success",
+          "message": "Python setup test"
+        },
+        "python_deps": {
+          "status": "success",
+          "message": "Python dependencies test"
+        },
+        "python_tests": {
+          "status": "success",
+          "message": "Python tests setup"
+        }
+      },
+      "duration": 4.073804616928101,
+      "message": "Workflow code-quality completed"
+    },
+    "lint-test": {
+      "status": "success",
+      "jobs": {
+        "python_setup": {
+          "status": "success",
+          "message": "Python setup test"
+        },
+        "python_deps": {
+          "status": "success",
+          "message": "Python dependencies test"
+        },
+        "python_tests": {
+          "status": "success",
+          "message": "Python tests setup"
+        },
+        "node_setup": {
+          "status": "success",
+          "message": "Node.js setup test"
+        },
+        "node_build": {
+          "status": "success",
+          "message": "Node.js build test (package.json exists)"
+        }
+      },
+      "duration": 4.06666898727417,
+      "message": "Workflow lint-test completed"
+    },
+    "defender-for-devops": {
+      "status": "success",
+      "jobs": {},
+      "duration": 4.410743713378906e-05,
+      "message": "Workflow defender-for-devops completed"
+    },
+    "ci": {
+      "status": "success",
+      "jobs": {
+        "python_setup": {
+          "status": "success",
+          "message": "Python setup test"
+        },
+        "python_deps": {
+          "status": "success",
+          "message": "Python dependencies test"
+        },
+        "python_tests": {
+          "status": "success",
+          "message": "Python tests setup"
+        },
+        "node_setup": {
+          "status": "success",
+          "message": "Node.js setup test"
+        },
+        "node_build": {
+          "status": "success",
+          "message": "Node.js build test (package.json exists)"
+        }
+      },
+      "duration": 4.093888998031616,
+      "message": "Workflow ci completed"
+    },
+    "ci-cd": {
+      "status": "failure",
+      "jobs": {
+        "python_setup": {
+          "status": "success",
+          "message": "Python setup test"
+        },
+        "python_deps": {
+          "status": "success",
+          "message": "Python dependencies test"
+        },
+        "python_tests": {
+          "status": "success",
+          "message": "Python tests setup"
+        },
+        "node_setup": {
+          "status": "success",
+          "message": "Node.js setup test"
+        },
+        "node_build": {
+          "status": "success",
+          "message": "Node.js build test (package.json exists)"
+        },
+        "docker_build": {
+          "status": "skipped",
+          "message": "Docker not available: [Errno 2] No such file or directory: 'docker'"
+        }
+      },
+      "duration": 4.10345983505249,
+      "message": "Workflow ci-cd completed"
+    },
+    "infra": {
+      "status": "success",
+      "jobs": {
+        "terraform_validate": {
+          "status": "success",
+          "message": "Terraform validation test (directory exists)"
+        }
+      },
+      "duration": 7.772445678710938e-05,
+      "message": "Workflow infra completed"
+    },
+    "monitor-workflow-failures": {
+      "status": "success",
+      "jobs": {},
+      "duration": 6.008148193359375e-05,
+      "message": "Workflow monitor-workflow-failures completed"
+    },
+    "test-simple": {
+      "status": "success",
+      "jobs": {
+        "python_setup": {
+          "status": "success",
+          "message": "Python setup test"
+        },
+        "python_deps": {
+          "status": "success",
+          "message": "Python dependencies test"
+        },
+        "python_tests": {
+          "status": "success",
+          "message": "Python tests setup"
+        }
+      },
+      "duration": 4.072472333908081,
+      "message": "Workflow test-simple completed"
+    },
+    "status-badge": {
+      "status": "success",
+      "jobs": {},
+      "duration": 0.00010752677917480469,
+      "message": "Workflow status-badge completed"
+    },
+    "ci-cd-minimal": {
+      "status": "success",
+      "jobs": {
+        "python_setup": {
+          "status": "success",
+          "message": "Python setup test"
+        },
+        "python_deps": {
+          "status": "success",
+          "message": "Python dependencies test"
+        },
+        "python_tests": {
+          "status": "success",
+          "message": "Python tests setup"
+        }
+      },
+      "duration": 4.080146551132202,
+      "message": "Workflow ci-cd-minimal completed"
+    }
+  }
+}
